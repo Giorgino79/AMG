@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nuovo Riconoscimento Fornitore{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'fatturazionepassiva:dashboard' %}">Fatturazione Passiva</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Nuovo Riconoscimento</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Nuovo Riconoscimento Fornitore</h1>
+                <a href="{% url 'fatturazionepassiva:dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Torna alla Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Dati Riconoscimento</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Fornitore -->
+                        <div class="form-group">
+                            <label for="fornitore" class="form-label">Fornitore *</label>
+                            <select class="form-control" id="fornitore" name="fornitore" required>
+                                <option value="">Seleziona fornitore...</option>
+                                {% for fornitore in fornitori %}
+                                    <option value="{{ fornitore.id }}">{{ fornitore.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Periodo -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="periodo_da" class="form-label">Periodo Da *</label>
+                                    <input type="date" class="form-control" id="periodo_da" name="periodo_da" 
+                                           value="{{ periodo_da_default }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="periodo_a" class="form-label">Periodo A *</label>
+                                    <input type="date" class="form-control" id="periodo_a" name="periodo_a" 
+                                           value="{{ periodo_a_default }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filtri di inclusione -->
+                        <div class="form-group">
+                            <label class="form-label">Includi nei riconoscimenti:</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="include_ordini_ricevuti" 
+                                       name="include_ordini_ricevuti" checked>
+                                <label class="form-check-label" for="include_ordini_ricevuti">
+                                    Ordini già ricevuti (quantità effettivamente ricevute)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="include_ordini_da_ricevere" 
+                                       name="include_ordini_da_ricevere">
+                                <label class="form-check-label" for="include_ordini_da_ricevere">
+                                    Ordini ancora da ricevere (quantità ordinate)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="include_ricezioni_manuali" 
+                                       name="include_ricezioni_manuali" checked>
+                                <label class="form-check-label" for="include_ricezioni_manuali">
+                                    Ricezioni manuali (senza ordine di riferimento)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Note -->
+                        <div class="form-group">
+                            <label for="note" class="form-label">Note</label>
+                            <textarea class="form-control" id="note" name="note" rows="3" 
+                                      placeholder="Note sul riconoscimento..."></textarea>
+                        </div>
+
+                        <!-- Pulsanti -->
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Crea Riconoscimento
+                            </button>
+                            <a href="{% url 'fatturazionepassiva:dashboard' %}" class="btn btn-secondary ml-2">
+                                Annulla
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Informazioni</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Come funziona</h6>
+                        <p class="mb-2">Il riconoscimento raccoglie automaticamente:</p>
+                        <ul class="mb-0">
+                            <li><strong>Ordini ricevuti:</strong> Quantità effettivamente ricevute nel periodo</li>
+                            <li><strong>Ordini da ricevere:</strong> Quantità ordinate (se selezionato)</li>
+                            <li><strong>Ricezioni manuali:</strong> Ricezioni senza ordine di riferimento</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Attenzione</h6>
+                        <p class="mb-0">Non è possibile creare più riconoscimenti per lo stesso fornitore e periodo.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-aggiornamento periodo fine mese quando cambia il periodo inizio
+    const periodoDa = document.getElementById('periodo_da');
+    const periodoA = document.getElementById('periodo_a');
+    
+    periodoDa.addEventListener('change', function() {
+        if (this.value) {
+            const data = new Date(this.value);
+            // Ultimo giorno del mese
+            const ultimoGiorno = new Date(data.getFullYear(), data.getMonth() + 1, 0);
+            periodoA.value = ultimoGiorno.toISOString().split('T')[0];
+        }
+    });
+});
+</script>
+{% endblock %}

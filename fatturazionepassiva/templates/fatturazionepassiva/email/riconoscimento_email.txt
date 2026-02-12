@@ -1,0 +1,41 @@
+RICONOSCIMENTO {{ riconoscimento.numero_riconoscimento }}
+
+Gentile {{ fornitore.nome }},
+
+Vi trasmettiamo in allegato il riconoscimento relativo alle forniture effettuate nel periodo {{ riconoscimento.periodo_da|date:"d/m/Y" }} - {{ riconoscimento.periodo_a|date:"d/m/Y" }}.
+
+RIEPILOGO RICONOSCIMENTO:
+- Numero Riconoscimento: {{ riconoscimento.numero_riconoscimento }}
+- Periodo: {{ riconoscimento.periodo_da|date:"d/m/Y" }} - {{ riconoscimento.periodo_a|date:"d/m/Y" }}
+- Righe incluse: {{ riconoscimento.righe.count }}
+- Totale Imponibile: € {{ riconoscimento.totale_imponibile|floatformat:2 }}
+- Totale IVA: € {{ riconoscimento.totale_iva|floatformat:2 }}
+- Totale Generale: € {{ riconoscimento.totale_riconoscimento|floatformat:2 }}
+
+DETTAGLI INCLUSIONI:
+{% if riconoscimento.include_ordini_ricevuti %}
+- Ordini ricevuti: Include le quantità effettivamente ricevute nel periodo
+{% endif %}
+{% if riconoscimento.include_ordini_da_ricevere %}
+- Ordini da ricevere: Include gli ordini inviati ma non ancora ricevuti
+{% endif %}
+{% if riconoscimento.include_ricezioni_manuali %}
+- Ricezioni manuali: Include le ricezioni senza ordine di riferimento
+{% endif %}
+
+{% if riconoscimento.note %}
+NOTE:
+{{ riconoscimento.note }}
+{% endif %}
+
+PROSSIMI PASSI:
+Vi preghiamo di:
+1. Verificare i dati contenuti nel riconoscimento
+2. Confermare la correttezza delle quantità e degli importi
+3. Procedere con l'emissione della fattura secondo le modalità concordate
+
+Per qualsiasi chiarimento o correzione, non esitate a contattarci.
+
+Cordiali saluti,
+{{ user.get_full_name }}
+{{ user.email }}

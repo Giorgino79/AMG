@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Step 3: Valutazione{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1>Step 3: Valutazione e Approvazione</h1>
+    <h3>Richiesta: {{ richiesta.numero }}</h3>
+
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Confronto Offerte</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Fornitore</th>
+                                <th>Importo Totale</th>
+                                <th>Consegna</th>
+                                <th>Validità</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for offerta in offerte %}
+                            <tr class="{% if forloop.first %}table-success{% endif %}">
+                                <td>
+                                    {% if forloop.first %}
+                                    <span class="badge bg-success">Migliore</span>
+                                    {% else %}
+                                    {{ forloop.counter }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ offerta.fornitore.ragione_sociale }}</td>
+                                <td><strong>{{ offerta.importo_totale|floatformat:2 }}</strong></td>
+                                <td>
+                                    {% if offerta.data_consegna_proposta %}
+                                    {{ offerta.data_consegna_proposta|date:"d/m/Y" }}
+                                    {% elif offerta.tempo_consegna_giorni %}
+                                    {{ offerta.tempo_consegna_giorni }} gg
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if offerta.giorni_validita_rimanenti != None %}
+                                    {{ offerta.giorni_validita_rimanenti }} gg
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'preventivi_beni:offerta_detail' offerta.pk %}" class="btn btn-sm btn-info">
+                                        Dettagli
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5>Approva Offerta</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                Approva Offerta Selezionata
+                            </button>
+                            <a href="{% url 'preventivi_beni:richiesta_detail' richiesta.pk %}" class="btn btn-secondary">
+                                Annulla
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

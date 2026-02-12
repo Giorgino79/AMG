@@ -1,0 +1,52 @@
+{% extends "mail/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'mail:dashboard' %}">Mail</a></li>
+<li class="breadcrumb-item"><a href="{% url 'mail:template_list' %}">Template</a></li>
+<li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ title }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% crispy form %}
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Salva Template
+                        </button>
+                        <a href="{% url 'mail:template_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Torna alla Lista
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Uso delle Variabili</h6>
+            </div>
+            <div class="card-body">
+                <p>Puoi usare variabili dinamiche nei tuoi template usando la sintassi <code>{{variabile}}</code></p>
+                <p class="mb-2"><strong>Esempi di variabili comuni:</strong></p>
+                <ul class="mb-0">
+                    <li><code>{{nome}}</code> - Nome destinatario</li>
+                    <li><code>{{cognome}}</code> - Cognome destinatario</li>
+                    <li><code>{{email}}</code> - Email destinatario</li>
+                    <li><code>{{azienda}}</code> - Nome azienda</li>
+                    <li><code>{{data}}</code> - Data corrente</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

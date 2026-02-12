@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% load static %}
+{% load allegati_tags %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/detail_page.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        {# MAIN CONTENT AREA - 95% personalizzabile #}
+        <div class="col-lg-10 col-md-9">
+            {# Breadcrumb #}
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                    {% block breadcrumb %}
+                    {# Le app custom aggiungono qui il loro breadcrumb #}
+                    {% endblock %}
+                </ol>
+            </nav>
+
+            {# Header con titolo e metadati #}
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 mb-1">
+                        {% block page_title %}Dettaglio Oggetto{% endblock %}
+                        {# Badge QR Code #}
+                        <span id="qrCodeBadge" class="d-none">
+                            <a href="#" id="qrCodeBadgeLink" class="text-decoration-none" title="Visualizza QR Code">
+                                <i class="bi bi-qr-code fs-4 text-primary"></i>
+                            </a>
+                        </span>
+                    </h1>
+                    {% block page_subtitle %}
+                    {# Sottotitolo opzionale #}
+                    {% endblock %}
+                </div>
+
+                {# Badge stato (opzionale) #}
+                {% block status_badge %}{% endblock %}
+            </div>
+
+            {# Alert e messaggi #}
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            {# AREA CONTENUTO PRINCIPALE - 100% CUSTOMIZZABILE #}
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    {% block detail_content %}
+                    {# Le app custom inseriscono qui i dettagli dell'oggetto #}
+                    <p class="text-muted">Nessun contenuto definito. Estendere il block 'detail_content'.</p>
+                    {% endblock %}
+                </div>
+            </div>
+
+            {# Area extra sotto il card principale (opzionale) #}
+            {% block extra_content %}{% endblock %}
+        </div>
+
+        {# SIDEBAR ACTIONS - 5% fisso con azioni CRUD #}
+        <div class="col-lg-2 col-md-3">
+            <div class="sidebar-actions sticky-top" style="top: 20px;">
+                {# Card Azioni CRUD #}
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-gear-fill"></i> Azioni
+                        </h6>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% block custom_actions %}
+                        {# Le app custom possono aggiungere azioni specifiche qui #}
+                        {% endblock %}
+
+                        {# Azioni standard #}
+                        {% if edit_url %}
+                        <a href="{{ edit_url }}" class="list-group-item list-group-item-action">
+                            <i class="bi bi-pencil-fill text-warning"></i> Modifica
+                        </a>
+                        {% endif %}
+
+                        {% if delete_url %}
+                        <a href="{{ delete_url }}"
+                           class="list-group-item list-group-item-action text-danger"
+                           onclick="return confirm('Sei sicuro di voler eliminare questo elemento?')">
+                            <i class="bi bi-trash-fill"></i> Elimina
+                        </a>
+                        {% endif %}
+
+                        {% if back_url %}
+                        <a href="{{ back_url }}" class="list-group-item list-group-item-action">
+                            <i class="bi bi-arrow-left"></i> Torna alla lista
+                        </a>
+                        {% endif %}
+
+                        {# QR Code #}
+                        {% if object %}
+                        <button type="button"
+                                class="list-group-item list-group-item-action text-primary"
+                                id="btnGenerateQRCode"
+                                data-content-type="{{ content_type_id }}"
+                                data-object-id="{{ object.pk }}">
+                            <i class="bi bi-qr-code"></i> Genera QR Code
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {# Card Allegati #}
+                {% if object %}
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-paperclip"></i> Allegati
+                            {% if object.ha_allegati %}
+                            <span class="badge bg-light text-dark">{{ object.conta_allegati }}</span>
+                            {% endif %}
+                        </h6>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {# Bottone Nuovo Allegato #}
+                        <button type="button"
+                                class="list-group-item list-group-item-action text-success"
+                                data-bs-toggle="modal"
+                                data-bs-target="#allegatoUploadModal"
+                                data-content-type="{{ content_type_id }}"
+                                data-object-id="{{ object.pk }}"
+                                data-object-name="{{ object }}">
+                            <i class="bi bi-plus-circle-fill"></i> Nuovo Allegato
+                        </button>
+
+                        {# Bottone Gestisci Allegati #}
+                        <button type="button"
+                                class="list-group-item list-group-item-action"
+                                data-bs-toggle="modal"
+                                data-bs-target="#allegatiGestioneModal"
+                                data-content-type="{{ content_type_id }}"
+                                data-object-id="{{ object.pk }}"
+                                data-object-name="{{ object }}">
+                            <i class="bi bi-folder-fill"></i> Gestisci Allegati
+                            {% if object.ha_allegati %}
+                            <span class="badge bg-primary rounded-pill">{{ object.conta_allegati }}</span>
+                            {% endif %}
+                        </button>
+
+                        {# Mini preview ultimi allegati (opzionale) #}
+                        {% if object.ha_allegati %}
+                        <div class="list-group-item bg-light">
+                            <small class="text-muted d-block mb-1">Ultimi caricati:</small>
+                            {% for allegato in object.allegati|slice:":3" %}
+                            <div class="d-flex align-items-center mb-1">
+                                <i class="bi bi-file-earmark-{% if allegato.is_pdf %}pdf{% elif allegato.is_image %}image{% else %}text{% endif %} me-2"></i>
+                                <small class="text-truncate" style="max-width: 150px;" title="{{ allegato.nome_originale }}">
+                                    {{ allegato.nome_originale }}
+                                </small>
+                            </div>
+                            {% endfor %}
+                            {% if object.conta_allegati > 3 %}
+                            <small class="text-muted">...e altri {{ object.conta_allegati|add:"-3" }}</small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {# Card Extra (opzionale - per app custom) #}
+                {% block sidebar_extra %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal QR Code #}
+<div class="modal fade" id="qrCodeModal" tabindex="-1" aria-labelledby="qrCodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="qrCodeModalLabel">
+                    <i class="bi bi-qr-code"></i> QR Code
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="qrCodeLoading" class="py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Generazione in corso...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Generazione QR Code...</p>
+                </div>
+                <div id="qrCodeContent" class="d-none">
+                    <img id="qrCodeImage" src="" alt="QR Code" class="img-fluid mb-3" style="max-width: 300px;">
+                    <p class="text-muted small mb-0" id="qrCodeUrl"></p>
+                </div>
+                <div id="qrCodeError" class="alert alert-danger d-none" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Chiudi
+                </button>
+                <a href="#" id="qrCodeDownload" class="btn btn-success d-none" download>
+                    <i class="bi bi-download"></i> Scarica
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modals allegati (sempre inclusi) #}
+{% include "commons_templates/components/allegato_upload_modal.html" %}
+{% include "commons_templates/components/allegati_gestione_modal.html" %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/allegati.js' %}?v=20260116v3"></script>
+<script src="{% static 'js/qrcode.js' %}?v=20260116v1"></script>
+{% block detail_extra_js %}
+{# JavaScript custom per ogni app #}
+{% endblock %}
+{% endblock %}

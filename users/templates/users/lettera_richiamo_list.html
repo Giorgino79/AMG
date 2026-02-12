@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Lettere di Richiamo - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Lettere di Richiamo</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-exclamation-triangle me-2"></i>Lettere di Richiamo</h2>
+        {% if perms.users.emetti_lettera_richiamo or request.user.is_superuser %}
+        <a href="{% url 'users:lettera_richiamo_create' %}" class="btn btn-danger">
+            <i class="bi bi-plus-circle me-1"></i>Nuova Lettera
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Filtri -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small">Dipendente</label>
+                    <input type="text" name="search" class="form-control"
+                           placeholder="Nome o codice..." value="{{ request.GET.search }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Tipo</label>
+                    <select name="tipo" class="form-select">
+                        <option value="">Tutti</option>
+                        <option value="verbale" {% if request.GET.tipo == 'verbale' %}selected{% endif %}>Verbale</option>
+                        <option value="scritto" {% if request.GET.tipo == 'scritto' %}selected{% endif %}>Scritto</option>
+                        <option value="sospensione" {% if request.GET.tipo == 'sospensione' %}selected{% endif %}>Sospensione</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Da Data</label>
+                    <input type="date" name="data_da" class="form-control" value="{{ request.GET.data_da }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">A Data</label>
+                    <input type="date" name="data_a" class="form-control" value="{{ request.GET.data_a }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-search"></i> Filtra
+                    </button>
+                    <a href="{% url 'users:lettera_richiamo_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            {% if lettere %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data Emissione</th>
+                            <th>Dipendente</th>
+                            <th>Codice</th>
+                            <th>Tipo</th>
+                            <th>Motivo</th>
+                            <th>Emessa Da</th>
+                            <th>Letta</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lettera in lettere %}
+                        <tr>
+                            <td>
+                                <strong>{{ lettera.data_emissione|date:"d/m/Y" }}</strong><br>
+                                <small class="text-muted">{{ lettera.created_at|date:"H:i" }}</small>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if lettera.user.foto_profilo %}
+                                    <img src="{{ lettera.user.foto_profilo.url }}" class="rounded-circle me-2 user-avatar-img" width="32" height="32">
+                                    {% else %}
+                                    <div class="user-avatar-sm me-2">
+                                        {{ lettera.user.get_full_name|default:lettera.user.username|slice:":1"|upper }}
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <span>{{ lettera.user.get_full_name|default:lettera.user.username }}</span><br>
+                                        <small class="text-muted">{{ lettera.user.qualifica }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><strong>{{ lettera.user.codice_dipendente }}</strong></td>
+                            <td>
+                                {% if lettera.tipo == 'verbale' %}
+                                <span class="badge bg-warning">Verbale</span>
+                                {% elif lettera.tipo == 'scritto' %}
+                                <span class="badge bg-danger">Scritto</span>
+                                {% else %}
+                                <span class="badge bg-dark">Sospensione</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ lettera.motivo|truncatewords:10 }}</td>
+                            <td>
+                                {{ lettera.emessa_da.get_full_name|default:lettera.emessa_da.username }}<br>
+                                <small class="text-muted">{{ lettera.emessa_da.qualifica }}</small>
+                            </td>
+                            <td class="text-center">
+                                {% if lettera.user_ha_letto %}
+                                <i class="bi bi-check-circle-fill text-success" title="Letta il {{ lettera.data_lettura|date:'d/m/Y H:i' }}"></i>
+                                {% else %}
+                                <i class="bi bi-circle text-muted" title="Non ancora letta"></i>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#dettaglioModal{{ lettera.pk }}">
+                                    <i class="bi bi-eye"></i> Dettagli
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                <p class="text-muted">Nessuna lettera di richiamo trovata</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal Dettaglio Lettera -->
+{% for lettera in lettere %}
+<div class="modal fade" id="dettaglioModal{{ lettera.pk }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-file-earmark-text me-2"></i>
+                    Dettaglio Lettera di Richiamo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Dipendente</h6>
+                        <p class="mb-0">
+                            <strong>{{ lettera.user.get_full_name|default:lettera.user.username }}</strong><br>
+                            <small>Codice: {{ lettera.user.codice_dipendente }}</small><br>
+                            <small>{{ lettera.user.qualifica }} - {{ lettera.user.reparto }}</small>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Tipo Richiamo</h6>
+                        <p class="mb-0">
+                            {% if lettera.tipo == 'verbale' %}
+                            <span class="badge bg-warning">Richiamo Verbale</span>
+                            {% elif lettera.tipo == 'scritto' %}
+                            <span class="badge bg-danger">Richiamo Scritto</span>
+                            {% else %}
+                            <span class="badge bg-dark">Sospensione</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="mb-3">
+                    <h6 class="text-muted">Data Emissione</h6>
+                    <p class="mb-0">{{ lettera.data_emissione|date:"d/m/Y" }}</p>
+                </div>
+
+                <div class="mb-3">
+                    <h6 class="text-muted">Motivo</h6>
+                    <p class="mb-0">{{ lettera.motivo }}</p>
+                </div>
+
+                {% if lettera.descrizione %}
+                <div class="mb-3">
+                    <h6 class="text-muted">Descrizione Dettagliata</h6>
+                    <p class="mb-0">{{ lettera.descrizione }}</p>
+                </div>
+                {% endif %}
+
+                {% if lettera.tipo == 'sospensione' %}
+                <hr>
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">Dettagli Sospensione</h6>
+                    <p class="mb-0">
+                        <strong>Giorni:</strong> {{ lettera.giorni_sospensione }}<br>
+                        <strong>Dal:</strong> {{ lettera.data_inizio_sospensione|date:"d/m/Y" }}<br>
+                        <strong>Al:</strong> {{ lettera.data_fine_sospensione|date:"d/m/Y" }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <hr>
+
+                <div class="mb-3">
+                    <h6 class="text-muted">Emessa Da</h6>
+                    <p class="mb-0">
+                        {{ lettera.emessa_da.get_full_name|default:lettera.emessa_da.username }}<br>
+                        <small class="text-muted">{{ lettera.emessa_da.qualifica }}</small>
+                    </p>
+                </div>
+
+                <div class="mb-3">
+                    <h6 class="text-muted">Stato Lettura</h6>
+                    {% if lettera.user_ha_letto %}
+                    <p class="mb-0 text-success">
+                        <i class="bi bi-check-circle-fill me-1"></i>
+                        Letta il {{ lettera.data_lettura|date:"d/m/Y" }} alle {{ lettera.data_lettura|date:"H:i" }}
+                    </p>
+                    {% else %}
+                    <p class="mb-0 text-muted">
+                        <i class="bi bi-circle me-1"></i>
+                        Non ancora letta
+                    </p>
+                    {% endif %}
+                </div>
+
+                {% if lettera.documento_pdf %}
+                <hr>
+                <div class="mb-0">
+                    <h6 class="text-muted">Documento Allegato</h6>
+                    <a href="{{ lettera.documento_pdf.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                        <i class="bi bi-file-pdf me-1"></i>Scarica PDF
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

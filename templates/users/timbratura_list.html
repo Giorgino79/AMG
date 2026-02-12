@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Le Mie Timbrature - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Timbrature</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="h2 mb-4"><i class="bi bi-clock-history me-2"></i>Le Mie Timbrature</h1>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label>Data Da</label>
+                    <input type="date" name="data_da" class="form-control" value="{{ request.GET.data_da }}">
+                </div>
+                <div class="col-md-4">
+                    <label>Data A</label>
+                    <input type="date" name="data_a" class="form-control" value="{{ request.GET.data_a }}">
+                </div>
+                <div class="col-md-4">
+                    <label>Turno</label>
+                    <select name="turno" class="form-select">
+                        <option value="">Tutti</option>
+                        <option value="mattina">Mattina</option>
+                        <option value="pomeriggio">Pomeriggio</option>
+                        <option value="notte">Notte</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Filtra</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Ora</th>
+                            <th>Tipo</th>
+                            <th>Turno</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for timbratura in timbrature %}
+                        <tr>
+                            <td>{{ timbratura.data|date:"d/m/Y" }}</td>
+                            <td>{{ timbratura.ora|time:"H:i" }}</td>
+                            <td>
+                                {% if timbratura.tipo == 'entrata' %}
+                                <span class="badge bg-success">{{ timbratura.get_tipo_display }}</span>
+                                {% else %}
+                                <span class="badge bg-danger">{{ timbratura.get_tipo_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ timbratura.get_turno_display }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">Nessuna timbratura trovata</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

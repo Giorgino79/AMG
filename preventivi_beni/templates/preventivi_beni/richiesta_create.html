@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Nuova Richiesta Preventivo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <h1>Nuova Richiesta Preventivo</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'preventivi_beni:dashboard' %}">Preventivi Beni</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'preventivi_beni:richieste_list' %}">Richieste</a></li>
+                    <li class="breadcrumb-item active">Nuova Richiesta</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <form method="post" id="richiestaForm">
+        {% csrf_token %}
+
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Informazioni Generali -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Informazioni Generali</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                {{ form.titolo.label_tag }}
+                                {{ form.titolo }}
+                                <div class="form-text">{{ form.titolo.help_text }}</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.tipo_richiesta.label_tag }}
+                                {{ form.tipo_richiesta }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.descrizione.label_tag }}
+                                {{ form.descrizione }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                {{ form.priorita.label_tag }}
+                                {{ form.priorita }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.categoria.label_tag }}
+                                {{ form.categoria }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.approvatore.label_tag }}
+                                {{ form.approvatore }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Voci Richiesta -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Articoli/Servizi Richiesti</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ formset.management_form }}
+                        <div id="voci-formset">
+                            {% for voce_form in formset %}
+                            <div class="voce-form border rounded p-3 mb-3">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        {{ voce_form.codice.label_tag }}
+                                        {{ voce_form.codice }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ voce_form.descrizione.label_tag }}
+                                        {{ voce_form.descrizione }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ voce_form.quantita.label_tag }}
+                                        {{ voce_form.quantita }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ voce_form.unita_misura.label_tag }}
+                                        {{ voce_form.unita_misura }}
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-md-3">
+                                        {{ voce_form.marca_richiesta.label_tag }}
+                                        {{ voce_form.marca_richiesta }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        {{ voce_form.modello_richiesto.label_tag }}
+                                        {{ voce_form.modello_richiesto }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        {{ voce_form.prezzo_unitario_stimato.label_tag }}
+                                        {{ voce_form.prezzo_unitario_stimato }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-check mt-4">
+                                            {{ voce_form.obbligatoria }} {{ voce_form.obbligatoria.label_tag }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-md-12">
+                                        {{ voce_form.note.label_tag }}
+                                        {{ voce_form.note }}
+                                    </div>
+                                </div>
+                                {{ voce_form.id }}
+                                {% if formset.can_delete %}
+                                <div class="mt-2">
+                                    {{ voce_form.DELETE }}
+                                    <label class="text-danger">{{ voce_form.DELETE.label }}</label>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="add-voce">
+                            + Aggiungi Voce
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Consegna -->
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Consegna</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.luogo_consegna.label_tag }}
+                                {{ form.luogo_consegna }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.data_consegna_richiesta.label_tag }}
+                                {{ form.data_consegna_richiesta }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.indirizzo_consegna.label_tag }}
+                                {{ form.indirizzo_consegna }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Condizioni -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Condizioni</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                {{ form.data_scadenza_offerte.label_tag }}
+                                {{ form.data_scadenza_offerte }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.condizioni_pagamento_richieste.label_tag }}
+                                {{ form.condizioni_pagamento_richieste }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.budget_massimo.label_tag }}
+                                {{ form.budget_massimo }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Automezzo Collegato -->
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-car me-2"></i>Automezzo Collegato</h5>
+                    </div>
+                    <div class="card-body">
+                        <label for="{{ form.automezzo.id_for_label }}" class="form-label">Seleziona Automezzo (opzionale)</label>
+                        {{ form.automezzo }}
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Se selezioni un automezzo, il libretto fronte verrà allegato automaticamente alla richiesta inviata ai fornitori.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Note Interne -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Note Interne</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form.note_interne }}
+                        <div class="form-text">Note ad uso interno, non visibili ai fornitori</div>
+                    </div>
+                </div>
+
+                <!-- Note per Fornitori -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Note per Fornitori</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form.note_per_fornitori }}
+                        <div class="form-text">Queste note saranno visibili ai fornitori nella richiesta</div>
+                    </div>
+                </div>
+
+                <!-- Azioni -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                Salva Richiesta
+                            </button>
+                            <a href="{% url 'preventivi_beni:richieste_list' %}" class="btn btn-secondary">
+                                Annulla
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// Gestione formset voci dinamici
+document.getElementById('add-voce')?.addEventListener('click', function() {
+    const formset = document.getElementById('voci-formset');
+    const totalForms = document.getElementById('id_voci-TOTAL_FORMS');
+    const formNum = parseInt(totalForms.value);
+
+    // Clone l'ultimo form
+    const forms = formset.querySelectorAll('.voce-form');
+    const newForm = forms[forms.length - 1].cloneNode(true);
+
+    // Aggiorna gli indici
+    newForm.innerHTML = newForm.innerHTML.replace(
+        new RegExp('voci-' + (formNum - 1), 'g'),
+        'voci-' + formNum
+    );
+
+    // Reset dei valori
+    newForm.querySelectorAll('input, textarea, select').forEach(function(input) {
+        if (input.type === 'checkbox') {
+            input.checked = input.name.includes('obbligatoria');
+        } else if (input.type !== 'hidden') {
+            input.value = '';
+        }
+    });
+
+    formset.appendChild(newForm);
+    totalForms.value = formNum + 1;
+});
+</script>
+{% endblock %}

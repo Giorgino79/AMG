@@ -1,0 +1,315 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invia la tua Offerta - {{ richiesta.numero }}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Color Palette - BEF Management Blue Theme */
+        :root {
+            --color-first: #d1e3f6;
+            --color-second: #a7c5d7;
+            --color-third: #5585b5;
+            --color-fourth: #3d6a99;
+            --color-text: #393e46;
+        }
+
+        body {
+            font-family: 'Ubuntu', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--color-third) 0%, var(--color-fourth) 100%);
+            min-height: 100vh;
+            padding: 40px 0;
+        }
+
+        .container-public {
+            max-width: 900px;
+        }
+
+        .card-public {
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(61, 106, 153, 0.3);
+            border: none;
+        }
+
+        .header-public {
+            background: linear-gradient(135deg, var(--color-third) 0%, var(--color-fourth) 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .info-box-public {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--color-third);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .btn-submit-public {
+            background: linear-gradient(135deg, var(--color-third) 0%, var(--color-fourth) 100%);
+            border: none;
+            padding: 12px 40px;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+
+        .btn-submit-public:hover {
+            background: linear-gradient(135deg, var(--color-fourth) 0%, var(--color-third) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(61, 106, 153, 0.4);
+        }
+
+        .alert-public {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .table-dettaglio {
+            font-size: 0.9rem;
+        }
+
+        .table-dettaglio th {
+            background-color: var(--color-first);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .badge-iva {
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            background-color: var(--color-third);
+            color: white;
+            border-radius: 5px;
+            margin-left: 10px;
+        }
+
+        .info-section {
+            background-color: var(--color-first);
+            border-left: 4px solid var(--color-third);
+        }
+    </style>
+</head>
+<body>
+    <div class="container container-public">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-public alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="card card-public">
+            <div class="header-public text-center">
+                <h1 class="mb-2"><i class="fas fa-file-invoice me-2"></i>Richiesta Preventivo</h1>
+                <p class="mb-0">{{ richiesta.numero }} - {{ richiesta.titolo }}</p>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Info Fornitore -->
+                <div class="alert alert-info alert-public mb-4">
+                    <i class="fas fa-building me-2"></i>
+                    <strong>{{ fornitore.ragione_sociale }}</strong>
+                    {% if offerta_esistente %}
+                        <span class="badge bg-success ms-2">Offerta gia inviata - Puoi aggiornarla</span>
+                    {% endif %}
+                </div>
+
+                <!-- Dettagli Richiesta -->
+                <div class="info-box-public info-section mb-4">
+                    <h5 class="mb-3" style="color: var(--color-fourth);"><i class="fas fa-list-alt me-2"></i>DETTAGLI RICHIESTA</h5>
+
+                    {% if richiesta.descrizione %}
+                    <p class="mb-3"><strong>Descrizione:</strong><br>{{ richiesta.descrizione }}</p>
+                    {% endif %}
+
+                    <div class="row">
+                        {% if richiesta.luogo_consegna %}
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>Luogo Consegna:</strong><br>{{ richiesta.luogo_consegna }}</p>
+                        </div>
+                        {% endif %}
+                        {% if richiesta.data_consegna_richiesta %}
+                        <div class="col-md-3">
+                            <p class="mb-2"><strong>Data Consegna Richiesta:</strong><br>{{ richiesta.data_consegna_richiesta|date:"d/m/Y" }}</p>
+                        </div>
+                        {% endif %}
+                        {% if richiesta.data_scadenza_offerte %}
+                        <div class="col-md-3">
+                            <p class="mb-2"><strong>Scadenza Offerte:</strong><br>{{ richiesta.data_scadenza_offerte|date:"d/m/Y" }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Voci Richieste -->
+                {% if richiesta.voci.exists %}
+                <div class="info-box-public mb-4">
+                    <h5 class="mb-3" style="color: var(--color-fourth);"><i class="fas fa-shopping-cart me-2"></i>VOCI RICHIESTE</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered table-dettaglio">
+                            <thead>
+                                <tr>
+                                    <th>Q.ta</th>
+                                    <th>U.M.</th>
+                                    <th>Descrizione</th>
+                                    {% if richiesta.voci.first.codice_articolo %}
+                                    <th>Codice</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for voce in richiesta.voci.all %}
+                                <tr>
+                                    <td class="text-center">{{ voce.quantita }}</td>
+                                    <td class="text-center">{{ voce.get_unita_misura_display }}</td>
+                                    <td>{{ voce.descrizione }}</td>
+                                    {% if richiesta.voci.first.codice_articolo %}
+                                    <td>{{ voce.codice_articolo|default:"-" }}</td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if richiesta.note_per_fornitori %}
+                <div class="alert alert-warning alert-public mb-4">
+                    <strong><i class="fas fa-sticky-note me-2"></i>Note:</strong><br>
+                    {{ richiesta.note_per_fornitori }}
+                </div>
+                {% endif %}
+
+                <hr class="my-4">
+
+                <!-- Form Offerta -->
+                <h4 class="mb-4"><i class="fas fa-file-invoice-dollar me-2"></i>Invia la tua Offerta</h4>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Errori generali -->
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger alert-public">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <!-- Importo Totale -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.importo_totale.id_for_label }}" class="form-label">
+                                {{ form.importo_totale.label }}
+                                <span class="badge-iva">+ IVA</span>
+                            </label>
+                            {{ form.importo_totale }}
+                            <small class="form-text text-muted d-block">{{ form.importo_totale.help_text }}</small>
+                            {% if form.importo_totale.errors %}
+                            <div class="alert alert-danger alert-public mt-2 py-2">{{ form.importo_totale.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Tempo Consegna -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.tempo_consegna_giorni.id_for_label }}" class="form-label">
+                                {{ form.tempo_consegna_giorni.label }}
+                            </label>
+                            {{ form.tempo_consegna_giorni }}
+                            <small class="form-text text-muted d-block">{{ form.tempo_consegna_giorni.help_text }}</small>
+                            {% if form.tempo_consegna_giorni.errors %}
+                            <div class="alert alert-danger alert-public mt-2 py-2">{{ form.tempo_consegna_giorni.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Data Consegna Proposta -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.data_consegna_proposta.id_for_label }}" class="form-label">
+                                {{ form.data_consegna_proposta.label }}
+                            </label>
+                            {{ form.data_consegna_proposta }}
+                            <small class="form-text text-muted d-block">{{ form.data_consegna_proposta.help_text }}</small>
+                            {% if form.data_consegna_proposta.errors %}
+                            <div class="alert alert-danger alert-public mt-2 py-2">{{ form.data_consegna_proposta.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Validita Offerta -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.validita_offerta_giorni.id_for_label }}" class="form-label">
+                                {{ form.validita_offerta_giorni.label }}
+                            </label>
+                            {{ form.validita_offerta_giorni }}
+                            <small class="form-text text-muted d-block">{{ form.validita_offerta_giorni.help_text }}</small>
+                            {% if form.validita_offerta_giorni.errors %}
+                            <div class="alert alert-danger alert-public mt-2 py-2">{{ form.validita_offerta_giorni.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Allegato -->
+                        <div class="col-md-12 mb-3">
+                            <label for="{{ form.allegato.id_for_label }}" class="form-label">
+                                {{ form.allegato.label }}
+                            </label>
+                            {{ form.allegato }}
+                            <small class="form-text text-muted d-block">{{ form.allegato.help_text }}</small>
+                            {% if form.allegato.errors %}
+                            <div class="alert alert-danger alert-public mt-2 py-2">{{ form.allegato.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Note -->
+                        <div class="col-12 mb-4">
+                            <label for="{{ form.note.id_for_label }}" class="form-label">
+                                {{ form.note.label }}
+                            </label>
+                            {{ form.note }}
+                            {% if form.note.errors %}
+                            <div class="alert alert-danger alert-public mt-2 py-2">{{ form.note.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg btn-submit-public">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            {% if offerta_esistente %}Aggiorna Offerta{% else %}Invia Offerta{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card-footer text-center text-muted bg-light" style="border-radius: 0 0 15px 15px;">
+                <small>
+                    <i class="fas fa-lock me-1"></i>
+                    Pagina sicura - Sistema di Gestione Preventivi
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

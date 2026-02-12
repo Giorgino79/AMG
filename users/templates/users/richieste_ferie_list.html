@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Le Mie Richieste Ferie - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Richieste Ferie</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-calendar-check me-2"></i>Le Mie Richieste Ferie</h2>
+        <a href="{% url 'users:richiesta_ferie_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Nuova Richiesta
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            {% if richieste %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data Richiesta</th>
+                            <th>Periodo</th>
+                            <th>Giorni</th>
+                            <th>Stato</th>
+                            <th>Gestita Da</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in richieste %}
+                        <tr>
+                            <td>{{ r.created_at|date:"d/m/Y H:i" }}</td>
+                            <td>{{ r.data_inizio|date:"d/m/Y" }} - {{ r.data_fine|date:"d/m/Y" }}</td>
+                            <td><strong>{{ r.giorni_richiesti }}</strong></td>
+                            <td>
+                                {% if r.stato == 'in_attesa' %}
+                                <span class="badge bg-warning">In Attesa</span>
+                                {% elif r.stato == 'approvata' %}
+                                <span class="badge bg-success">Approvata</span>
+                                {% else %}
+                                <span class="badge bg-danger">Rifiutata</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ r.gestita_da|default:"-" }}</td>
+                        </tr>
+                        {% if r.stato == 'rifiutata' and r.motivazione_rifiuto %}
+                        <tr>
+                            <td colspan="5" class="bg-light">
+                                <small class="text-danger">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    <strong>Motivazione rifiuto:</strong> {{ r.motivazione_rifiuto }}
+                                </small>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                <p class="text-muted">Nessuna richiesta ferie</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

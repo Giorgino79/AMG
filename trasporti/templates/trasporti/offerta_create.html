@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Nuova Offerta Trasporto{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1>Inserisci Offerta Trasporto</h1>
+    <h3>Richiesta: {{ richiesta.numero }}</h3>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-3">
+                    <div class="card-header"><h5>Informazioni Offerta</h5></div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.trasportatore.label_tag }}
+                                {{ form.trasportatore }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.numero_offerta.label_tag }}
+                                {{ form.numero_offerta }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header"><h5>Prezzi</h5></div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.importo_trasporto.label_tag }}
+                                {{ form.importo_trasporto }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.importo_assicurazione.label_tag }}
+                                {{ form.importo_assicurazione }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.importo_pedaggi.label_tag }}
+                                {{ form.importo_pedaggi }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.importo_extra.label_tag }}
+                                {{ form.importo_extra }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <strong>{{ form.importo_totale.label_tag }}</strong>
+                                {{ form.importo_totale }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header"><h5>Tempi</h5></div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                {{ form.data_ritiro_proposta.label_tag }}
+                                {{ form.data_ritiro_proposta }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.data_consegna_prevista.label_tag }}
+                                {{ form.data_consegna_prevista }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.tempo_transito_giorni.label_tag }}
+                                {{ form.tempo_transito_giorni }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header"><h5>Mezzo e Conducente</h5></div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.tipo_mezzo.label_tag }}
+                                {{ form.tipo_mezzo }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.targa_mezzo.label_tag }}
+                                {{ form.targa_mezzo }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.conducente_nome.label_tag }}
+                                {{ form.conducente_nome }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.conducente_telefono.label_tag }}
+                                {{ form.conducente_telefono }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header"><h5>Condizioni</h5></div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.termini_pagamento.label_tag }}
+                                {{ form.termini_pagamento }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.validita_offerta_giorni.label_tag }}
+                                {{ form.validita_offerta_giorni }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    {{ form.tracking_incluso }} {{ form.tracking_incluso.label_tag }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    {{ form.assicurazione_inclusa }} {{ form.assicurazione_inclusa.label_tag }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    {{ form.scarico_a_piano_incluso }} {{ form.scarico_a_piano_incluso.label_tag }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header"><h5>File e Note</h5></div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {{ form.file_offerta.label_tag }}
+                            {{ form.file_offerta }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.note_tecniche.label_tag }}
+                            {{ form.note_tecniche }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.note_commerciali.label_tag }}
+                            {{ form.note_commerciali }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">Salva Offerta</button>
+                            <a href="{% url 'trasporti:step2_raccolta' richiesta.pk %}" class="btn btn-secondary">Annulla</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

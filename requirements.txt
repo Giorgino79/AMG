@@ -1,0 +1,37 @@
+# ================================================================
+# ModularBEF - Requirements Development
+# ================================================================
+
+
+Django==5.1.4
+psycopg2-binary==2.9.10
+celery==5.3.4
+redis==5.0.8
+django-celery-beat==2.8.1
+django-crispy-forms==2.1
+crispy-bootstrap5==0.7
+python-decouple==3.8
+Pillow==10.1.0
+reportlab==4.0.7
+openpyxl==3.1.2
+xhtml2pdf==0.2.13
+
+# Development & Debugging
+django-extensions==3.2.3
+
+# Testing
+pytest==8.3.4
+pytest-django==4.9.0
+pytest-cov==6.0.0
+factory-boy==3.3.1
+
+# Code Quality
+black==24.10.0
+flake8==7.1.1
+isort==5.13.2
+
+# Documentation
+Sphinx==8.1.3
+
+gunicorn==21.2.0
+whitenoise==6.6.0

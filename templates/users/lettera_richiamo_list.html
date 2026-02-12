@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Lettere di Richiamo - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Lettere Richiamo</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2"><i class="bi bi-exclamation-triangle me-2"></i>Lettere di Richiamo</h1>
+        {% if perms.users.emetti_lettera_richiamo %}
+        <a href="{% url 'users:lettera_richiamo_create' %}" class="btn btn-danger">
+            <i class="bi bi-plus-circle me-2"></i>Nuova Lettera
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Dipendente</th>
+                            <th>Tipo</th>
+                            <th>Data Emissione</th>
+                            <th>Emessa Da</th>
+                            <th>Letta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lettera in lettere %}
+                        <tr {% if not lettera.user_ha_letto and lettera.user == request.user %}class="table-warning"{% endif %}>
+                            <td>{{ lettera.user.get_full_name }}</td>
+                            <td><span class="badge bg-danger">{{ lettera.get_tipo_display }}</span></td>
+                            <td>{{ lettera.data_emissione|date:"d/m/Y" }}</td>
+                            <td>{{ lettera.emessa_da.get_full_name }}</td>
+                            <td>
+                                {% if lettera.user_ha_letto %}
+                                    <i class="bi bi-check-circle text-success"></i>
+                                {% else %}
+                                    <i class="bi bi-circle text-warning"></i> Non Letta
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Nessuna lettera</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

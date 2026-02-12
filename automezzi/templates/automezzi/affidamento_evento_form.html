@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Segnala Evento - {{ affidamento.automezzo.targa }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'automezzi:dashboard' %}">Automezzi</a></li>
+<li class="breadcrumb-item"><a href="{% url 'automezzi:mio_affidamento' %}">Il Mio Mezzo</a></li>
+<li class="breadcrumb-item active">Segnala Evento</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2 py-md-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-exclamation-triangle me-2"></i>Segnala Evento
+            </h1>
+            <p class="text-muted mb-0">Mezzo: <strong>{{ affidamento.automezzo.targa }}</strong> - {{ affidamento.automezzo.marca }} {{ affidamento.automezzo.modello }}</p>
+        </div>
+        <a href="{% url 'automezzi:mio_affidamento' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Torna al Mio Mezzo
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>Errori nella compilazione:</h5>
+                {{ form.errors }}
+            </div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                {# Automezzo nascosto (preimpostato) #}
+                <input type="hidden" name="automezzo" value="{{ affidamento.automezzo.pk }}">
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.tipo.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-tags me-2 text-warning"></i>Tipo Evento *
+                            </label>
+                            <select name="{{ form.tipo.name }}"
+                                    class="form-select{% if form.tipo.errors %} is-invalid{% endif %}"
+                                    id="{{ form.tipo.id_for_label }}" required>
+                                {% for value, label in form.tipo.field.choices %}
+                                <option value="{{ value }}"
+                                        {% if form.tipo.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.tipo.errors %}
+                            <div class="invalid-feedback">{{ form.tipo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.data_evento.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-calendar-alt me-2 text-danger"></i>Data Evento *
+                            </label>
+                            <input type="date" name="{{ form.data_evento.name }}"
+                                   class="form-control{% if form.data_evento.errors %} is-invalid{% endif %}"
+                                   id="{{ form.data_evento.id_for_label }}"
+                                   value="{{ form.data_evento.value|default:'' }}"
+                                   required>
+                            {% if form.data_evento.errors %}
+                            <div class="invalid-feedback">{{ form.data_evento.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.costo.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-euro-sign me-2 text-success"></i>Costo stimato
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">&euro;</span>
+                                <input type="number" name="{{ form.costo.name }}"
+                                       class="form-control{% if form.costo.errors %} is-invalid{% endif %}"
+                                       id="{{ form.costo.id_for_label }}"
+                                       value="{{ form.costo.value|default:'' }}"
+                                       step="0.01" min="0" placeholder="0.00">
+                            </div>
+                            {% if form.costo.errors %}
+                            <div class="invalid-feedback">{{ form.costo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.descrizione.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-clipboard-list me-2 text-primary"></i>Descrizione *
+                            </label>
+                            <textarea name="{{ form.descrizione.name }}"
+                                      class="form-control{% if form.descrizione.errors %} is-invalid{% endif %}"
+                                      id="{{ form.descrizione.id_for_label }}"
+                                      rows="5" required
+                                      placeholder="Descrivi dettagliatamente l'evento...">{{ form.descrizione.value|default:'' }}</textarea>
+                            {% if form.descrizione.errors %}
+                            <div class="invalid-feedback">{{ form.descrizione.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.file_allegato.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-paperclip me-2 text-secondary"></i>Allegato
+                            </label>
+                            <input type="file" name="{{ form.file_allegato.name }}"
+                                   class="form-control{% if form.file_allegato.errors %} is-invalid{% endif %}"
+                                   id="{{ form.file_allegato.id_for_label }}"
+                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                            {% if form.file_allegato.errors %}
+                            <div class="invalid-feedback">{{ form.file_allegato.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">Foto, verbali o documenti relativi all'evento</div>
+                        </div>
+                    </div>
+                </div>
+
+                {# Dipendente coinvolto nascosto (preimpostato all'utente corrente) #}
+                <input type="hidden" name="dipendente_coinvolto" value="{{ user.pk }}">
+                {# Risolto default false #}
+
+                <!-- Info box -->
+                <div class="alert alert-warning mt-3">
+                    <h6><i class="fas fa-lightbulb me-2"></i>Tipologie eventi:</h6>
+                    <small>
+                        <strong>Incidente:</strong> Sinistri, danni |
+                        <strong>Furto:</strong> Furto veicolo/parti |
+                        <strong>Guasto:</strong> Avarie, panne |
+                        <strong>Fermo:</strong> Blocchi amministrativi |
+                        <strong>Altro:</strong> Altro
+                    </small>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'automezzi:mio_affidamento' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Annulla
+                    </a>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save me-2"></i>Segnala Evento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

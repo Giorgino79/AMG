@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lista Riconoscimenti{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'fatturazionepassiva:dashboard' %}">Fatturazione Passiva</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Lista Riconoscimenti</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Lista Riconoscimenti</h1>
+                <a href="{% url 'fatturazionepassiva:crea_riconoscimento' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nuovo Riconoscimento
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtri -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Filtri di Ricerca</h6>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="fornitore" class="form-label">Fornitore</label>
+                            <select class="form-control" id="fornitore" name="fornitore">
+                                <option value="">Tutti i fornitori</option>
+                                {% for fornitore in fornitori %}
+                                    <option value="{{ fornitore.id }}" {% if filtri.fornitore_id == fornitore.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ fornitore.nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="stato" class="form-label">Stato</label>
+                            <select class="form-control" id="stato" name="stato">
+                                <option value="">Tutti gli stati</option>
+                                {% for valore, etichetta in stati_choices %}
+                                    <option value="{{ valore }}" {% if filtri.stato == valore %}selected{% endif %}>
+                                        {{ etichetta }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="periodo_da" class="form-label">Periodo Da</label>
+                            <input type="date" class="form-control" id="periodo_da" name="periodo_da" value="{{ filtri.periodo_da }}">
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="periodo_a" class="form-label">Periodo A</label>
+                            <input type="date" class="form-control" id="periodo_a" name="periodo_a" value="{{ filtri.periodo_a }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Cerca
+                                </button>
+                                <a href="{% url 'fatturazionepassiva:lista_riconoscimenti' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Reset
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabella riconoscimenti -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Riconoscimenti ({{ riconoscimenti.paginator.count }} totali)</h6>
+                </div>
+                <div class="card-body p-0">
+                    {% if riconoscimenti %}
+                        <div class="table-responsive">
+                            <table class="table table-striped mb-0">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th>Numero</th>
+                                        <th>Fornitore</th>
+                                        <th>Periodo</th>
+                                        <th>Stato</th>
+                                        <th class="text-right">Totale</th>
+                                        <th>Creato</th>
+                                        <th>Email</th>
+                                        <th>Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for riconoscimento in riconoscimenti %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'fatturazionepassiva:dettaglio_riconoscimento' riconoscimento.pk %}" class="font-weight-bold">
+                                                {{ riconoscimento.numero_riconoscimento }}
+                                            </a>
+                                        </td>
+                                        <td>{{ riconoscimento.fornitore.nome }}</td>
+                                        <td>
+                                            {{ riconoscimento.periodo_da|date:"d/m/Y" }}<br>
+                                            <small class="text-muted">{{ riconoscimento.periodo_a|date:"d/m/Y" }}</small>
+                                        </td>
+                                        <td>
+                                            {% if riconoscimento.stato == 'bozza' %}
+                                                <span class="badge badge-warning">{{ riconoscimento.get_stato_display }}</span>
+                                            {% elif riconoscimento.stato == 'definitivo' %}
+                                                <span class="badge badge-info">{{ riconoscimento.get_stato_display }}</span>
+                                            {% elif riconoscimento.stato == 'inviato' %}
+                                                <span class="badge badge-primary">{{ riconoscimento.get_stato_display }}</span>
+                                            {% elif riconoscimento.stato == 'confermato' %}
+                                                <span class="badge badge-success">{{ riconoscimento.get_stato_display }}</span>
+                                            {% elif riconoscimento.stato == 'fatturato' %}
+                                                <span class="badge badge-dark">{{ riconoscimento.get_stato_display }}</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">{{ riconoscimento.get_stato_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-right">
+                                            <strong>€ {{ riconoscimento.totale_riconoscimento|floatformat:2 }}</strong>
+                                        </td>
+                                        <td>
+                                            {{ riconoscimento.data_creazione|date:"d/m/Y" }}<br>
+                                            <small class="text-muted">{{ riconoscimento.creato_da.get_full_name }}</small>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if riconoscimento.inviato_via_email %}
+                                                <i class="fas fa-check-circle text-success" title="Email inviata il {{ riconoscimento.data_invio_email|date:'d/m/Y H:i' }}"></i>
+                                            {% else %}
+                                                <i class="fas fa-times-circle text-danger" title="Email non inviata"></i>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'fatturazionepassiva:dettaglio_riconoscimento' riconoscimento.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary" title="Dettaglio">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <div class="dropdown">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                            data-bs-toggle="dropdown" aria-expanded="false" title="Export">
+                                                        <i class="fas fa-download"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <li><a class="dropdown-item" href="{% url 'fatturazionepassiva:export_pdf' riconoscimento.pk %}" target="_blank">
+                                                            <i class="fas fa-file-pdf text-danger me-2"></i>PDF
+                                                        </a></li>
+                                                        <li><a class="dropdown-item" href="{% url 'fatturazionepassiva:export_excel' riconoscimento.pk %}" target="_blank">
+                                                            <i class="fas fa-file-excel text-success me-2"></i>Excel
+                                                        </a></li>
+                                                        <li><a class="dropdown-item" href="{% url 'fatturazionepassiva:export_csv' riconoscimento.pk %}" target="_blank">
+                                                            <i class="fas fa-file-csv text-info me-2"></i>CSV
+                                                        </a></li>
+                                                    </ul>
+                                                </div>
+                                                {% if riconoscimento.stato in 'definitivo,inviato,confermato' %}
+                                                <a href="{% url 'fatturazionepassiva:invia_email' riconoscimento.pk %}" 
+                                                   class="btn btn-sm btn-outline-info" title="Invia Email">
+                                                    <i class="fas fa-envelope"></i>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Paginazione -->
+                        {% if riconoscimenti.has_other_pages %}
+                        <div class="card-footer">
+                            <nav aria-label="Navigazione riconoscimenti">
+                                <ul class="pagination justify-content-center mb-0">
+                                    {% if riconoscimenti.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?{% if request.GET.fornitore %}fornitore={{ request.GET.fornitore }}&{% endif %}{% if request.GET.stato %}stato={{ request.GET.stato }}&{% endif %}{% if request.GET.periodo_da %}periodo_da={{ request.GET.periodo_da }}&{% endif %}{% if request.GET.periodo_a %}periodo_a={{ request.GET.periodo_a }}&{% endif %}page={{ riconoscimenti.previous_page_number }}">
+                                                <i class="fas fa-chevron-left"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    {% for num in riconoscimenti.paginator.page_range %}
+                                        {% if riconoscimenti.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > riconoscimenti.number|add:-3 and num < riconoscimenti.number|add:3 %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?{% if request.GET.fornitore %}fornitore={{ request.GET.fornitore }}&{% endif %}{% if request.GET.stato %}stato={{ request.GET.stato }}&{% endif %}{% if request.GET.periodo_da %}periodo_da={{ request.GET.periodo_da }}&{% endif %}{% if request.GET.periodo_a %}periodo_a={{ request.GET.periodo_a }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if riconoscimenti.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?{% if request.GET.fornitore %}fornitore={{ request.GET.fornitore }}&{% endif %}{% if request.GET.stato %}stato={{ request.GET.stato }}&{% endif %}{% if request.GET.periodo_da %}periodo_da={{ request.GET.periodo_da }}&{% endif %}{% if request.GET.periodo_a %}periodo_a={{ request.GET.periodo_a }}&{% endif %}page={{ riconoscimenti.next_page_number }}">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Nessun riconoscimento trovato</h5>
+                            {% if request.GET.fornitore or request.GET.stato or request.GET.periodo_da or request.GET.periodo_a %}
+                                <p class="text-muted">Prova a modificare i filtri di ricerca</p>
+                                <a href="{% url 'fatturazionepassiva:lista_riconoscimenti' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Rimuovi Filtri
+                                </a>
+                            {% else %}
+                                <p class="text-muted">Crea il primo riconoscimento per iniziare</p>
+                                <a href="{% url 'fatturazionepassiva:crea_riconoscimento' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Nuovo Riconoscimento
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-submit form quando cambia il fornitore o lo stato
+document.addEventListener('DOMContentLoaded', function() {
+    const fornitoreSelect = document.getElementById('fornitore');
+    const statoSelect = document.getElementById('stato');
+    
+    if (fornitoreSelect) {
+        fornitoreSelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+    
+    if (statoSelect) {
+        statoSelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+});
+</script>
+
+<style>
+/* Fix per dropdown export in tabella */
+.table .dropdown-menu {
+    z-index: 1050;
+    min-width: 120px;
+}
+
+.table .dropdown-toggle::after {
+    margin-left: 0.3em;
+}
+
+/* Miglioramenti responsive */
+@media (max-width: 768px) {
+    .table .btn-group {
+        flex-direction: column;
+    }
+    
+    .table .btn-sm {
+        margin-bottom: 2px;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Nuovo Affidamento Mezzo{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'automezzi:dashboard' %}">Automezzi</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'automezzi:affidamento_list' %}">Affidamenti</a></li>
+    <li class="breadcrumb-item active">Nuovo</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-handshake me-2"></i>Nuovo Affidamento Mezzo
+            </h1>
+            <p class="text-muted mb-0">Compila i dati per affidare un mezzo a un dipendente</p>
+        </div>
+        <a href="{% url 'automezzi:affidamento_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Torna all'Elenco
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="alert alert-info border-start border-info border-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle fa-2x text-info me-3"></i>
+                            <div>
+                                <h5 class="alert-heading mb-1">Affidamento Mezzo</h5>
+                                <p class="mb-0">Una volta compilato il form, verrà inviata una mail al dipendente con tutti i dati e un link per accettare la presa in carico del mezzo.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i>Errori nella compilazione:</h5>
+                        {{ form.errors }}
+                    </div>
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="text-primary border-bottom pb-2 mb-3">
+                                    <i class="fas fa-user me-2"></i>Dipendente e Mezzo
+                                </h5>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.user.id_for_label }}" class="form-label fw-semibold">
+                                        <i class="fas fa-user me-2 text-primary"></i>Dipendente *
+                                    </label>
+                                    <select name="{{ form.user.name }}"
+                                            class="form-select{% if form.user.errors %} is-invalid{% endif %}"
+                                            id="{{ form.user.id_for_label }}" required>
+                                        <option value="">Seleziona dipendente...</option>
+                                        {% for value, label in form.user.field.choices %}
+                                            {% if value %}
+                                            <option value="{{ value }}" {% if form.user.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                    {% if form.user.errors %}<div class="invalid-feedback">{{ form.user.errors.0 }}</div>{% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.automezzo.id_for_label }}" class="form-label fw-semibold">
+                                        <i class="fas fa-car me-2 text-success"></i>Automezzo *
+                                    </label>
+                                    <select name="{{ form.automezzo.name }}"
+                                            class="form-select{% if form.automezzo.errors %} is-invalid{% endif %}"
+                                            id="{{ form.automezzo.id_for_label }}" required>
+                                        <option value="">Seleziona automezzo...</option>
+                                        {% for value, label in form.automezzo.field.choices %}
+                                            {% if value %}
+                                            <option value="{{ value }}" {% if form.automezzo.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                    {% if form.automezzo.errors %}<div class="invalid-feedback">{{ form.automezzo.errors.0 }}</div>{% endif %}
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.data_inizio.id_for_label }}" class="form-label fw-semibold">
+                                                <i class="fas fa-calendar me-2 text-warning"></i>Da *
+                                            </label>
+                                            <input type="date" name="{{ form.data_inizio.name }}"
+                                                   class="form-control{% if form.data_inizio.errors %} is-invalid{% endif %}"
+                                                   id="{{ form.data_inizio.id_for_label }}"
+                                                   value="{{ form.data_inizio.value|default:'' }}" required>
+                                            {% if form.data_inizio.errors %}<div class="invalid-feedback">{{ form.data_inizio.errors.0 }}</div>{% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.data_fine.id_for_label }}" class="form-label fw-semibold">
+                                                <i class="fas fa-calendar-check me-2 text-warning"></i>A *
+                                            </label>
+                                            <input type="date" name="{{ form.data_fine.name }}"
+                                                   class="form-control{% if form.data_fine.errors %} is-invalid{% endif %}"
+                                                   id="{{ form.data_fine.id_for_label }}"
+                                                   value="{{ form.data_fine.value|default:'' }}" required>
+                                            {% if form.data_fine.errors %}<div class="invalid-feedback">{{ form.data_fine.errors.0 }}</div>{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h5 class="text-primary border-bottom pb-2 mb-3">
+                                    <i class="fas fa-clipboard-list me-2"></i>Dettagli Consegna
+                                </h5>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.km_iniziali.id_for_label }}" class="form-label fw-semibold">
+                                        <i class="fas fa-tachometer-alt me-2 text-info"></i>Km Iniziali *
+                                    </label>
+                                    <input type="number" name="{{ form.km_iniziali.name }}"
+                                           class="form-control{% if form.km_iniziali.errors %} is-invalid{% endif %}"
+                                           id="{{ form.km_iniziali.id_for_label }}"
+                                           value="{{ form.km_iniziali.value|default:'' }}" min="0" required>
+                                    {% if form.km_iniziali.errors %}<div class="invalid-feedback">{{ form.km_iniziali.errors.0 }}</div>{% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.carburante.id_for_label }}" class="form-label fw-semibold">
+                                        <i class="fas fa-gas-pump me-2 text-danger"></i>Livello Carburante *
+                                    </label>
+                                    <select name="{{ form.carburante.name }}"
+                                            class="form-select{% if form.carburante.errors %} is-invalid{% endif %}"
+                                            id="{{ form.carburante.id_for_label }}" required>
+                                        <option value="">Seleziona livello...</option>
+                                        {% for value, label in form.carburante.field.choices %}
+                                            {% if value %}
+                                            <option value="{{ value }}" {% if form.carburante.value == value %}selected{% endif %}>{{ label }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                    {% if form.carburante.errors %}<div class="invalid-feedback">{{ form.carburante.errors.0 }}</div>{% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.scopo_viaggio.id_for_label }}" class="form-label fw-semibold">
+                                        <i class="fas fa-route me-2 text-primary"></i>Scopo del Viaggio *
+                                    </label>
+                                    <input type="text" name="{{ form.scopo_viaggio.name }}"
+                                           class="form-control{% if form.scopo_viaggio.errors %} is-invalid{% endif %}"
+                                           id="{{ form.scopo_viaggio.id_for_label }}"
+                                           value="{{ form.scopo_viaggio.value|default:'' }}"
+                                           maxlength="200"
+                                           placeholder="Es. Trasferta cliente Milano, consegna materiale..." required>
+                                    {% if form.scopo_viaggio.errors %}<div class="invalid-feedback">{{ form.scopo_viaggio.errors.0 }}</div>{% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.video_stato_vettura.id_for_label }}" class="form-label fw-semibold">
+                                        <i class="fas fa-video me-2 text-success"></i>Video Stato Vettura
+                                    </label>
+                                    <input type="file" name="{{ form.video_stato_vettura.name }}"
+                                           class="form-control{% if form.video_stato_vettura.errors %} is-invalid{% endif %}"
+                                           id="{{ form.video_stato_vettura.id_for_label }}"
+                                           accept="video/*">
+                                    {% if form.video_stato_vettura.errors %}<div class="invalid-feedback">{{ form.video_stato_vettura.errors.0 }}</div>{% endif %}
+                                    <div class="form-text">Video per documentare lo stato della vettura alla consegna</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="{{ form.note.id_for_label }}" class="form-label fw-semibold">
+                                        <i class="fas fa-sticky-note me-2 text-muted"></i>Note
+                                    </label>
+                                    <textarea name="{{ form.note.name }}"
+                                              class="form-control{% if form.note.errors %} is-invalid{% endif %}"
+                                              id="{{ form.note.id_for_label }}" rows="3"
+                                              placeholder="Note aggiuntive sull'affidamento...">{{ form.note.value|default:'' }}</textarea>
+                                    {% if form.note.errors %}<div class="invalid-feedback">{{ form.note.errors.0 }}</div>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'automezzi:affidamento_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Annulla
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i>Crea Affidamento e Invia Mail
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

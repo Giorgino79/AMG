@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Richiedi Permesso - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Richiedi Permesso</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4"><i class="bi bi-clock me-2"></i>Richiedi Permesso</h2>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Ore disponibili:</strong> {{ ore_disponibili }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.data.label }}</label>
+                            {{ form.data }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.ora_inizio.label }}</label>
+                                {{ form.ora_inizio }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.ora_fine.label }}</label>
+                                {{ form.ora_fine }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.motivo.label }}</label>
+                            {{ form.motivo }}
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'users:richieste_permessi_list' %}" class="btn btn-outline-secondary">Annulla</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send me-1"></i>Invia Richiesta
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

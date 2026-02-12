@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'users:user_list' %}">Users</a></li>
+<li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-person-plus me-2"></i>{{ title }}</h2>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row">
+            {# Credenziali #}
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-key me-2"></i>Credenziali</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.username.label }}</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                            <div class="text-danger small">{{ form.username.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.email.label }}</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="text-danger small">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        {% if form.password1 %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.password1.label }}</label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}
+                            <div class="text-danger small">{{ form.password1.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.password2.label }}</label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}
+                            <div class="text-danger small">{{ form.password2.errors }}</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {# Dati Personali #}
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-person me-2"></i>Dati Personali</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.first_name.label }}</label>
+                                {{ form.first_name }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.last_name.label }}</label>
+                                {{ form.last_name }}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.codice_fiscale.label }}</label>
+                            {{ form.codice_fiscale }}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.data_nascita.label }}</label>
+                                {{ form.data_nascita }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.luogo_nascita.label }}</label>
+                                {{ form.luogo_nascita }}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.foto_profilo.label }}</label>
+                            {{ form.foto_profilo }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Dati Lavorativi #}
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-briefcase me-2"></i>Dati Lavorativi</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.qualifica.label }}</label>
+                                {{ form.qualifica }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.reparto.label }}</label>
+                                {{ form.reparto }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.stato.label }}</label>
+                                {{ form.stato }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.data_assunzione.label }}</label>
+                                {{ form.data_assunzione }}
+                            </div>
+                        </div>
+                        {% if form.data_cessazione %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.data_cessazione.label }}</label>
+                            {{ form.data_cessazione }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {# Contatti #}
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-telephone me-2"></i>Contatti</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.telefono.label }}</label>
+                                {{ form.telefono }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.telefono_emergenza.label }}</label>
+                                {{ form.telefono_emergenza }}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.indirizzo.label }}</label>
+                            {{ form.indirizzo }}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.citta.label }}</label>
+                                {{ form.citta }}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">{{ form.cap.label }}</label>
+                                {{ form.cap }}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">{{ form.provincia.label }}</label>
+                                {{ form.provincia }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Ferie e Permessi #}
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Ferie e Permessi</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ form.giorni_ferie_anno.label }}</label>
+                                {{ form.giorni_ferie_anno }}
+                            </div>
+                            {% if form.giorni_ferie_residui %}
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ form.giorni_ferie_residui.label }}</label>
+                                {{ form.giorni_ferie_residui }}
+                            </div>
+                            {% endif %}
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ form.ore_permesso_residue.label }}</label>
+                                {{ form.ore_permesso_residue }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Permessi (solo creazione) #}
+            {% if form.template_permessi %}
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-shield-lock me-2"></i>Permessi Sistema</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.template_permessi.label }}</label>
+                            {{ form.template_permessi }}
+                            <small class="text-muted d-block mt-1">Seleziona un template predefinito o personalizza i permessi</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {# Note #}
+            {% if form.note_interne %}
+            <div class="col-12 mb-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-sticky me-2"></i>Note Interne</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form.note_interne }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Pulsanti #}
+        <div class="d-flex justify-content-end gap-2 mt-4">
+            <a href="{% url 'users:user_list' %}" class="btn btn-outline-secondary btn-lg">
+                <i class="bi bi-x-circle me-1"></i>Annulla
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-check-circle me-1"></i>Salva Utente
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

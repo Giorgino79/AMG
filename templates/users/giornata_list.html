@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Giornate Lavorative - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Giornate Lavorative</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0"><i class="bi bi-calendar3 me-2"></i>Le Mie Giornate Lavorative</h1>
+        <div>
+            <a href="{% url 'users:giornate_export_excel' %}?{{ request.GET.urlencode }}" class="btn btn-success btn-sm">
+                <i class="bi bi-file-earmark-excel me-1"></i>Esporta Excel
+            </a>
+            <a href="{% url 'users:giornate_export_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-danger btn-sm">
+                <i class="bi bi-file-pdf me-1"></i>Esporta PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtri -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filtri Ricerca</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="data_da" class="form-label">Data Da</label>
+                    <input type="date" name="data_da" id="data_da" class="form-control" value="{{ data_da }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="data_a" class="form-label">Data A</label>
+                    <input type="date" name="data_a" id="data_a" class="form-control" value="{{ data_a }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="stato" class="form-label">Stato</label>
+                    <select name="stato" id="stato" class="form-select">
+                        <option value="">Tutte</option>
+                        <option value="conclusa" {% if request.GET.stato == 'conclusa' %}selected{% endif %}>Solo Concluse</option>
+                        <option value="in_corso" {% if request.GET.stato == 'in_corso' %}selected{% endif %}>Solo In Corso</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-search me-1"></i>Filtra
+                    </button>
+                    <a href="{% url 'users:giornata_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i>Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistiche -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-check fs-1 mb-2"></i>
+                    <h3 class="mb-0">{{ giornate.count }}</h3>
+                    <p class="mb-0 small">Giornate Totali</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-clock-history fs-1 mb-2"></i>
+                    <h3 class="mb-0">{{ ore_totali|floatformat:2 }}h</h3>
+                    <p class="mb-0 small">Ore Totali Lavorate</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-exclamation-triangle fs-1 mb-2"></i>
+                    <h3 class="mb-0">{{ straordinari|floatformat:2 }}h</h3>
+                    <p class="mb-0 small">Ore Straordinarie</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-graph-up-arrow fs-1 mb-2"></i>
+                    <h3 class="mb-0">{{ media_ore|floatformat:2 }}h</h3>
+                    <p class="mb-0 small">Media Ore/Giorno</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabella Giornate -->
+    <div class="card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-list-ul me-2"></i>Elenco Giornate
+                {% if data_da or data_a %}
+                <small class="text-muted">
+                    ({% if data_da %}dal {{ data_da|date:"d/m/Y" }}{% endif %}
+                    {% if data_a %}al {{ data_a|date:"d/m/Y" }}{% endif %})
+                </small>
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th class="text-center">Mattina</th>
+                            <th class="text-center">Pomeriggio</th>
+                            <th class="text-center">Notte</th>
+                            <th class="text-center">Totale Ore</th>
+                            <th class="text-center">Straordinari</th>
+                            <th class="text-center">Stato</th>
+                            <th class="text-center">Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for giornata in giornate %}
+                        <tr>
+                            <td>
+                                <strong>{{ giornata.data|date:"d/m/Y" }}</strong>
+                                <br>
+                                <small class="text-muted">{{ giornata.data|date:"l" }}</small>
+                            </td>
+                            <td class="text-center">
+                                {% if giornata.ore_mattina > 0 %}
+                                    <span class="badge bg-light text-dark">{{ giornata.ore_mattina|floatformat:2 }}h</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if giornata.ore_pomeriggio > 0 %}
+                                    <span class="badge bg-light text-dark">{{ giornata.ore_pomeriggio|floatformat:2 }}h</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if giornata.ore_notte > 0 %}
+                                    <span class="badge bg-dark">{{ giornata.ore_notte|floatformat:2 }}h</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <strong class="text-primary fs-5">{{ giornata.ore_totali|floatformat:2 }}h</strong>
+                            </td>
+                            <td class="text-center">
+                                {% if giornata.ore_straordinarie > 0 %}
+                                    <span class="badge bg-warning text-dark">
+                                        +{{ giornata.ore_straordinarie|floatformat:2 }}h
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if giornata.conclusa %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle me-1"></i>Conclusa
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-hourglass-split me-1"></i>In Corso
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if giornata.note %}
+                                    <i class="bi bi-chat-left-text text-info"
+                                       data-bs-toggle="tooltip"
+                                       title="{{ giornata.note }}"></i>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                                Nessuna giornata lavorativa trovata per i filtri selezionati
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    {% if giornate %}
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="4" class="text-end"><strong>TOTALI:</strong></td>
+                            <td class="text-center"><strong class="text-primary fs-5">{{ ore_totali|floatformat:2 }}h</strong></td>
+                            <td class="text-center"><strong class="text-warning">{{ straordinari|floatformat:2 }}h</strong></td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inizializza tooltips per le note
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Imposta data di default se non specificata
+    const dataDa = document.getElementById('data_da');
+    const dataA = document.getElementById('data_a');
+
+    if (!dataDa.value) {
+        // Default: primo giorno del mese corrente
+        const oggi = new Date();
+        const primoGiorno = new Date(oggi.getFullYear(), oggi.getMonth(), 1);
+        dataDa.value = primoGiorno.toISOString().split('T')[0];
+    }
+
+    if (!dataA.value) {
+        // Default: ultimo giorno del mese corrente
+        const oggi = new Date();
+        const ultimoGiorno = new Date(oggi.getFullYear(), oggi.getMonth() + 1, 0);
+        dataA.value = ultimoGiorno.toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %}

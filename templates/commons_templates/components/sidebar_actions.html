@@ -1,0 +1,111 @@
+{% load allegati_tags %}
+
+<div class="sidebar-actions sticky-top" style="top: 20px;">
+    {# Card Azioni CRUD #}
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-primary text-white">
+            <h6 class="mb-0">
+                <i class="bi bi-gear-fill"></i> Azioni
+            </h6>
+        </div>
+        <div class="list-group list-group-flush">
+            {# Azioni custom passate dal template padre #}
+            {% if custom_actions %}
+            {{ custom_actions }}
+            {% endif %}
+
+            {# Azioni standard #}
+            {% if edit_url %}
+            <a href="{{ edit_url }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-pencil-fill text-warning"></i> Modifica
+            </a>
+            {% endif %}
+
+            {% if delete_url %}
+            <a href="{{ delete_url }}"
+               class="list-group-item list-group-item-action text-danger"
+               onclick="return confirm('Sei sicuro di voler eliminare questo elemento?')">
+                <i class="bi bi-trash-fill"></i> Elimina
+            </a>
+            {% endif %}
+
+            {% if back_url %}
+            <a href="{{ back_url }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-arrow-left"></i> Torna alla lista
+            </a>
+            {% endif %}
+
+            {# QR Code #}
+            {% if object %}
+            <button type="button"
+                    class="list-group-item list-group-item-action text-primary"
+                    id="btnGenerateQRCode"
+                    data-content-type="{{ content_type_id }}"
+                    data-object-id="{{ object.pk }}">
+                <i class="bi bi-qr-code"></i> Genera QR Code
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Card Allegati #}
+    {% if object %}
+    <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+            <h6 class="mb-0">
+                <i class="bi bi-paperclip"></i> Allegati
+                {% if object.ha_allegati %}
+                <span class="badge bg-light text-dark">{{ object.conta_allegati }}</span>
+                {% endif %}
+            </h6>
+        </div>
+        <div class="list-group list-group-flush">
+            {# Bottone Nuovo Allegato #}
+            <button type="button"
+                    class="list-group-item list-group-item-action text-success"
+                    data-bs-toggle="modal"
+                    data-bs-target="#allegatoUploadModal"
+                    data-content-type="{{ content_type_id }}"
+                    data-object-id="{{ object.pk }}"
+                    data-object-name="{{ object }}">
+                <i class="bi bi-plus-circle-fill"></i> Nuovo Allegato
+            </button>
+
+            {# Bottone Gestisci Allegati #}
+            <button type="button"
+                    class="list-group-item list-group-item-action"
+                    data-bs-toggle="modal"
+                    data-bs-target="#allegatiGestioneModal"
+                    data-content-type="{{ content_type_id }}"
+                    data-object-id="{{ object.pk }}"
+                    data-object-name="{{ object }}">
+                <i class="bi bi-folder-fill"></i> Gestisci Allegati
+                {% if object.ha_allegati %}
+                <span class="badge bg-primary rounded-pill">{{ object.conta_allegati }}</span>
+                {% endif %}
+            </button>
+
+            {# Mini preview ultimi allegati (opzionale) #}
+            {% if object.ha_allegati %}
+            <div class="list-group-item bg-light">
+                <small class="text-muted d-block mb-1">Ultimi caricati:</small>
+                {% for allegato in object.allegati|slice:":3" %}
+                <div class="d-flex align-items-center mb-1">
+                    <i class="bi bi-file-earmark-{% if allegato.is_pdf %}pdf{% elif allegato.is_image %}image{% else %}text{% endif %} me-2"></i>
+                    <small class="text-truncate" style="max-width: 150px;" title="{{ allegato.nome_originale }}">
+                        {{ allegato.nome_originale }}
+                    </small>
+                </div>
+                {% endfor %}
+                {% if object.conta_allegati > 3 %}
+                <small class="text-muted">...e altri {{ object.conta_allegati|add:"-3" }}</small>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# Card Extra (opzionale - per app custom) #}
+    {% block sidebar_extra %}{% endblock %}
+</div>

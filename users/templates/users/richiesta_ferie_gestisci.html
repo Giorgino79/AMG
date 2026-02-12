@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Gestisci Richiesta Ferie - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'users:richieste_ferie_admin_list' %}">Gestione Ferie</a></li>
+<li class="breadcrumb-item active">Dettaglio Richiesta</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Dettagli Richiesta -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar-check me-2"></i>
+                        Dettagli Richiesta Ferie
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Dipendente</h6>
+                            <div class="d-flex align-items-center">
+                                {% if richiesta.user.foto_profilo %}
+                                <img src="{{ richiesta.user.foto_profilo.url }}" class="rounded-circle me-3 user-avatar-img" width="50" height="50">
+                                {% else %}
+                                <div class="user-avatar-md me-3">
+                                    {{ richiesta.user.get_full_name|default:richiesta.user.username|slice:":1"|upper }}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <strong>{{ richiesta.user.get_full_name|default:richiesta.user.username }}</strong><br>
+                                    <small class="text-muted">Codice: {{ richiesta.user.codice_dipendente }}</small><br>
+                                    <small class="text-muted">{{ richiesta.user.qualifica }} - {{ richiesta.user.reparto }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Stato Richiesta</h6>
+                            {% if richiesta.stato == 'in_attesa' %}
+                            <span class="badge bg-warning fs-6">In Attesa</span>
+                            {% elif richiesta.stato == 'approvata' %}
+                            <span class="badge bg-success fs-6">Approvata</span>
+                            {% else %}
+                            <span class="badge bg-danger fs-6">Rifiutata</span>
+                            {% endif %}
+                            <p class="small text-muted mt-2 mb-0">
+                                Richiesta inviata il {{ richiesta.created_at|date:"d/m/Y" }} alle {{ richiesta.created_at|date:"H:i" }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <h6 class="text-muted mb-2">Data Inizio</h6>
+                            <p class="mb-0"><strong>{{ richiesta.data_inizio|date:"d/m/Y" }}</strong></p>
+                            <small class="text-muted">{{ richiesta.data_inizio|date:"l" }}</small>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <h6 class="text-muted mb-2">Data Fine</h6>
+                            <p class="mb-0"><strong>{{ richiesta.data_fine|date:"d/m/Y" }}</strong></p>
+                            <small class="text-muted">{{ richiesta.data_fine|date:"l" }}</small>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <h6 class="text-muted mb-2">Giorni Richiesti</h6>
+                            <p class="mb-0">
+                                <span class="badge bg-primary fs-6">{{ richiesta.giorni_richiesti }} giorni</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    {% if richiesta.motivo %}
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">Motivo</h6>
+                        <p class="mb-0">{{ richiesta.motivo }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if richiesta.stato != 'in_attesa' %}
+                    <hr>
+                    <div class="alert {% if richiesta.stato == 'approvata' %}alert-success{% else %}alert-danger{% endif %}">
+                        <h6 class="alert-heading">
+                            {% if richiesta.stato == 'approvata' %}
+                            <i class="bi bi-check-circle me-2"></i>Richiesta Approvata
+                            {% else %}
+                            <i class="bi bi-x-circle me-2"></i>Richiesta Rifiutata
+                            {% endif %}
+                        </h6>
+                        <p class="mb-0">
+                            <strong>Gestita da:</strong> {{ richiesta.gestita_da.get_full_name|default:richiesta.gestita_da.username }}<br>
+                            <strong>Data:</strong> {{ richiesta.gestita_il|date:"d/m/Y H:i" }}
+                        </p>
+                        {% if richiesta.stato == 'rifiutata' and richiesta.motivazione_rifiuto %}
+                        <hr>
+                        <p class="mb-0">
+                            <strong>Motivazione rifiuto:</strong><br>
+                            {{ richiesta.motivazione_rifiuto }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if richiesta.stato == 'in_attesa' %}
+            <!-- Form Gestione -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pencil-square me-2"></i>
+                        Gestisci Richiesta
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Azione</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="azione" id="approva" value="approva" required>
+                                <label class="btn btn-outline-success" for="approva">
+                                    <i class="bi bi-check-circle me-2"></i>Approva
+                                </label>
+
+                                <input type="radio" class="btn-check" name="azione" id="rifiuta" value="rifiuta" required>
+                                <label class="btn btn-outline-danger" for="rifiuta">
+                                    <i class="bi bi-x-circle me-2"></i>Rifiuta
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 d-none-js" id="motivazione-container">
+                            <label class="form-label fw-bold">Motivazione Rifiuto *</label>
+                            <textarea name="motivazione_rifiuto" class="form-control" rows="4"
+                                      placeholder="Inserisci la motivazione del rifiuto..."></textarea>
+                            <small class="text-muted">Obbligatoria in caso di rifiuto</small>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'users:richieste_ferie_admin_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Indietro
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send me-1"></i>Conferma
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Info Dipendente -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person me-2"></i>
+                        Info Dipendente
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>Ferie Anno:</strong> {{ richiesta.user.giorni_ferie_anno }} giorni
+                    </p>
+                    <p class="mb-2">
+                        <strong>Ferie Residue:</strong>
+                        <span class="badge bg-info">{{ richiesta.user.giorni_ferie_residui }} giorni</span>
+                    </p>
+                    <p class="mb-2">
+                        <strong>Email:</strong> {{ richiesta.user.email|default:"-" }}
+                    </p>
+                    <p class="mb-0">
+                        <strong>Telefono:</strong> {{ richiesta.user.telefono|default:"-" }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Storico Richieste -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Ultime Richieste
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if altre_richieste %}
+                    <div class="list-group list-group-flush">
+                        {% for r in altre_richieste %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <small class="text-muted">{{ r.data_inizio|date:"d/m/Y" }} - {{ r.data_fine|date:"d/m/Y" }}</small><br>
+                                    <small><strong>{{ r.giorni_richiesti }} giorni</strong></small>
+                                </div>
+                                <div>
+                                    {% if r.stato == 'approvata' %}
+                                    <span class="badge bg-success">Approvata</span>
+                                    {% elif r.stato == 'rifiutata' %}
+                                    <span class="badge bg-danger">Rifiutata</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">In Attesa</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center mb-0">Nessuna altra richiesta</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mostra/nascondi campo motivazione rifiuto
+document.querySelectorAll('input[name="azione"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const motivazioneContainer = document.getElementById('motivazione-container');
+        if (this.value === 'rifiuta') {
+            motivazioneContainer.classList.remove('d-none-js');
+            motivazioneContainer.querySelector('textarea').required = true;
+        } else {
+            motivazioneContainer.classList.add('d-none-js');
+            motivazioneContainer.querySelector('textarea').required = false;
+        }
+    });
+});
+</script>
+{% endblock %}

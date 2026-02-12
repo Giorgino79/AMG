@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Fatturazione Passiva{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Fatturazione Passiva</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Fatturazione Passiva</h1>
+                <a href="{% url 'fatturazionepassiva:crea_riconoscimento' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nuovo Riconoscimento
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiche rapide -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card text-center">
+                <div class="card-body">
+                    <div class="stats-number text-primary">{{ stats.totale }}</div>
+                    <div class="text-muted">Totale</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card text-center">
+                <div class="card-body">
+                    <div class="stats-number text-warning">{{ stats.bozze }}</div>
+                    <div class="text-muted">Bozze</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card text-center">
+                <div class="card-body">
+                    <div class="stats-number text-info">{{ stats.definitivi }}</div>
+                    <div class="text-muted">Definitivi</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card text-center">
+                <div class="card-body">
+                    <div class="stats-number text-success">{{ stats.inviati }}</div>
+                    <div class="text-muted">Inviati</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Riconoscimenti recenti -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Riconoscimenti Recenti</h5>
+                    <a href="{% url 'fatturazionepassiva:lista_riconoscimenti' %}" class="btn btn-sm btn-outline-primary">
+                        Vedi tutti
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if riconoscimenti_recenti %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Numero</th>
+                                        <th>Fornitore</th>
+                                        <th>Periodo</th>
+                                        <th>Stato</th>
+                                        <th>Totale</th>
+                                        <th>Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for riconoscimento in riconoscimenti_recenti %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'fatturazionepassiva:dettaglio_riconoscimento' riconoscimento.pk %}">
+                                                {{ riconoscimento.numero_riconoscimento }}
+                                            </a>
+                                        </td>
+                                        <td>{{ riconoscimento.fornitore.nome }}</td>
+                                        <td>{{ riconoscimento.periodo_da|date:"d/m/Y" }} - {{ riconoscimento.periodo_a|date:"d/m/Y" }}</td>
+                                        <td>
+                                            {% if riconoscimento.stato == 'bozza' %}
+                                                <span class="badge badge-warning">{{ riconoscimento.get_stato_display }}</span>
+                                            {% elif riconoscimento.stato == 'definitivo' %}
+                                                <span class="badge badge-info">{{ riconoscimento.get_stato_display }}</span>
+                                            {% elif riconoscimento.stato == 'inviato' %}
+                                                <span class="badge badge-primary">{{ riconoscimento.get_stato_display }}</span>
+                                            {% elif riconoscimento.stato == 'confermato' %}
+                                                <span class="badge badge-success">{{ riconoscimento.get_stato_display }}</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">{{ riconoscimento.get_stato_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>€ {{ riconoscimento.totale_riconoscimento|floatformat:2 }}</td>
+                                        <td>
+                                            <a href="{% url 'fatturazionepassiva:dettaglio_riconoscimento' riconoscimento.pk %}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Nessun riconoscimento presente</p>
+                            <a href="{% url 'fatturazionepassiva:crea_riconoscimento' %}" class="btn btn-primary">
+                                Crea il primo riconoscimento
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Azioni rapide -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Azioni Rapide</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-2">
+                            <a href="{% url 'fatturazionepassiva:crea_riconoscimento' %}" class="btn btn-outline-primary btn-block">
+                                <i class="fas fa-plus mr-2"></i>Nuovo Riconoscimento
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <a href="{% url 'fatturazionepassiva:lista_riconoscimenti' %}" class="btn btn-outline-info btn-block">
+                                <i class="fas fa-list mr-2"></i>Lista Riconoscimenti
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <a href="{% url 'fatturazionepassiva:lista_riconoscimenti' %}?stato=bozza" class="btn btn-outline-warning btn-block">
+                                <i class="fas fa-edit mr-2"></i>Bozze da Completare
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

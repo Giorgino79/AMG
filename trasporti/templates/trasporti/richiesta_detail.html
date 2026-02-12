@@ -1,0 +1,406 @@
+{% extends "commons_templates/base_detail.html" %}
+{% load static %}
+{% load humanize %}
+{% load allegati_tags %}
+
+{% block title %}Richiesta {{ richiesta.numero }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'trasporti:dashboard' %}">Trasporti</a></li>
+<li class="breadcrumb-item"><a href="{% url 'trasporti:richieste_list' %}">Richieste</a></li>
+<li class="breadcrumb-item active">{{ richiesta.numero }}</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-truck me-2 text-primary"></i>{{ richiesta.numero }}
+{% endblock %}
+
+{% block page_subtitle %}
+<p class="text-muted mb-0">{{ richiesta.titolo }}</p>
+{% endblock %}
+
+{% block status_badge %}
+<div class="text-end">
+    <span class="badge fs-6 {% if richiesta.stato == 'BOZZA' %}bg-secondary{% elif richiesta.stato == 'RICHIESTA_INVIATA' %}bg-primary{% elif richiesta.stato == 'OFFERTE_RICEVUTE' %}bg-info{% elif richiesta.stato == 'APPROVATA' %}bg-success{% elif richiesta.stato == 'CONFERMATA' %}bg-success{% elif richiesta.stato == 'IN_CORSO' %}bg-warning{% elif richiesta.stato == 'CONSEGNATO' %}bg-success{% else %}bg-danger{% endif %}">
+        {{ richiesta.get_stato_display }}
+    </span>
+    <span class="badge fs-6 ms-2 {% if richiesta.priorita == 'BASSA' %}bg-secondary{% elif richiesta.priorita == 'NORMALE' %}bg-info{% elif richiesta.priorita == 'ALTA' %}bg-warning{% else %}bg-danger{% endif %}">
+        {{ richiesta.get_priorita_display }}
+    </span>
+</div>
+{% endblock %}
+
+{% block detail_content %}
+<!-- Progress Bar Stato -->
+<div class="mb-4">
+    <div class="position-relative mb-4">
+        {% with progress=richiesta.stato %}
+        <div class="progress" style="height: 8px;">
+            <div class="progress-bar bg-success" role="progressbar"
+                 style="width: {% if progress == 'CONSEGNATO' %}100{% elif progress == 'IN_CORSO' %}85{% elif progress == 'CONFERMATA' %}70{% elif progress == 'APPROVATA' %}55{% elif progress == 'OFFERTE_RICEVUTE' %}40{% elif progress == 'RICHIESTA_INVIATA' %}25{% else %}10{% endif %}%">
+            </div>
+        </div>
+        {% endwith %}
+
+        <div class="d-flex justify-content-between mt-2">
+            <small class="{% if richiesta.stato != 'BOZZA' %}text-success{% else %}text-muted{% endif %}">
+                <i class="bi bi-{% if richiesta.stato != 'BOZZA' %}check-circle-fill{% else %}circle{% endif %}"></i> Bozza
+            </small>
+            <small class="{% if richiesta.stato in 'RICHIESTA_INVIATA,OFFERTE_RICEVUTE,APPROVATA,CONFERMATA,IN_CORSO,CONSEGNATO' %}text-success{% else %}text-muted{% endif %}">
+                <i class="bi bi-{% if richiesta.stato in 'RICHIESTA_INVIATA,OFFERTE_RICEVUTE,APPROVATA,CONFERMATA,IN_CORSO,CONSEGNATO' %}check-circle-fill{% else %}circle{% endif %}"></i> Inviata
+            </small>
+            <small class="{% if richiesta.stato in 'APPROVATA,CONFERMATA,IN_CORSO,CONSEGNATO' %}text-success{% else %}text-muted{% endif %}">
+                <i class="bi bi-{% if richiesta.stato in 'APPROVATA,CONFERMATA,IN_CORSO,CONSEGNATO' %}check-circle-fill{% else %}circle{% endif %}"></i> Approvata
+            </small>
+            <small class="{% if richiesta.stato in 'CONFERMATA,IN_CORSO,CONSEGNATO' %}text-success{% else %}text-muted{% endif %}">
+                <i class="bi bi-{% if richiesta.stato in 'CONFERMATA,IN_CORSO,CONSEGNATO' %}check-circle-fill{% else %}circle{% endif %}"></i> Confermata
+            </small>
+            <small class="{% if richiesta.stato == 'CONSEGNATO' %}text-success{% else %}text-muted{% endif %}">
+                <i class="bi bi-{% if richiesta.stato == 'CONSEGNATO' %}check-circle-fill{% else %}circle{% endif %}"></i> Consegnato
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Percorso Trasporto -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-geo-alt me-2 text-primary"></i>Percorso Trasporto
+    </h5>
+    <div class="row">
+        <!-- Ritiro -->
+        <div class="col-md-6">
+            <div class="border rounded p-3 bg-primary bg-opacity-10">
+                <h6 class="text-primary"><i class="bi bi-pin-map me-1"></i> Punto di Ritiro</h6>
+                <p class="mb-1"><strong>{{ richiesta.indirizzo_ritiro }}</strong></p>
+                <p class="mb-1">{{ richiesta.cap_ritiro }} {{ richiesta.citta_ritiro }} ({{ richiesta.provincia_ritiro }})</p>
+                <p class="mb-1">{{ richiesta.get_nazione_ritiro_display|default:richiesta.nazione_ritiro }}</p>
+                <hr>
+                <p class="mb-1"><strong>Data Ritiro:</strong> {{ richiesta.data_ritiro_richiesta|date:"d/m/Y" }}</p>
+                {% if richiesta.ora_ritiro_dalle %}
+                <p class="mb-1"><strong>Orario:</strong> {{ richiesta.ora_ritiro_dalle|time:"H:i" }} - {{ richiesta.ora_ritiro_alle|time:"H:i" }}</p>
+                {% endif %}
+                {% if richiesta.note_ritiro %}
+                <hr>
+                <p class="mb-0 small"><strong>Note:</strong> {{ richiesta.note_ritiro }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Consegna -->
+        <div class="col-md-6">
+            <div class="border rounded p-3 bg-success bg-opacity-10">
+                <h6 class="text-success"><i class="bi bi-box-seam me-1"></i> Punto di Consegna</h6>
+                <p class="mb-1"><strong>{{ richiesta.indirizzo_consegna }}</strong></p>
+                <p class="mb-1">{{ richiesta.cap_consegna }} {{ richiesta.citta_consegna }} ({{ richiesta.provincia_consegna }})</p>
+                <p class="mb-1">{{ richiesta.get_nazione_consegna_display|default:richiesta.nazione_consegna }}</p>
+                <hr>
+                <p class="mb-1"><strong>Data Consegna:</strong> {{ richiesta.data_consegna_richiesta|date:"d/m/Y" }}</p>
+                {% if richiesta.ora_consegna_dalle %}
+                <p class="mb-1"><strong>Orario:</strong> {{ richiesta.ora_consegna_dalle|time:"H:i" }} - {{ richiesta.ora_consegna_alle|time:"H:i" }}</p>
+                {% endif %}
+                {% if richiesta.note_consegna %}
+                <hr>
+                <p class="mb-0 small"><strong>Note:</strong> {{ richiesta.note_consegna }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if richiesta.distanza_km %}
+    <div class="text-center mt-3">
+        <span class="badge bg-secondary fs-6"><i class="bi bi-signpost-split me-1"></i> Distanza: {{ richiesta.distanza_km }} km</span>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Colli -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-boxes me-2 text-primary"></i>Colli da Trasportare
+    </h5>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="text-center p-2 bg-light rounded">
+                <small class="text-muted">Totale Colli</small>
+                <h4 class="mb-0 text-primary">{{ richiesta.numero_colli_totali }}</h4>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-center p-2 bg-light rounded">
+                <small class="text-muted">Peso Totale</small>
+                <h4 class="mb-0 text-primary">{{ richiesta.peso_totale_kg|floatformat:2 }} kg</h4>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-center p-2 bg-light rounded">
+                <small class="text-muted">Volume Totale</small>
+                <h4 class="mb-0 text-primary">{{ richiesta.volume_totale_m3|floatformat:2 }} m³</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-hover">
+            <thead>
+                <tr>
+                    <th>Quantità</th>
+                    <th>Tipo</th>
+                    <th>Dimensioni (L x W x H cm)</th>
+                    <th>Peso (kg)</th>
+                    <th>Volume (m³)</th>
+                    <th>Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for collo in richiesta.colli.all %}
+                <tr>
+                    <td>{{ collo.quantita }}x</td>
+                    <td>{{ collo.get_tipo_display }}</td>
+                    <td>{{ collo.lunghezza_cm }} × {{ collo.larghezza_cm }} × {{ collo.altezza_cm }}</td>
+                    <td>{{ collo.peso_kg|floatformat:2 }}</td>
+                    <td>{{ collo.volume_m3|floatformat:4 }}</td>
+                    <td>
+                        {% if collo.fragile %}<span class="badge bg-warning">Fragile</span>{% endif %}
+                        {% if not collo.stackable %}<span class="badge bg-info">Non impilabile</span>{% endif %}
+                        {% if collo.descrizione %}<small>{{ collo.descrizione }}</small>{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted">Nessun collo inserito</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Caratteristiche Merce -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-info-circle me-2 text-primary"></i>Caratteristiche Merce
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <dl class="row mb-0">
+                <dt class="col-sm-5 text-muted">Tipo Merce</dt>
+                <dd class="col-sm-7">{{ richiesta.tipo_merce }}</dd>
+                {% if richiesta.valore_merce %}
+                <dt class="col-sm-5 text-muted">Valore</dt>
+                <dd class="col-sm-7">&euro;{{ richiesta.valore_merce|floatformat:2 }} {{ richiesta.valuta }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+        <div class="col-md-6">
+            {% if richiesta.merce_fragile %}<span class="badge bg-warning me-1">Fragile</span>{% endif %}
+            {% if richiesta.merce_deperibile %}<span class="badge bg-info me-1">Deperibile</span>{% endif %}
+            {% if richiesta.merce_pericolosa %}<span class="badge bg-danger me-1">Pericolosa ADR: {{ richiesta.codice_adr }}</span>{% endif %}
+            {% if richiesta.temperatura_controllata %}<span class="badge bg-primary me-1">Temperatura: {{ richiesta.temperatura_min }}°C - {{ richiesta.temperatura_max }}°C</span>{% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Offerte Ricevute -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-card-list me-2 text-primary"></i>Offerte Ricevute ({{ richiesta.offerte_totali }})
+    </h5>
+    {% if richiesta.offerte.all %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Trasportatore</th>
+                    <th>Importo</th>
+                    <th>Ritiro</th>
+                    <th>Consegna</th>
+                    <th>Transito</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for offerta in richiesta.offerte.all %}
+                <tr {% if offerta == richiesta.offerta_approvata %}class="table-success"{% endif %}>
+                    <td>
+                        {{ offerta.trasportatore.nome }}
+                        {% if offerta == richiesta.offerta_approvata %}
+                        <span class="badge bg-success">Approvata</span>
+                        {% endif %}
+                    </td>
+                    <td><strong>&euro;{{ offerta.importo_totale|floatformat:2 }}</strong></td>
+                    <td>{{ offerta.data_ritiro_proposta|date:"d/m/Y" }}</td>
+                    <td>{{ offerta.data_consegna_prevista|date:"d/m/Y" }}</td>
+                    <td>{{ offerta.tempo_transito_giorni }} gg</td>
+                    <td>
+                        <a href="{% url 'trasporti:offerta_detail' offerta.pk %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-eye"></i> Dettagli
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-4">
+        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+        <p class="mb-0">Nessuna offerta ricevuta ancora</p>
+        {% if richiesta.stato == 'RICHIESTA_INVIATA' %}
+        <a href="{% url 'trasporti:offerta_create' richiesta.pk %}" class="btn btn-success mt-3">
+            <i class="bi bi-plus-lg"></i> Aggiungi Offerta Manualmente
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Informazioni Richiesta -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-file-text me-2 text-primary"></i>Informazioni Richiesta
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <dl class="row mb-0">
+                <dt class="col-sm-5 text-muted">Tipo Trasporto</dt>
+                <dd class="col-sm-7">{{ richiesta.get_tipo_trasporto_display }}</dd>
+                <dt class="col-sm-5 text-muted">Richiedente</dt>
+                <dd class="col-sm-7">{{ richiesta.richiedente.get_full_name }}</dd>
+                {% if richiesta.operatore %}
+                <dt class="col-sm-5 text-muted">Operatore</dt>
+                <dd class="col-sm-7">{{ richiesta.operatore.get_full_name }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+        <div class="col-md-6">
+            <dl class="row mb-0">
+                {% if richiesta.approvatore %}
+                <dt class="col-sm-5 text-muted">Approvatore</dt>
+                <dd class="col-sm-7">{{ richiesta.approvatore.get_full_name }}</dd>
+                {% endif %}
+                {% if richiesta.budget_massimo %}
+                <dt class="col-sm-5 text-muted">Budget Massimo</dt>
+                <dd class="col-sm-7">&euro;{{ richiesta.budget_massimo|floatformat:2 }}</dd>
+                {% endif %}
+                <dt class="col-sm-5 text-muted">Data Creazione</dt>
+                <dd class="col-sm-7">{{ richiesta.data_creazione|date:"d/m/Y H:i" }}</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+
+<!-- Servizi Richiesti -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-gear me-2 text-primary"></i>Servizi Richiesti
+    </h5>
+    <div class="row">
+        {% if richiesta.assicurazione_richiesta %}
+        <div class="col-auto"><span class="badge bg-success"><i class="bi bi-check"></i> Assicurazione (&euro;{{ richiesta.massimale_assicurazione|floatformat:2 }})</span></div>
+        {% endif %}
+        {% if richiesta.scarico_a_piano %}
+        <div class="col-auto"><span class="badge bg-success"><i class="bi bi-check"></i> Scarico a piano {{ richiesta.numero_piano }}{% if richiesta.presenza_montacarichi %} (con montacarichi){% endif %}</span></div>
+        {% endif %}
+        {% if richiesta.tracking_richiesto %}
+        <div class="col-auto"><span class="badge bg-success"><i class="bi bi-check"></i> Tracking GPS</span></div>
+        {% endif %}
+        {% if richiesta.packing_list_richiesto %}
+        <div class="col-auto"><span class="badge bg-success"><i class="bi bi-check"></i> Packing List</span></div>
+        {% endif %}
+        {% if not richiesta.assicurazione_richiesta and not richiesta.scarico_a_piano and not richiesta.tracking_richiesto and not richiesta.packing_list_richiesto %}
+        <div class="col"><span class="text-muted">Nessun servizio aggiuntivo richiesto</span></div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Note Interne -->
+{% if richiesta.note_interne %}
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-sticky me-2 text-primary"></i>Note Interne
+    </h5>
+    <div style="white-space: pre-wrap;">{{ richiesta.note_interne }}</div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block custom_actions %}
+<!-- Azioni specifiche in base allo stato -->
+{% if richiesta.stato == 'BOZZA' %}
+<a href="{% url 'trasporti:richiesta_select_trasportatori' richiesta.pk %}" class="list-group-item list-group-item-action text-primary">
+    <i class="bi bi-send"></i> Seleziona Trasportatori
+</a>
+{% elif richiesta.stato == 'RICHIESTA_INVIATA' %}
+<a href="{% url 'trasporti:step2_raccolta' richiesta.pk %}" class="list-group-item list-group-item-action text-primary">
+    <i class="bi bi-collection"></i> Gestisci Offerte
+</a>
+<a href="{% url 'trasporti:offerta_create' richiesta.pk %}" class="list-group-item list-group-item-action text-success">
+    <i class="bi bi-plus-circle"></i> Aggiungi Offerta
+</a>
+{% elif richiesta.stato == 'OFFERTE_RICEVUTE' %}
+<a href="{% url 'trasporti:step3_valutazione' richiesta.pk %}" class="list-group-item list-group-item-action text-warning">
+    <i class="bi bi-check2-square"></i> Valuta Offerte
+</a>
+{% elif richiesta.stato == 'APPROVATA' and richiesta.offerta_approvata %}
+<a href="{% url 'trasporti:conferma_trasporto' richiesta.pk %}" class="list-group-item list-group-item-action text-success">
+    <i class="bi bi-check-circle"></i> Conferma Trasporto
+</a>
+{% elif richiesta.stato in 'CONFERMATA,IN_CORSO,CONSEGNATO' %}
+{% if richiesta.offerta_approvata %}
+<a href="{% url 'trasporti:offerta_tracking' richiesta.offerta_approvata.pk %}" class="list-group-item list-group-item-action text-info">
+    <i class="bi bi-geo-alt"></i> Tracking Spedizione
+</a>
+{% endif %}
+<a href="{% url 'trasporti:riapri_richiesta' richiesta.pk %}" class="list-group-item list-group-item-action text-warning" onclick="return confirm('Sei sicuro di voler riaprire questa richiesta?');">
+    <i class="bi bi-arrow-counterclockwise"></i> Riapri Richiesta
+</a>
+{% endif %}
+{% endblock %}
+
+{% block sidebar_extra %}
+<!-- Timeline -->
+<div class="card shadow-sm mt-3">
+    <div class="card-header bg-secondary text-white">
+        <h6 class="mb-0"><i class="bi bi-clock-history"></i> Timeline</h6>
+    </div>
+    <div class="card-body small">
+        <ul class="list-unstyled mb-0">
+            <li class="mb-2 pb-2 border-bottom">
+                <small class="text-muted">{{ richiesta.data_creazione|date:"d/m/Y H:i" }}</small><br>
+                <strong><i class="bi bi-check-circle-fill text-success"></i> Richiesta creata</strong>
+            </li>
+            {% if richiesta.data_invio_richiesta %}
+            <li class="mb-2 pb-2 border-bottom">
+                <small class="text-muted">{{ richiesta.data_invio_richiesta|date:"d/m/Y H:i" }}</small><br>
+                <strong><i class="bi bi-check-circle-fill text-success"></i> Inviata ai trasportatori</strong>
+            </li>
+            {% endif %}
+            {% if richiesta.data_approvazione %}
+            <li class="mb-2 pb-2 border-bottom">
+                <small class="text-muted">{{ richiesta.data_approvazione|date:"d/m/Y H:i" }}</small><br>
+                <strong><i class="bi bi-check-circle-fill text-success"></i> Offerta approvata</strong>
+            </li>
+            {% endif %}
+            {% if richiesta.data_conferma %}
+            <li class="mb-2 pb-2 border-bottom">
+                <small class="text-muted">{{ richiesta.data_conferma|date:"d/m/Y H:i" }}</small><br>
+                <strong><i class="bi bi-check-circle-fill text-success"></i> Trasporto confermato</strong>
+            </li>
+            {% endif %}
+            {% if richiesta.data_ritiro_effettivo %}
+            <li class="mb-2 pb-2 border-bottom">
+                <small class="text-muted">{{ richiesta.data_ritiro_effettivo|date:"d/m/Y H:i" }}</small><br>
+                <strong><i class="bi bi-check-circle-fill text-success"></i> Ritiro effettuato</strong>
+            </li>
+            {% endif %}
+            {% if richiesta.data_consegna_effettiva %}
+            <li class="mb-2">
+                <small class="text-muted">{{ richiesta.data_consegna_effettiva|date:"d/m/Y H:i" }}</small><br>
+                <strong><i class="bi bi-check-circle-fill text-success"></i> Consegna effettuata</strong>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

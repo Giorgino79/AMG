@@ -1,0 +1,56 @@
+/*
+ * Mail App Styles - ModularBEF
+ * Custom styles for email, promemoria e chat
+ */
+
+/* Email List Styles */
+.email-item {
+    border-bottom: 1px solid #e9ecef;
+    padding: 12px 0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.email-item:hover {
+    background-color: #f8f9fa;
+}
+
+.email-item.unread {
+    font-weight: bold;
+    background-color: #f0f7ff;
+}
+
+/* Chat Styles */
+.chat-message {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.chat-message.sent {
+    background-color: #007bff;
+    color: white;
+    margin-left: auto;
+    max-width: 70%;
+}
+
+.chat-message.received {
+    background-color: #e9ecef;
+    margin-right: auto;
+    max-width: 70%;
+}
+
+/* Promemoria Priority Colors */
+.priority-badge.high {
+    background-color: #dc3545;
+}
+
+.priority-badge.medium {
+    background-color: #ffc107;
+}
+
+.priority-badge.low {
+    background-color: #17a2b8;
+}
+
+/* TODO: Additional styles to be implemented */

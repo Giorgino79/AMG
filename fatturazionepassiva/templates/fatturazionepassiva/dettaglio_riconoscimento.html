@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ riconoscimento.numero_riconoscimento }} - Dettaglio Riconoscimento{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'fatturazionepassiva:dashboard' %}">Fatturazione Passiva</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'fatturazionepassiva:lista_riconoscimenti' %}">Lista Riconoscimenti</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ riconoscimento.numero_riconoscimento }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">{{ riconoscimento.numero_riconoscimento }}</h1>
+                <div>
+                    <a href="{% url 'fatturazionepassiva:lista_riconoscimenti' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Torna alla Lista
+                    </a>
+                    {% if can_modify %}
+                    <a href="#" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Modifica
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informazioni principali -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Informazioni Riconoscimento</h5>
+                    <span class="badge badge-{% if riconoscimento.stato == 'bozza' %}warning{% elif riconoscimento.stato == 'definitivo' %}info{% elif riconoscimento.stato == 'inviato' %}primary{% elif riconoscimento.stato == 'confermato' %}success{% else %}secondary{% endif %} badge-lg">
+                        {{ riconoscimento.get_stato_display }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th width="40%">Fornitore:</th>
+                                    <td>{{ riconoscimento.fornitore.nome }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Periodo:</th>
+                                    <td>{{ riconoscimento.periodo_da|date:"d/m/Y" }} - {{ riconoscimento.periodo_a|date:"d/m/Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Creato da:</th>
+                                    <td>{{ riconoscimento.creato_da.get_full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Data creazione:</th>
+                                    <td>{{ riconoscimento.data_creazione|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th width="40%">Ordini ricevuti:</th>
+                                    <td>
+                                        {% if riconoscimento.include_ordini_ricevuti %}
+                                            <i class="fas fa-check text-success"></i> Inclusi
+                                        {% else %}
+                                            <i class="fas fa-times text-danger"></i> Esclusi
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Ordini da ricevere:</th>
+                                    <td>
+                                        {% if riconoscimento.include_ordini_da_ricevere %}
+                                            <i class="fas fa-check text-success"></i> Inclusi
+                                        {% else %}
+                                            <i class="fas fa-times text-danger"></i> Esclusi
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Ricezioni manuali:</th>
+                                    <td>
+                                        {% if riconoscimento.include_ricezioni_manuali %}
+                                            <i class="fas fa-check text-success"></i> Inclusi
+                                        {% else %}
+                                            <i class="fas fa-times text-danger"></i> Esclusi
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Email inviata:</th>
+                                    <td>
+                                        {% if riconoscimento.inviato_via_email %}
+                                            <i class="fas fa-check text-success"></i> {{ riconoscimento.data_invio_email|date:"d/m/Y H:i" }}
+                                        {% else %}
+                                            <i class="fas fa-times text-danger"></i> Non inviata
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    {% if riconoscimento.note %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <strong>Note:</strong>
+                            <p class="mt-1">{{ riconoscimento.note }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Righe riconoscimento -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Righe Riconoscimento ({{ righe.count }})</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if righe %}
+                        <div class="table-responsive">
+                            <table class="table table-striped mb-0">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th>Prodotto</th>
+                                        <th>Origine</th>
+                                        <th class="text-right">Qt. Ordinata</th>
+                                        <th class="text-right">Qt. Riconosciuta</th>
+                                        <th class="text-right">Prezzo Unit.</th>
+                                        <th class="text-right">Tot. Imponibile</th>
+                                        <th class="text-right">Tot. IVA</th>
+                                        <th class="text-right">Tot. con IVA</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for riga in righe %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ riga.prodotto.nome_prodotto }}</strong>
+                                            {% if riga.prodotto.codice_interno %}
+                                                <br><small class="text-muted">Cod: {{ riga.prodotto.codice_interno }}</small>
+                                            {% endif %}
+                                            {% if riga.prodotto.ean %}
+                                                <br><small class="text-muted">EAN: {{ riga.prodotto.ean }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-{% if riga.tipo_origine == 'ordine_ricevuto' %}success{% elif riga.tipo_origine == 'ordine_da_ricevere' %}warning{% else %}info{% endif %}">
+                                                {{ riga.get_tipo_origine_display }}
+                                            </span>
+                                            <br><small class="text-muted">{{ riga.get_riferimento_display }}</small>
+                                        </td>
+                                        <td class="text-right">
+                                            {% if riga.quantita_ordinata %}
+                                                {{ riga.quantita_ordinata }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-right">{{ riga.quantita_riconosciuta }}</td>
+                                        <td class="text-right">€ {{ riga.prezzo_unitario|floatformat:2 }}</td>
+                                        <td class="text-right">€ {{ riga.get_totale_imponibile|floatformat:2 }}</td>
+                                        <td class="text-right">€ {{ riga.get_totale_iva|floatformat:2 }}</td>
+                                        <td class="text-right"><strong>€ {{ riga.get_totale_con_iva|floatformat:2 }}</strong></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="thead-light">
+                                    <tr>
+                                        <th colspan="5" class="text-right">TOTALI:</th>
+                                        <th class="text-right">€ {{ riconoscimento.totale_imponibile|floatformat:2 }}</th>
+                                        <th class="text-right">€ {{ riconoscimento.totale_iva|floatformat:2 }}</th>
+                                        <th class="text-right">€ {{ riconoscimento.totale_riconoscimento|floatformat:2 }}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Nessuna riga presente</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar azioni -->
+        <div class="col-lg-4">
+            <!-- Azioni stato -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Gestione Stato</h6>
+                </div>
+                <div class="card-body">
+                    {% if riconoscimento.stato == 'bozza' %}
+                        <form method="post" action="{% url 'fatturazionepassiva:cambia_stato_riconoscimento' riconoscimento.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="nuovo_stato" value="definitivo">
+                            <button type="submit" class="btn btn-info btn-block">
+                                <i class="fas fa-check"></i> Rendi Definitivo
+                            </button>
+                        </form>
+                    {% elif riconoscimento.stato == 'definitivo' and can_send %}
+                        <a href="{% url 'fatturazionepassiva:invia_email' riconoscimento.pk %}" class="btn btn-primary btn-block">
+                            <i class="fas fa-paper-plane"></i> Invia Email
+                        </a>
+                    {% elif riconoscimento.stato == 'inviato' and can_confirm %}
+                        <form method="post" action="{% url 'fatturazionepassiva:cambia_stato_riconoscimento' riconoscimento.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="nuovo_stato" value="confermato">
+                            <button type="submit" class="btn btn-success btn-block">
+                                <i class="fas fa-thumbs-up"></i> Conferma
+                            </button>
+                        </form>
+                    {% endif %}
+                    
+                    {% if riconoscimento.stato != 'annullato' %}
+                        <form method="post" action="{% url 'fatturazionepassiva:cambia_stato_riconoscimento' riconoscimento.pk %}" class="mt-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="nuovo_stato" value="annullato">
+                            <button type="submit" class="btn btn-outline-danger btn-block" onclick="return confirm('Sei sicuro di voler annullare questo riconoscimento?')">
+                                <i class="fas fa-ban"></i> Annulla
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Export -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Export</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12 mb-2">
+                            <a href="{% url 'fatturazionepassiva:export_pdf' riconoscimento.pk %}" class="btn btn-outline-danger btn-block" target="_blank">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </a>
+                        </div>
+                        <div class="col-12 mb-2">
+                            <a href="{% url 'fatturazionepassiva:export_excel' riconoscimento.pk %}" class="btn btn-outline-success btn-block" target="_blank">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </a>
+                        </div>
+                        <div class="col-12 mb-2">
+                            <a href="{% url 'fatturazionepassiva:export_csv' riconoscimento.pk %}" class="btn btn-outline-info btn-block" target="_blank">
+                                <i class="fas fa-file-csv"></i> CSV
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email -->
+            {% if riconoscimento.stato in 'definitivo,inviato,confermato' %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Invio Email</h6>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'fatturazionepassiva:invia_email' riconoscimento.pk %}" class="btn btn-primary btn-block">
+                        <i class="fas fa-envelope"></i> Invia Email
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Export history -->
+            {% if export_history %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Storico Export</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for export in export_history %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <span><i class="fas fa-file"></i> {{ export.get_tipo_export_display }}</span>
+                                <small class="text-muted">{{ export.data_export|date:"d/m H:i" }}</small>
+                            </div>
+                            {% if export.inviato_via_email %}
+                                <small class="text-success">
+                                    <i class="fas fa-envelope"></i> {{ export.email_destinatario }}
+                                </small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

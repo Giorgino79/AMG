@@ -1,0 +1,92 @@
+{% extends "mail/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'mail:dashboard' %}">Mail</a></li>
+<li class="breadcrumb-item active">Configurazione</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Configurazione Email</h5>
+                <a href="{% url 'mail:test_config' %}" class="btn btn-sm btn-info">
+                    <i class="bi bi-check-circle"></i> Test Configurazione SMTP
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Configura i parametri SMTP per l'invio e IMAP per la ricezione delle email.
+                </div>
+
+                {% if config.last_smtp_error %}
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <strong>Errore SMTP:</strong> {{ config.last_smtp_error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endif %}
+
+                {% if config.last_imap_error %}
+                <div class="alert alert-warning alert-dismissible fade show">
+                    <strong>Errore IMAP:</strong> {{ config.last_imap_error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    {% crispy form %}
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Salva Configurazione
+                        </button>
+                        <a href="{% url 'mail:dashboard' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annulla
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if config.smtp_server %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">Informazioni Configurazione</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>SMTP (Invio)</h6>
+                        <p class="mb-1"><small class="text-muted">Server:</small> {{ config.smtp_server }}:{{ config.smtp_port }}</p>
+                        <p class="mb-1"><small class="text-muted">Username:</small> {{ config.smtp_username }}</p>
+                        <p class="mb-1"><small class="text-muted">TLS:</small> {% if config.use_tls %}<span class="badge bg-success">Sì</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</p>
+                        <p class="mb-0"><small class="text-muted">SSL:</small> {% if config.use_ssl %}<span class="badge bg-success">Sì</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>IMAP (Ricezione)</h6>
+                        {% if config.imap_enabled %}
+                        <p class="mb-1"><small class="text-muted">Server:</small> {{ config.imap_server }}:{{ config.imap_port }}</p>
+                        <p class="mb-1"><small class="text-muted">Username:</small> {{ config.imap_username }}</p>
+                        <p class="mb-0"><small class="text-muted">Ultimo sync:</small> {{ config.last_imap_sync|date:"d/m/Y H:i"|default:"Mai" }}</p>
+                        {% else %}
+                        <p class="text-muted"><small>IMAP non abilitato</small></p>
+                        {% endif %}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-12">
+                        <h6>Limiti</h6>
+                        <p class="mb-1"><small class="text-muted">Limite giornaliero:</small> {{ config.daily_limit|default:"Nessun limite" }}</p>
+                        <p class="mb-0"><small class="text-muted">Limite orario:</small> {{ config.hourly_limit|default:"Nessun limite" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

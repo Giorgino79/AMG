@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static crispy_forms_tags %}
+
+{% block title %}Carica Lista Materiale - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'allestimento:lista_sessioni' %}">Allestimento</a></li>
+<li class="breadcrumb-item active">Carica File</li>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-upload me-2"></i>Carica Lista Materiale
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Formato file richiesto:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>File Excel (.xlsx)</li>
+                            <li>Colonna A: Quantita prodotti</li>
+                            <li>Colonna B: Descrizione prodotto</li>
+                            <li>I dati devono iniziare dalla riga 8</li>
+                        </ul>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-upload me-2"></i>Carica e Crea Sessione
+                            </button>
+                            <a href="{% url 'allestimento:lista_sessioni' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Annulla
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

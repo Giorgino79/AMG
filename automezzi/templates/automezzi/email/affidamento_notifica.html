@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { background: #0d6efd; color: white; padding: 25px; text-align: center; }
+        .header h1 { margin: 0; font-size: 22px; }
+        .content { padding: 30px; }
+        .info-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .info-table th { text-align: left; padding: 10px 15px; background: #f8f9fa; color: #666; width: 35%; border-bottom: 1px solid #dee2e6; }
+        .info-table td { padding: 10px 15px; border-bottom: 1px solid #dee2e6; }
+        .btn { display: inline-block; background: #198754; color: white; padding: 15px 40px; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold; margin: 20px 0; }
+        .btn:hover { background: #157347; }
+        .footer { background: #f8f9fa; padding: 15px; text-align: center; color: #666; font-size: 12px; }
+        .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 15px; margin: 15px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Affidamento Mezzo Aziendale</h1>
+        </div>
+        <div class="content">
+            <p>Gentile <strong>{{ affidamento.user.get_full_name|default:affidamento.user.username }}</strong>,</p>
+            <p>Ti è stato affidato un mezzo aziendale per un viaggio di lavoro. Di seguito i dettagli:</p>
+
+            <table class="info-table">
+                <tr><th>Automezzo</th><td>{{ affidamento.automezzo.targa }} - {{ affidamento.automezzo.marca }} {{ affidamento.automezzo.modello }}</td></tr>
+                <tr><th>Periodo</th><td>{{ affidamento.data_inizio|date:"d/m/Y" }} → {{ affidamento.data_fine|date:"d/m/Y" }}</td></tr>
+                <tr><th>Km Iniziali</th><td>{{ affidamento.km_iniziali }}</td></tr>
+                <tr><th>Carburante</th><td>{{ affidamento.get_carburante_display }}</td></tr>
+                <tr><th>Scopo del Viaggio</th><td>{{ affidamento.scopo_viaggio }}</td></tr>
+                {% if affidamento.automezzo.carta_carburante %}
+                <tr><th>Carta Carburante</th><td>{{ affidamento.automezzo.carta_carburante }}</td></tr>
+                <tr><th>PIN Carta</th><td>{{ affidamento.automezzo.pin_carta_carburante }}</td></tr>
+                {% endif %}
+                {% if affidamento.note %}
+                <tr><th>Note</th><td>{{ affidamento.note }}</td></tr>
+                {% endif %}
+            </table>
+
+            <div class="warning">
+                <strong>Attenzione:</strong> Premendo il pulsante qui sotto confermi di aver ricevuto il mezzo nelle condizioni descritte e di accettarne la responsabilità.
+            </div>
+
+            <div style="text-align: center;">
+                <a href="{{ accept_url }}" class="btn">Accetto la presa in carico</a>
+            </div>
+
+            <p style="color: #666; font-size: 13px;">Se il pulsante non funziona, copia e incolla questo link nel browser:<br>
+            <a href="{{ accept_url }}">{{ accept_url }}</a></p>
+        </div>
+        <div class="footer">
+            <p>ModularBEF - Gestione Automezzi</p>
+        </div>
+    </div>
+</body>
+</html>

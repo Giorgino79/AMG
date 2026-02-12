@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard Trasporti{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Dashboard Trasporti</h1>
+        </div>
+        <div class="col text-end">
+            <a href="{% url 'trasporti:richiesta_create' %}" class="btn btn-primary">
+                + Nuova Richiesta Trasporto
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistiche -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Richieste Attive</h5>
+                    <h2 class="text-primary">{{ richieste_attive }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">In Corso</h5>
+                    <h2 class="text-info">{{ richieste_in_corso }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Bozze</h5>
+                    <h2 class="text-warning">{{ richieste_bozza }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Azioni Rapide</h5>
+                    <a href="{% url 'trasporti:richieste_list' %}" class="btn btn-sm btn-outline-primary">
+                        Vedi Tutte
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Richieste Recenti -->
+    <div class="card">
+        <div class="card-header">
+            <h5>Richieste Recenti</h5>
+        </div>
+        <div class="card-body">
+            {% if richieste_recenti %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Numero</th>
+                        <th>Titolo</th>
+                        <th>Percorso</th>
+                        <th>Stato</th>
+                        <th>Data</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for richiesta in richieste_recenti %}
+                    <tr>
+                        <td>{{ richiesta.numero }}</td>
+                        <td>{{ richiesta.titolo }}</td>
+                        <td>{{ richiesta.citta_ritiro }} → {{ richiesta.citta_consegna }}</td>
+                        <td><span class="badge bg-info">{{ richiesta.get_stato_display }}</span></td>
+                        <td>{{ richiesta.data_creazione|date:"d/m/Y" }}</td>
+                        <td>
+                            <a href="{% url 'trasporti:richiesta_detail' richiesta.pk %}" class="btn btn-sm btn-primary">
+                                Dettagli
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted">Nessuna richiesta recente</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% comment %}
+Componente Confirm Action (modal generico per conferma azioni)
+
+Uso:
+    {% include 'components/confirm_action.html' with config=confirm_config %}
+
+Parametri:
+    - config: Dictionary con:
+        - modal_id: ID modal (required)
+        - title: Titolo modal
+        - message: Messaggio conferma
+        - confirm_text: Testo bottone conferma
+        - confirm_class: CSS class bottone (default: 'btn-primary')
+        - cancel_text: Testo bottone annulla
+        - form_action: URL action form
+        - form_method: Method form (default: 'post')
+
+Esempio:
+    {% include 'components/confirm_action.html' with config=approve_config %}
+
+    approve_config = {
+        'modal_id': 'approveModal',
+        'title': 'Conferma Approvazione',
+        'message': 'Sei sicuro di voler approvare questo ordine?',
+        'confirm_text': 'Approva',
+        'confirm_class': 'btn-success',
+        'form_action': url_to_approve,
+    }
+{% endcomment %}
+
+<div class="modal fade" id="{{ config.modal_id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ config.title|default:"Conferma Azione" }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ config.message|default:"Sei sicuro di voler procedere?" }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {{ config.cancel_text|default:"Annulla" }}
+                </button>
+                <form method="{{ config.form_method|default:'post' }}"
+                      action="{{ config.form_action }}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn {{ config.confirm_class|default:'btn-primary' }}">
+                        {{ config.confirm_text|default:"Conferma" }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,330 @@
+{% extends "mail/base.html" %}
+{% load static %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'mail:dashboard' %}">Mail</a></li>
+<li class="breadcrumb-item active">Messaggi</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2>Messaggi Email</h2>
+                <p class="text-muted">Gestione inbox, sent e cartelle email</p>
+            </div>
+            <a href="{% url 'mail:compose' %}" class="btn btn-success">
+                <i class="bi bi-pencil-square"></i> Nuova Email
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Sidebar cartelle e labels -->
+    <div class="col-md-3">
+        <!-- Cartelle predefinite -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">Cartelle</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="?folder=inbox" class="list-group-item list-group-item-action {% if current_folder == 'inbox' %}active{% endif %}">
+                    <i class="bi bi-inbox"></i> Inbox
+                    <span class="badge bg-primary float-end">{{ folders_stats.inbox|default:0 }}</span>
+                </a>
+                <a href="?folder=sent" class="list-group-item list-group-item-action {% if current_folder == 'sent' %}active{% endif %}">
+                    <i class="bi bi-send"></i> Inviati
+                    <span class="badge bg-secondary float-end">{{ folders_stats.sent|default:0 }}</span>
+                </a>
+                <a href="?folder=drafts" class="list-group-item list-group-item-action {% if current_folder == 'drafts' %}active{% endif %}">
+                    <i class="bi bi-file-earmark"></i> Bozze
+                    <span class="badge bg-warning float-end">{{ folders_stats.drafts|default:0 }}</span>
+                </a>
+                <a href="?folder=trash" class="list-group-item list-group-item-action {% if current_folder == 'trash' %}active{% endif %}">
+                    <i class="bi bi-trash"></i> Cestino
+                    <span class="badge bg-danger float-end">{{ folders_stats.trash|default:0 }}</span>
+                </a>
+                <a href="?folder=spam" class="list-group-item list-group-item-action {% if current_folder == 'spam' %}active{% endif %}">
+                    <i class="bi bi-exclamation-triangle"></i> Spam
+                    <span class="badge bg-danger float-end">{{ folders_stats.spam|default:0 }}</span>
+                </a>
+                <a href="?folder=archive" class="list-group-item list-group-item-action {% if current_folder == 'archive' %}active{% endif %}">
+                    <i class="bi bi-archive"></i> Archivio
+                    <span class="badge bg-info float-end">{{ folders_stats.archive|default:0 }}</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Cartelle personalizzate -->
+        {% if folders %}
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Cartelle Personalizzate</h6>
+                <button class="btn btn-sm btn-link" data-bs-toggle="modal" data-bs-target="#newFolderModal">
+                    <i class="bi bi-plus"></i>
+                </button>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for folder in folders %}
+                <a href="?folder=custom_{{ folder.id }}" class="list-group-item list-group-item-action {% if current_folder == 'custom_'|add:folder.id|stringformat:'s' %}active{% endif %}">
+                    <i class="bi bi-folder"></i> {{ folder.name }}
+                    <span class="badge bg-secondary float-end">{{ folder.total_messages }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Labels -->
+        {% if labels %}
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Etichette</h6>
+                <button class="btn btn-sm btn-link" data-bs-toggle="modal" data-bs-target="#newLabelModal">
+                    <i class="bi bi-plus"></i>
+                </button>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for label in labels %}
+                <a href="?label={{ label.id }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                    <i class="bi bi-{{ label.icon }}" style="color: {{ label.color }}"></i>
+                    <span class="ms-2">{{ label.name }}</span>
+                    <span class="badge bg-secondary ms-auto">{{ label.message_count }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Lista messaggi -->
+    <div class="col-md-9">
+        <!-- Barra di ricerca e filtri -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <form method="get" class="row g-2">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" name="search" class="form-control" placeholder="Cerca nei messaggi..." value="{{ search }}">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Cerca</button>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{% url 'mail:message_list' %}" class="btn btn-secondary w-100">Reset</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Messaggi -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0">
+                        {% if current_folder == 'inbox' %}
+                            <i class="bi bi-inbox"></i> Posta in Arrivo
+                        {% elif current_folder == 'sent' %}
+                            <i class="bi bi-send"></i> Inviati
+                        {% elif current_folder == 'drafts' %}
+                            <i class="bi bi-file-earmark"></i> Bozze
+                        {% elif current_folder == 'trash' %}
+                            <i class="bi bi-trash"></i> Cestino
+                        {% elif current_folder == 'spam' %}
+                            <i class="bi bi-exclamation-triangle"></i> Spam
+                        {% elif current_folder == 'archive' %}
+                            <i class="bi bi-archive"></i> Archivio
+                        {% else %}
+                            <i class="bi bi-envelope"></i> Tutti i Messaggi
+                        {% endif %}
+                    </h5>
+                    <small class="text-muted">{{ messages.count }} messaggi</small>
+                </div>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="syncEmails()" id="syncButton" title="Sincronizza nuove email">
+                        <i class="bi bi-arrow-clockwise"></i> Sincronizza
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.reload()" title="Ricarica pagina">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            </div>
+
+            {% if messages %}
+            <div class="list-group list-group-flush">
+                {% for msg in messages %}
+                <a href="{% url 'mail:message_detail' msg.id %}" class="list-group-item list-group-item-action {% if not msg.is_read %}fw-bold{% endif %}">
+                    <div class="d-flex w-100 align-items-start">
+                        <!-- Checkbox e stella -->
+                        <div class="me-2">
+                            <input type="checkbox" class="form-check-input me-2" onclick="event.stopPropagation();">
+                            <i class="bi bi-star{% if msg.is_flagged %}-fill text-warning{% endif %}" onclick="event.preventDefault(); event.stopPropagation(); toggleFlag({{ msg.id }});"></i>
+                        </div>
+
+                        <!-- Info mittente/destinatario -->
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <div class="d-flex align-items-center">
+                                    {% if msg.direction == 'outgoing' %}
+                                        <span class="text-dark">A: {{ msg.to_addresses|join:", " }}</span>
+                                    {% else %}
+                                        <span class="text-dark">{{ msg.from_name|default:msg.from_address }}</span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="d-flex align-items-center">
+                                    <!-- Labels -->
+                                    {% for label in msg.labels.all %}
+                                        <span class="badge me-1" style="background-color: {{ label.color }};">
+                                            <i class="bi bi-{{ label.icon }}"></i> {{ label.name }}
+                                        </span>
+                                    {% endfor %}
+
+                                    <!-- Allegati -->
+                                    {% if msg.has_attachments %}
+                                        <i class="bi bi-paperclip me-2" title="Ha allegati"></i>
+                                    {% endif %}
+
+                                    <!-- Status badge -->
+                                    {% if msg.status == 'draft' %}
+                                        <span class="badge bg-warning text-dark me-2">Bozza</span>
+                                    {% elif msg.status == 'failed' %}
+                                        <span class="badge bg-danger me-2">Fallito</span>
+                                    {% elif msg.status == 'pending' %}
+                                        <span class="badge bg-info me-2">In attesa</span>
+                                    {% endif %}
+
+                                    <!-- Data -->
+                                    <small class="text-muted">{{ msg.created_at|date:"d/m/Y H:i" }}</small>
+                                </div>
+                            </div>
+
+                            <!-- Oggetto -->
+                            <div class="mb-1">
+                                <span class="{% if not msg.is_read %}fw-bold{% endif %}">{{ msg.subject }}</span>
+                            </div>
+
+                            <!-- Preview contenuto -->
+                            <div>
+                                <small class="text-muted">
+                                    {{ msg.content_text|truncatewords:20|default:"Nessun contenuto testuale" }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card-body text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <p class="text-muted mt-3">
+                    {% if search %}
+                        Nessun messaggio trovato con i criteri di ricerca.
+                    {% else %}
+                        Nessun messaggio in questa cartella.
+                    {% endif %}
+                </p>
+                <a href="{% url 'mail:compose' %}" class="btn btn-success">
+                    <i class="bi bi-pencil-square"></i> Componi Nuova Email
+                </a>
+            </div>
+            {% endif %}
+
+            {% if messages %}
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">Mostrando {{ messages.count }} messaggi</small>
+                    <!-- Pagination placeholder -->
+                    <nav aria-label="Navigazione messaggi">
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item disabled"><a class="page-link" href="#">Precedente</a></li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">Successivo</a></li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function toggleFlag(messageId) {
+    const csrftoken = getCookie('csrftoken');
+    fetch(`/mail/messages/${messageId}/toggle-flag/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function syncEmails() {
+    const button = document.getElementById('syncButton');
+    const icon = button.querySelector('i');
+
+    // Disabilita bottone e mostra spinner
+    button.disabled = true;
+    icon.classList.remove('bi-arrow-clockwise');
+    icon.classList.add('bi-hourglass-split');
+    button.innerHTML = '<i class="bi bi-hourglass-split"></i> Sincronizzazione...';
+
+    const csrftoken = getCookie('csrftoken');
+    fetch('{% url "mail:sync_emails" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Attendi 3 secondi poi ricarica
+            setTimeout(() => {
+                location.reload();
+            }, 3000);
+        } else {
+            alert('Errore: ' + data.error);
+            button.disabled = false;
+            button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Sincronizza';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Errore durante la sincronizzazione');
+        button.disabled = false;
+        button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Sincronizza';
+    });
+}
+</script>
+{% endblock %}

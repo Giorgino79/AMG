@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Gestisci Richiesta Permesso - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'users:richieste_permessi_admin_list' %}">Richieste Permessi</a></li>
+<li class="breadcrumb-item active">Gestisci</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h4 class="mb-0">Gestisci Richiesta Permesso</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="small text-muted">Dipendente</label>
+                            <h5>{{ richiesta.user.get_full_name }}</h5>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted">Data</label>
+                            <h5>{{ richiesta.data|date:"d/m/Y" }}</h5>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small text-muted">Dalle</label>
+                            <h5>{{ richiesta.ora_inizio|time:"H:i" }}</h5>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small text-muted">Alle</label>
+                            <h5>{{ richiesta.ora_fine|time:"H:i" }}</h5>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small text-muted">Ore Richieste</label>
+                            <h5>{{ richiesta.ore_richieste }}h</h5>
+                        </div>
+                        <div class="col-12">
+                            <label class="small text-muted">Motivazione</label>
+                            <p>{{ richiesta.motivazione|default:"Nessuna motivazione fornita" }}</p>
+                        </div>
+                    </div>
+
+                    <form method="post" class="border-top pt-3">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'users:richieste_permessi_admin_list' %}" class="btn btn-secondary">Indietro</a>
+                            <button type="submit" class="btn btn-warning">Conferma Azione</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

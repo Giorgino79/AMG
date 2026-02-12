@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Richiedi Permesso - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'users:richieste_permessi_list' %}">Permessi</a></li>
+<li class="breadcrumb-item active">Nuova Richiesta</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h4 class="mb-0"><i class="bi bi-clock me-2"></i>Richiedi Permesso</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>Ore disponibili: <strong>{{ ore_disponibili }}</strong>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label>Data *</label>
+                                {{ form.data }}
+                                {% if form.data.errors %}<div class="text-danger">{{ form.data.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                <label>Ora Inizio *</label>
+                                {{ form.ora_inizio }}
+                                {% if form.ora_inizio.errors %}<div class="text-danger">{{ form.ora_inizio.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                <label>Ora Fine *</label>
+                                {{ form.ora_fine }}
+                                {% if form.ora_fine.errors %}<div class="text-danger">{{ form.ora_fine.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-12">
+                                <label>Motivazione</label>
+                                {{ form.motivazione }}
+                                {% if form.motivazione.errors %}<div class="text-danger">{{ form.motivazione.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'users:richieste_permessi_list' %}" class="btn btn-secondary">Annulla</a>
+                            <button type="submit" class="btn btn-warning">Invia Richiesta</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

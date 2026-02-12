@@ -1,0 +1,77 @@
+{% comment %}
+Componente Pagination
+
+Uso:
+    {% include 'components/pagination.html' with page_obj=page_obj %}
+
+Parametri:
+    - page_obj: Oggetto paginator (required)
+    - preserve_query: Preserva query params (default: True)
+{% endcomment %}
+
+{% if page_obj.has_other_pages %}
+<nav aria-label="Navigazione pagine">
+    <ul class="pagination justify-content-center mb-0">
+        <!-- First Page -->
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1{% if preserve_query|default:True %}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}{% endif %}">
+                <i class="bi bi-chevron-bar-left"></i>
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if preserve_query|default:True %}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}{% endif %}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link"><i class="bi bi-chevron-bar-left"></i></span>
+        </li>
+        <li class="page-item disabled">
+            <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+        </li>
+        {% endif %}
+
+        <!-- Page Numbers -->
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if preserve_query|default:True %}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}{% endif %}">{{ num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+
+        <!-- Last Page -->
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if preserve_query|default:True %}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}{% endif %}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if preserve_query|default:True %}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}{% endif %}">
+                <i class="bi bi-chevron-bar-right"></i>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+        </li>
+        <li class="page-item disabled">
+            <span class="page-link"><i class="bi bi-chevron-bar-right"></i></span>
+        </li>
+        {% endif %}
+    </ul>
+
+    <!-- Page Info -->
+    <p class="text-center text-muted small mt-2 mb-0">
+        Pagina {{ page_obj.number }} di {{ page_obj.paginator.num_pages }}
+        ({{ page_obj.paginator.count }} {{ page_obj.paginator.count|pluralize:"elemento,elementi" }} totali)
+    </p>
+</nav>
+{% endif %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Le Mie Richieste Permessi - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Richieste Permessi</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-clock me-2"></i>Le Mie Richieste Permessi</h2>
+        <a href="{% url 'users:richiesta_permesso_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Nuova Richiesta
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            {% if richieste %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Orario</th>
+                            <th>Ore</th>
+                            <th>Motivo</th>
+                            <th>Stato</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in richieste %}
+                        <tr>
+                            <td>{{ r.data|date:"d/m/Y" }}</td>
+                            <td>{{ r.ora_inizio|date:"H:i" }} - {{ r.ora_fine|date:"H:i" }}</td>
+                            <td><strong>{{ r.ore_richieste }}h</strong></td>
+                            <td>{{ r.motivo|truncatewords:10 }}</td>
+                            <td>
+                                {% if r.stato == 'in_attesa' %}
+                                <span class="badge bg-warning">In Attesa</span>
+                                {% elif r.stato == 'approvata' %}
+                                <span class="badge bg-success">Approvata</span>
+                                {% else %}
+                                <span class="badge bg-danger">Rifiutata</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                <p class="text-muted">Nessuna richiesta permesso</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

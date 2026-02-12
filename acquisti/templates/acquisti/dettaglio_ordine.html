@@ -1,0 +1,295 @@
+{% extends "commons_templates/base_detail.html" %}
+{% load static %}
+{% load allegati_tags %}
+
+{% block title %}{{ ordine.numero_ordine }} - Dettaglio Ordine{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'acquisti:dashboard' %}">Acquisti</a></li>
+<li class="breadcrumb-item active">{{ ordine.numero_ordine }}</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-file-earmark-text me-2 text-primary"></i>{{ ordine.numero_ordine }}
+{% endblock %}
+
+{% block page_subtitle %}
+<p class="text-muted mb-0">
+    <i class="bi bi-building me-1"></i>{{ ordine.fornitore.nome }}
+    {% if ordine.titolo_display %} - {{ ordine.titolo_display }}{% endif %}
+</p>
+{% endblock %}
+
+{% block status_badge %}
+<div class="text-end">
+    <span class="badge bg-{{ ordine.get_stato_css_class }} fs-6 mb-2">
+        {{ ordine.get_stato_display }}
+    </span>
+    <br>
+    <span class="h4 text-primary fw-bold">&euro;{{ ordine.importo_totale|floatformat:2 }}</span>
+</div>
+{% endblock %}
+
+{% block detail_content %}
+<!-- Dati Commerciali -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-cash-coin me-2 text-primary"></i>Dati Commerciali
+    </h5>
+    <dl class="row mb-0">
+        <dt class="col-sm-3 text-muted">Importo Totale</dt>
+        <dd class="col-sm-9"><strong>&euro;{{ ordine.importo_totale|floatformat:2 }}</strong> {{ ordine.valuta }}</dd>
+
+        <dt class="col-sm-3 text-muted">Termini Pagamento</dt>
+        <dd class="col-sm-9">{{ ordine.termini_pagamento|default:"-" }}</dd>
+
+        <dt class="col-sm-3 text-muted">Tempi Consegna</dt>
+        <dd class="col-sm-9">{{ ordine.tempi_consegna|default:"-" }}</dd>
+
+        <dt class="col-sm-3 text-muted">Data Consegna Richiesta</dt>
+        <dd class="col-sm-9">{{ ordine.data_consegna_richiesta|date:"d/m/Y"|default:"-" }}</dd>
+
+        {% if ordine.riferimento_esterno %}
+        <dt class="col-sm-3 text-muted">Riferimento Fornitore</dt>
+        <dd class="col-sm-9">{{ ordine.riferimento_esterno }}</dd>
+        {% endif %}
+    </dl>
+</div>
+
+<!-- Timeline Ordine - Progress Bar -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-clock-history me-2 text-primary"></i>Stato Ordine
+    </h5>
+
+    <!-- Progress Bar -->
+    <div class="position-relative mb-4">
+        <div class="progress" style="height: 8px;">
+            <div class="progress-bar bg-success" role="progressbar"
+                 style="width: {% if ordine.stato == 'PAGATO' %}100{% elif ordine.stato == 'RICEVUTO' %}66{% else %}33{% endif %}%">
+            </div>
+        </div>
+
+        <!-- Step indicators -->
+        <div class="d-flex justify-content-between position-relative" style="margin-top: -14px;">
+            <!-- Step 1: Creato -->
+            <div class="text-center" style="width: 33%;">
+                <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center"
+                     style="width: 24px; height: 24px; font-size: 12px;">
+                    <i class="bi bi-check"></i>
+                </div>
+                <div class="mt-2">
+                    <strong class="d-block small">Creato</strong>
+                    <small class="text-muted">{{ ordine.data_ordine|date:"d/m/Y" }}</small>
+                </div>
+            </div>
+
+            <!-- Step 2: Ricevuto -->
+            <div class="text-center" style="width: 33%;">
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center {% if ordine.stato != 'CREATO' %}bg-success text-white{% else %}bg-light border{% endif %}"
+                     style="width: 24px; height: 24px; font-size: 12px;">
+                    {% if ordine.stato != 'CREATO' %}
+                    <i class="bi bi-check"></i>
+                    {% else %}
+                    <span class="text-muted">2</span>
+                    {% endif %}
+                </div>
+                <div class="mt-2">
+                    <strong class="d-block small {% if ordine.stato == 'CREATO' %}text-muted{% endif %}">Ricevuto</strong>
+                    {% if ordine.data_ricevimento %}
+                    <small class="text-muted">{{ ordine.data_ricevimento|date:"d/m/Y" }}</small>
+                    {% else %}
+                    <small class="text-muted">In attesa</small>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Step 3: Pagato -->
+            <div class="text-center" style="width: 33%;">
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center {% if ordine.stato == 'PAGATO' %}bg-success text-white{% else %}bg-light border{% endif %}"
+                     style="width: 24px; height: 24px; font-size: 12px;">
+                    {% if ordine.stato == 'PAGATO' %}
+                    <i class="bi bi-check"></i>
+                    {% else %}
+                    <span class="text-muted">3</span>
+                    {% endif %}
+                </div>
+                <div class="mt-2">
+                    <strong class="d-block small {% if ordine.stato != 'PAGATO' %}text-muted{% endif %}">Pagato</strong>
+                    {% if ordine.data_pagamento %}
+                    <small class="text-muted">{{ ordine.data_pagamento|date:"d/m/Y" }}</small>
+                    {% else %}
+                    <small class="text-muted">-</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dettagli ultimo step -->
+    <div class="alert alert-light border-0 bg-light small mb-0">
+        {% if ordine.stato == 'PAGATO' %}
+        <i class="bi bi-check-circle-fill text-success me-1"></i>
+        <strong>Completato</strong> - Pagamento effettuato il {{ ordine.data_pagamento|date:"d/m/Y" }}
+        {% elif ordine.stato == 'RICEVUTO' %}
+        <i class="bi bi-box-seam text-primary me-1"></i>
+        <strong>Ricevuto</strong> il {{ ordine.data_ricevimento|date:"d/m/Y" }} da {{ ordine.ricevuto_da.get_full_name|default:"-" }} - In attesa di pagamento
+        {% else %}
+        <i class="bi bi-hourglass-split text-warning me-1"></i>
+        <strong>In attesa</strong> - Ordine creato {{ ordine.get_giorni_dalla_creazione }} giorni fa da {{ ordine.creato_da.get_full_name|default:ordine.creato_da.username }}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Note Ordine -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-sticky me-2 text-primary"></i>Note Ordine
+    </h5>
+    {% if ordine.note_ordine %}
+    <div style="white-space: pre-wrap;">{{ ordine.note_ordine }}</div>
+    {% else %}
+    <p class="text-muted mb-0">Nessuna nota disponibile</p>
+    {% endif %}
+</div>
+
+<!-- Dati Fornitore -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-building me-2 text-primary"></i>Dati Fornitore
+    </h5>
+    <dl class="row mb-0">
+        <dt class="col-sm-3 text-muted">Ragione Sociale</dt>
+        <dd class="col-sm-9"><strong>{{ ordine.fornitore.nome }}</strong></dd>
+
+        {% if ordine.fornitore.email %}
+        <dt class="col-sm-3 text-muted">Email</dt>
+        <dd class="col-sm-9"><i class="bi bi-envelope me-1"></i>{{ ordine.fornitore.email }}</dd>
+        {% endif %}
+
+        {% if ordine.fornitore.telefono %}
+        <dt class="col-sm-3 text-muted">Telefono</dt>
+        <dd class="col-sm-9"><i class="bi bi-telephone me-1"></i>{{ ordine.fornitore.telefono }}</dd>
+        {% endif %}
+
+        {% if ordine.fornitore.indirizzo %}
+        <dt class="col-sm-3 text-muted">Indirizzo</dt>
+        <dd class="col-sm-9">
+            <i class="bi bi-geo-alt me-1"></i>{{ ordine.fornitore.indirizzo }}
+            {% if ordine.fornitore.citta %}, {{ ordine.fornitore.citta }}{% endif %}
+        </dd>
+        {% endif %}
+    </dl>
+</div>
+
+<!-- Collegamento Preventivo -->
+{% if ordine.richiesta_preventivo %}
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-link-45deg me-2 text-primary"></i>Collegamento Preventivo
+    </h5>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <strong>Preventivo:</strong> {{ ordine.richiesta_preventivo.numero }}<br>
+            <small class="text-muted">{{ ordine.richiesta_preventivo.titolo }}</small>
+        </div>
+        <a href="{% url 'preventivi_beni:richiesta_detail' ordine.richiesta_preventivo.pk %}" class="btn btn-outline-primary">
+            <i class="bi bi-eye"></i> Vedi Preventivo
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_content %}
+<!-- Card Azioni Stato -->
+<div class="card shadow-sm mt-4">
+    <div class="card-header">
+        <i class="bi bi-gear me-2"></i><strong>Cambia Stato Ordine</strong>
+    </div>
+    <div class="card-body">
+        {% if form_stato.fields.azione.choices %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="cambia_stato" value="1">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Azione</label>
+                    {{ form_stato.azione }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Note (opzionale)</label>
+                    {{ form_stato.note }}
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100" onclick="return confirm('Sei sicuro?')">
+                        <i class="bi bi-check-lg"></i> Esegui
+                    </button>
+                </div>
+            </div>
+        </form>
+        {% else %}
+        <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle me-2"></i>Nessuna azione disponibile per questo ordine.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Card Modifica Dettagli -->
+<div class="card shadow-sm mt-3">
+    <div class="card-header">
+        <i class="bi bi-pencil me-2"></i><strong>Modifica Dettagli</strong>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="aggiorna_dettagli" value="1">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Riferimento Fornitore</label>
+                    {{ form_dettaglio.riferimento_esterno }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Note Ordine</label>
+                    {{ form_dettaglio.note_ordine }}
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-save"></i> Salva
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_actions %}
+<!-- Azioni specifiche ordine -->
+<a href="{% url 'acquisti:scarica_pdf' ordine.pk %}" class="list-group-item list-group-item-action" target="_blank">
+    <i class="bi bi-file-pdf text-danger"></i> Scarica PDF
+</a>
+{% if ordine.fornitore.email %}
+<a href="mailto:{{ ordine.fornitore.email }}?subject=Ordine {{ ordine.numero_ordine }}" class="list-group-item list-group-item-action">
+    <i class="bi bi-envelope text-info"></i> Email Fornitore
+</a>
+{% endif %}
+{% endblock %}
+
+{% block sidebar_extra %}
+<!-- Info Sistema -->
+<div class="card shadow-sm mt-3">
+    <div class="card-header bg-secondary text-white">
+        <h6 class="mb-0"><i class="bi bi-info-circle"></i> Info Sistema</h6>
+    </div>
+    <div class="card-body small">
+        <dl class="mb-0">
+            <dt class="text-muted">Creato il</dt>
+            <dd>{{ ordine.created_at|date:"d/m/Y H:i" }}</dd>
+            <dt class="text-muted">Modificato il</dt>
+            <dd class="mb-0">{{ ordine.updated_at|date:"d/m/Y H:i" }}</dd>
+        </dl>
+    </div>
+</div>
+{% endblock %}

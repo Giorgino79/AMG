@@ -1,0 +1,249 @@
+{% extends "commons_templates/base_detail.html" %}
+{% load static %}
+{% load humanize %}
+{% load allegati_tags %}
+
+{% block title %}Automezzo {{ automezzo.targa }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'automezzi:dashboard' %}">Automezzi</a></li>
+<li class="breadcrumb-item"><a href="{% url 'automezzi:automezzo_list' %}">Elenco</a></li>
+<li class="breadcrumb-item active">{{ automezzo.targa }}</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-truck me-2 text-primary"></i>{{ automezzo.targa }}
+{% endblock %}
+
+{% block page_subtitle %}
+<p class="text-muted mb-0">
+    {{ automezzo.marca }} {{ automezzo.modello }} ({{ automezzo.anno_immatricolazione }})
+</p>
+{% endblock %}
+
+{% block status_badge %}
+<div class="text-end">
+    {% if automezzo.attivo %}
+    <span class="badge fs-6 bg-success mb-1">Attivo</span>
+    {% else %}
+    <span class="badge fs-6 bg-danger mb-1">Non attivo</span>
+    {% endif %}
+    <br>
+    {% if automezzo.disponibile %}
+    <span class="badge bg-info">Disponibile</span>
+    {% else %}
+    <span class="badge bg-warning text-dark">Non disponibile</span>
+    {% endif %}
+    {% if automezzo.bloccata %}
+    <br><span class="badge bg-danger mt-1"><i class="bi bi-lock-fill me-1"></i>Bloccato</span>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block detail_content %}
+<!-- Info Generali -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-info-circle me-2 text-primary"></i>Informazioni Generali
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <dl class="row mb-0">
+                {% if automezzo.numero_mezzo %}
+                <dt class="col-sm-5 text-muted">Numero Mezzo</dt>
+                <dd class="col-sm-7"><strong class="text-primary fs-5">#{{ automezzo.numero_mezzo }}</strong></dd>
+                {% endif %}
+                <dt class="col-sm-5 text-muted">Targa</dt>
+                <dd class="col-sm-7"><strong>{{ automezzo.targa }}</strong></dd>
+                <dt class="col-sm-5 text-muted">Marca</dt>
+                <dd class="col-sm-7">{{ automezzo.marca }}</dd>
+                <dt class="col-sm-5 text-muted">Modello</dt>
+                <dd class="col-sm-7">{{ automezzo.modello }}</dd>
+            </dl>
+        </div>
+        <div class="col-md-6">
+            <dl class="row mb-0">
+                <dt class="col-sm-5 text-muted">Anno Immatricolazione</dt>
+                <dd class="col-sm-7">{{ automezzo.anno_immatricolazione }} <small class="text-muted">({{ automezzo.eta }} anni)</small></dd>
+                <dt class="col-sm-5 text-muted">Chilometri Attuali</dt>
+                <dd class="col-sm-7"><strong>{{ automezzo.chilometri_attuali|intcomma }}</strong> km</dd>
+                {% if automezzo.data_revisione %}
+                <dt class="col-sm-5 text-muted">Data Revisione</dt>
+                <dd class="col-sm-7">{{ automezzo.data_revisione|date:"d/m/Y" }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+</div>
+
+<!-- Assegnazione -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-person me-2 text-primary"></i>Assegnazione
+    </h5>
+    {% if automezzo.assegnato_a %}
+    <div class="d-flex align-items-center">
+        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+            <i class="bi bi-person-fill fs-4"></i>
+        </div>
+        <div>
+            <strong>{{ automezzo.assegnato_a.get_full_name|default:automezzo.assegnato_a.username }}</strong>
+            {% if automezzo.assegnato_a.email %}
+            <br><small class="text-muted">{{ automezzo.assegnato_a.email }}</small>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0"><i class="bi bi-dash-circle me-2"></i>Nessun assegnatario</p>
+    {% endif %}
+</div>
+
+<!-- Motivo Blocco -->
+{% if automezzo.bloccata and automezzo.motivo_blocco %}
+<div class="mb-4">
+    <div class="alert alert-danger">
+        <h6 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Mezzo Bloccato</h6>
+        <p class="mb-0">{{ automezzo.motivo_blocco }}</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Documenti -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-file-earmark-text me-2 text-primary"></i>Documenti del Mezzo
+    </h5>
+    <div class="row g-3">
+        <!-- Libretto Fronte -->
+        <div class="col-md-4">
+            <div class="card h-100 border {% if automezzo.libretto_fronte %}border-success{% else %}border-secondary{% endif %}">
+                <div class="card-body text-center">
+                    <i class="bi bi-card-text fs-1 {% if automezzo.libretto_fronte %}text-success{% else %}text-muted{% endif %} mb-2"></i>
+                    <h6 class="card-title">Libretto Fronte</h6>
+                    {% if automezzo.libretto_fronte %}
+                    <a href="{{ automezzo.libretto_fronte.url }}" target="_blank" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-eye me-1"></i>Visualizza
+                    </a>
+                    {% else %}
+                    <p class="text-muted small mb-0">Non caricato</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Libretto Retro -->
+        <div class="col-md-4">
+            <div class="card h-100 border {% if automezzo.libretto_retro %}border-success{% else %}border-secondary{% endif %}">
+                <div class="card-body text-center">
+                    <i class="bi bi-card-text fs-1 {% if automezzo.libretto_retro %}text-success{% else %}text-muted{% endif %} mb-2"></i>
+                    <h6 class="card-title">Libretto Retro</h6>
+                    {% if automezzo.libretto_retro %}
+                    <a href="{{ automezzo.libretto_retro.url }}" target="_blank" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-eye me-1"></i>Visualizza
+                    </a>
+                    {% else %}
+                    <p class="text-muted small mb-0">Non caricato</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Assicurazione -->
+        <div class="col-md-4">
+            <div class="card h-100 border {% if automezzo.assicurazione %}border-success{% else %}border-secondary{% endif %}">
+                <div class="card-body text-center">
+                    <i class="bi bi-shield-check fs-1 {% if automezzo.assicurazione %}text-success{% else %}text-muted{% endif %} mb-2"></i>
+                    <h6 class="card-title">Assicurazione</h6>
+                    {% if automezzo.assicurazione %}
+                    <a href="{{ automezzo.assicurazione.url }}" target="_blank" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-eye me-1"></i>Visualizza
+                    </a>
+                    {% else %}
+                    <p class="text-muted small mb-0">Non caricata</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_content %}
+<!-- Card Statistiche Rapide -->
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Riepilogo Attività</h6>
+    </div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-4">
+                <a href="{% url 'automezzi:manutenzione_list' %}?automezzo={{ automezzo.pk }}" class="text-decoration-none">
+                    <div class="border rounded p-3 h-100">
+                        <i class="bi bi-wrench fs-2 text-warning"></i>
+                        <h4 class="mb-0 mt-2">{{ manutenzioni_count }}</h4>
+                        <small class="text-muted">Manutenzioni</small>
+                        {% if manutenzioni_aperte > 0 %}
+                        <br><span class="badge bg-warning text-dark">{{ manutenzioni_aperte }} aperte</span>
+                        {% endif %}
+                    </div>
+                </a>
+            </div>
+            <div class="col-4">
+                <a href="{% url 'automezzi:rifornimento_list' %}?automezzo={{ automezzo.pk }}" class="text-decoration-none">
+                    <div class="border rounded p-3 h-100">
+                        <i class="bi bi-fuel-pump fs-2 text-success"></i>
+                        <h4 class="mb-0 mt-2">{{ rifornimenti_count }}</h4>
+                        <small class="text-muted">Rifornimenti</small>
+                    </div>
+                </a>
+            </div>
+            <div class="col-4">
+                <a href="{% url 'automezzi:evento_list' %}?automezzo={{ automezzo.pk }}" class="text-decoration-none">
+                    <div class="border rounded p-3 h-100">
+                        <i class="bi bi-exclamation-triangle fs-2 text-danger"></i>
+                        <h4 class="mb-0 mt-2">{{ eventi_count }}</h4>
+                        <small class="text-muted">Eventi</small>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_actions %}
+<!-- Link rapidi gestione -->
+<a href="{% url 'automezzi:manutenzione_create' %}?automezzo={{ automezzo.pk }}" class="list-group-item list-group-item-action">
+    <i class="bi bi-wrench text-warning"></i> Nuova Manutenzione
+</a>
+<a href="{% url 'automezzi:rifornimento_create' %}?automezzo={{ automezzo.pk }}" class="list-group-item list-group-item-action">
+    <i class="bi bi-fuel-pump text-success"></i> Nuovo Rifornimento
+</a>
+<a href="{% url 'automezzi:evento_create' %}?automezzo={{ automezzo.pk }}" class="list-group-item list-group-item-action">
+    <i class="bi bi-exclamation-triangle text-danger"></i> Nuovo Evento
+</a>
+<a href="{% url 'automezzi:cronologia' %}?automezzo={{ automezzo.pk }}" class="list-group-item list-group-item-action">
+    <i class="bi bi-clock-history text-info"></i> Cronologia
+</a>
+{% endblock %}
+
+{% block sidebar_extra %}
+<!-- Info Sistema -->
+<div class="card shadow-sm mt-3">
+    <div class="card-header bg-secondary text-white">
+        <h6 class="mb-0"><i class="bi bi-info-circle"></i> Info Rapide</h6>
+    </div>
+    <div class="card-body small">
+        <dl class="mb-0">
+            <dt class="text-muted">Km Attuali</dt>
+            <dd><strong>{{ automezzo.chilometri_attuali|intcomma }}</strong> km</dd>
+            {% if automezzo.data_revisione %}
+            <dt class="text-muted">Prossima Revisione</dt>
+            <dd>{{ automezzo.data_revisione|date:"d/m/Y" }}</dd>
+            {% endif %}
+            <dt class="text-muted">Età Veicolo</dt>
+            <dd class="mb-0">{{ automezzo.eta }} anni</dd>
+        </dl>
+    </div>
+</div>
+{% endblock %}

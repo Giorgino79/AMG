@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'core:permission_template_list' %}">Template Permessi</a></li>
+                <li class="breadcrumb-item active">{% if template %}Modifica{% else %}Nuovo{% endif %}</li>
+            </ol>
+        </nav> 
+        <h2><i class="bi bi-folder-symlink me-2"></i>{{ title }}</h2>
+    </div>
+
+    <form method="post" id="template-form">
+        {% csrf_token %}
+
+        <!-- Informazioni Base -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Informazioni Template</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.nome.id_for_label }}" class="form-label">
+                            Nome Template <span class="text-danger">*</span>
+                        </label>
+                        {{ form.nome }}
+                        {% if form.nome.errors %}
+                            <div class="invalid-feedback d-block">{{ form.nome.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Es. "Responsabile HR", "Addetto Payroll"</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="{{ form.attivo.id_for_label }}" class="form-label">Stato</label>
+                        <div class="form-check form-switch">
+                            {{ form.attivo }}
+                            <label class="form-check-label" for="{{ form.attivo.id_for_label }}">
+                                Template attivo (disponibile per l'uso)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label for="{{ form.descrizione.id_for_label }}" class="form-label">Descrizione</label>
+                        {{ form.descrizione }}
+                        {% if form.descrizione.errors %}
+                            <div class="invalid-feedback d-block">{{ form.descrizione.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permessi Base Operativi -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-toggles me-2"></i>Permessi Base Operativi</h5>
+                <small class="text-muted">Permessi per operazioni quotidiane (timbrature, ferie, approvazioni)</small>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for value, label in form.fields.permessi_base_selezionati.choices %}
+                        <div class="col-md-6 mb-2">
+                            <div class="form-check">
+                                <input type="checkbox"
+                                       name="permessi_base_selezionati"
+                                       value="{{ value }}"
+                                       id="perm_base_{{ forloop.counter }}"
+                                       class="form-check-input"
+                                       {% if value in form.permessi_base_selezionati.value %}checked{% endif %}>
+                                <label class="form-check-label" for="perm_base_{{ forloop.counter }}">
+                                    {{ label }}
+                                </label>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Permessi CRUD sui Modelli -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-grid-3x3-gap me-2"></i>Permessi CRUD sui Modelli</h5>
+                <small class="text-muted">Permessi di creazione, visualizzazione, modifica ed eliminazione</small>
+            </div>
+            <div class="card-body">
+                {% for category, data in permessi_by_category.items %}
+                    <div class="mb-4">
+                        <h6 class="text-primary border-bottom pb-2">
+                            <i class="bi bi-folder me-2"></i>{{ category }}
+                        </h6>
+
+                        {% for model_name, model_data in data.models.items %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <strong>{{ model_name }}</strong>
+                                    <small class="text-muted ms-2">({{ model_data.info.app_label }}.{{ model_data.info.model_name }})</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        {% for perm_data in model_data.permissions %}
+                                            <div class="col-md-3 mb-2">
+                                                <div class="form-check">
+                                                    <input type="checkbox"
+                                                           name="permessi_crud"
+                                                           value="{{ perm_data.permission.pk }}"
+                                                           id="perm_{{ perm_data.permission.pk }}"
+                                                           class="form-check-input"
+                                                           {% if template and perm_data.permission in template.permessi_crud.all %}checked{% endif %}>
+                                                    <label class="form-check-label" for="perm_{{ perm_data.permission.pk }}">
+                                                        <span class="badge bg-{{ perm_data.info.badge_class }} me-1">
+                                                            {{ perm_data.info.action|upper }}
+                                                        </span>
+                                                        {{ perm_data.info.display_name }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Azioni -->
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>
+                        {% if template %}Salva Modifiche{% else %}Crea Template{% endif %}
+                    </button>
+                    <a href="{% url 'core:permission_template_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-2"></i>Annulla
+                    </a>
+                    {% if template %}
+                        <button type="button" class="btn btn-outline-danger ms-auto" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash me-2"></i>Elimina Template
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% if template %}
+<!-- Modal Conferma Eliminazione -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Conferma Eliminazione</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sei sicuro di voler eliminare il template <strong>{{ template.nome }}</strong>?</p>
+                <p class="text-muted small mb-0">
+                    Questa operazione non può essere annullata. Gli utenti che hanno già ricevuto i permessi
+                    da questo template manterranno i loro permessi attuali.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <form method="post" action="{% url 'core:permission_template_delete' template.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-2"></i>Elimina
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

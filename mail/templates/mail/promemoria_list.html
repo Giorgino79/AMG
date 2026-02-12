@@ -1,0 +1,164 @@
+{% extends "mail/base.html" %}
+{% load static %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'mail:dashboard' %}">Mail</a></li>
+<li class="breadcrumb-item active">Promemoria</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2>Promemoria</h2>
+                <p class="text-muted">Gestisci i tuoi promemoria e notifiche</p>
+            </div>
+            <a href="{% url 'mail:promemoria_create' %}" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Nuovo Promemoria
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <!-- Filtri -->
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Stato</label>
+                        <select name="stato" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Tutti</option>
+                            {% for value, label in stati %}
+                            <option value="{{ value }}" {% if stato == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Priorità</label>
+                        <select name="priorita" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Tutte</option>
+                            {% for value, label in prioritas %}
+                            <option value="{{ value }}" {% if priorita == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">Cerca</label>
+                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Cerca per titolo o descrizione" value="{{ search }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-sm me-2">
+                            <i class="bi bi-search"></i> Cerca
+                        </button>
+                        <a href="{% url 'mail:promemoria_list' %}" class="btn btn-secondary btn-sm">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        {% if promemoria %}
+            <div class="list-group">
+                {% for item in promemoria %}
+                <div class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-2">
+                                <h5 class="mb-0 me-3">{{ item.titolo }}</h5>
+
+                                <!-- Badge priorità -->
+                                {% if item.priorita == 'urgente' %}
+                                <span class="badge bg-danger me-2"><i class="bi bi-exclamation-triangle-fill"></i> Urgente</span>
+                                {% elif item.priorita == 'alta' %}
+                                <span class="badge bg-warning text-dark me-2"><i class="bi bi-exclamation-circle-fill"></i> Alta</span>
+                                {% elif item.priorita == 'media' %}
+                                <span class="badge bg-info me-2"><i class="bi bi-info-circle-fill"></i> Media</span>
+                                {% else %}
+                                <span class="badge bg-secondary me-2"><i class="bi bi-dash-circle-fill"></i> Bassa</span>
+                                {% endif %}
+
+                                <!-- Badge stato -->
+                                {% if item.stato == 'completed' %}
+                                <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Completato</span>
+                                {% elif item.stato == 'in_progress' %}
+                                <span class="badge bg-primary"><i class="bi bi-hourglass-split"></i> In Corso</span>
+                                {% elif item.stato == 'cancelled' %}
+                                <span class="badge bg-dark"><i class="bi bi-x-circle-fill"></i> Annullato</span>
+                                {% else %}
+                                <span class="badge bg-secondary"><i class="bi bi-clock-fill"></i> In Attesa</span>
+                                {% endif %}
+                            </div>
+
+                            {% if item.descrizione %}
+                            <p class="mb-2 text-muted">{{ item.descrizione|truncatewords:20 }}</p>
+                            {% endif %}
+
+                            <div class="d-flex align-items-center text-muted small">
+                                {% if item.data_scadenza %}
+                                <span class="me-3">
+                                    <i class="bi bi-calendar-event"></i>
+                                    Scadenza: {{ item.data_scadenza|date:"d/m/Y H:i" }}
+                                </span>
+                                {% endif %}
+
+                                {% if item.notifica_email %}
+                                <span class="me-3">
+                                    <i class="bi bi-envelope-fill"></i> Notifica email
+                                </span>
+                                {% endif %}
+
+                                {% if item.tags %}
+                                <span>
+                                    <i class="bi bi-tags-fill"></i>
+                                    {% for tag in item.tags %}
+                                        <span class="badge bg-light text-dark">{{ tag }}</span>
+                                    {% endfor %}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column align-items-end">
+                            <small class="text-muted mb-2">{{ item.created_at|date:"d/m/Y H:i" }}</small>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'mail:promemoria_edit' item.id %}" class="btn btn-outline-primary" title="Modifica">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'mail:promemoria_detail' item.id %}" class="btn btn-outline-info" title="Dettagli">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <form method="post" action="{% url 'mail:promemoria_delete' item.id %}" style="display: inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo promemoria?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Elimina">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-bell text-muted" style="font-size: 4rem;"></i>
+                    <h5 class="mt-3">Nessun promemoria trovato</h5>
+                    <p class="text-muted">Crea il tuo primo promemoria per iniziare</p>
+                    <a href="{% url 'mail:promemoria_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Nuovo Promemoria
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Modifica Manuale Payroll - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'payroll:manuale_payroll' %}">Manuale Payroll</a></li>
+<li class="breadcrumb-item active">Modifica</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-pencil-square me-2"></i>Modifica Manuale Payroll</h2>
+            <p class="text-muted">Aggiorna il contenuto del manuale di istruzioni per la compilazione dei form</p>
+        </div>
+    </div>
+
+    <!-- Alert info -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Suggerimenti per la formattazione:</strong>
+                <ul class="mb-0 mt-2">
+                    <li><code># Titolo</code> - Titolo principale</li>
+                    <li><code>## Sottotitolo</code> - Sottotitolo</li>
+                    <li><code>**testo**</code> - Grassetto</li>
+                    <li><code>*testo*</code> - Corsivo</li>
+                    <li><code>`codice`</code> - Codice inline</li>
+                    <li><code>[link](url)</code> - Link</li>
+                    <li><code>- elemento</code> - Lista puntata</li>
+                    <li><code>✅ ❌ ⭐ ⚠️</code> - Icone speciali</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form modifica -->
+    <form method="post" id="edit-form">
+        {% csrf_token %}
+
+        <div class="row">
+            <!-- Colonna sinistra: Form -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-warning">
+                        <h5 class="mb-0"><i class="bi bi-pencil me-2"></i>Editor</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="titolo" class="form-label">Titolo</label>
+                            <input type="text" class="form-control" id="titolo" name="titolo" value="{{ manuale.titolo }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="versione" class="form-label">Versione</label>
+                            <input type="text" class="form-control" id="versione" name="versione" value="{{ manuale.versione }}" required placeholder="es. 1.0, 2.1, 3.0">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="contenuto" class="form-label">Contenuto</label>
+                            <textarea class="form-control font-monospace" id="contenuto" name="contenuto" rows="30" required style="font-size: 0.9rem;">{{ manuale.contenuto }}</textarea>
+                            <small class="form-text text-muted">Usa la formattazione Markdown per strutturare il contenuto</small>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'payroll:manuale_payroll' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Annulla
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-save me-1"></i>Salva Modifiche
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colonna destra: Anteprima -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm sticky-top" style="top: 1rem;">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-eye me-2"></i>Anteprima Live</h5>
+                    </div>
+                    <div class="card-body" style="max-height: 80vh; overflow-y: auto;">
+                        <div id="preview-content" class="markdown-content">
+                            <p class="text-muted"><em>L'anteprima apparirà qui mentre digiti...</em></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+/* Stili per il contenuto markdown (stesso del template di visualizzazione) */
+.markdown-content {
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.markdown-content h1 {
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.markdown-content h2 {
+    font-size: 1.35rem;
+    font-weight: bold;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: #0d6efd;
+}
+
+.markdown-content h3 {
+    font-size: 1.15rem;
+    font-weight: bold;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: #198754;
+}
+
+.markdown-content h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.markdown-content p {
+    margin-bottom: 0.75rem;
+}
+
+.markdown-content strong {
+    font-weight: 600;
+}
+
+.markdown-content code {
+    background-color: #f8f9fa;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85em;
+    color: #d63384;
+}
+
+.markdown-content pre {
+    background-color: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 5px;
+    border-left: 3px solid #0d6efd;
+    overflow-x: auto;
+    margin: 0.75rem 0;
+    font-size: 0.85rem;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-left: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.markdown-content li {
+    margin-bottom: 0.25rem;
+}
+
+.markdown-content blockquote {
+    border-left: 3px solid #ffc107;
+    padding-left: 0.75rem;
+    margin: 0.75rem 0;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.markdown-content table {
+    width: 100%;
+    margin: 0.75rem 0;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.markdown-content table th {
+    background-color: #0d6efd;
+    color: white;
+    padding: 0.5rem;
+    text-align: left;
+    font-weight: 600;
+}
+
+.markdown-content table td {
+    padding: 0.5rem;
+    border: 1px solid #dee2e6;
+}
+
+.markdown-content table tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.markdown-content hr {
+    margin: 1.5rem 0;
+    border: none;
+    border-top: 2px solid #dee2e6;
+}
+</style>
+
+<script>
+// Funzione per convertire Markdown in HTML (versione semplificata)
+function convertMarkdownToHTML(markdown) {
+    let html = markdown;
+
+    // Escape HTML
+    html = html.replace(/&/g, '&amp;')
+               .replace(/</g, '&lt;')
+               .replace(/>/g, '&gt;');
+
+    // Titoli
+    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^### (.+)$/gm, '<h3>$3</h3>');
+    html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^##### (.+)$/gm, '<h5>$1</h5>');
+
+    // Code blocks (triple backticks)
+    html = html.replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>');
+
+    // Bold
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+    // Italic
+    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+    // Code inline
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+    // Liste non ordinate
+    html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+    // Liste ordinate
+    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+
+    // Blockquote
+    html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+
+    // Horizontal rule
+    html = html.replace(/^---$/gm, '<hr>');
+
+    // Paragrafi (linee vuote)
+    html = html.replace(/\n\n/g, '</p><p>');
+    html = '<p>' + html + '</p>';
+
+    // Icone speciali
+    html = html.replace(/✅/g, '<i class="bi bi-check-circle-fill text-success"></i>');
+    html = html.replace(/❌/g, '<i class="bi bi-x-circle-fill text-danger"></i>');
+    html = html.replace(/⭐/g, '<i class="bi bi-star-fill text-warning"></i>');
+    html = html.replace(/⚠️/g, '<i class="bi bi-exclamation-triangle-fill text-warning"></i>');
+
+    // Pulisci paragrafi vuoti
+    html = html.replace(/<p>\s*<\/p>/g, '');
+    html = html.replace(/<p>\s*<h/g, '<h');
+    html = html.replace(/<\/h[1-6]>\s*<\/p>/g, function(match) {
+        return match.replace('</p>', '');
+    });
+
+    return html;
+}
+
+// Aggiorna anteprima in tempo reale
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.getElementById('contenuto');
+    const preview = document.getElementById('preview-content');
+
+    function updatePreview() {
+        const markdown = textarea.value;
+        const html = convertMarkdownToHTML(markdown);
+        preview.innerHTML = html;
+    }
+
+    // Aggiorna anteprima iniziale
+    updatePreview();
+
+    // Aggiorna anteprima mentre si digita (con debounce)
+    let timeout;
+    textarea.addEventListener('input', function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(updatePreview, 300);
+    });
+
+    // Previeni perdita dati accidentale
+    let formModified = false;
+    textarea.addEventListener('input', function() {
+        formModified = true;
+    });
+
+    window.addEventListener('beforeunload', function(e) {
+        if (formModified) {
+            e.preventDefault();
+            e.returnValue = '';
+            return '';
+        }
+    });
+
+    // Rimuovi flag quando si invia il form
+    document.getElementById('edit-form').addEventListener('submit', function() {
+        formModified = false;
+    });
+
+    // Tab support nella textarea
+    textarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            const value = this.value;
+
+            this.value = value.substring(0, start) + '    ' + value.substring(end);
+            this.selectionStart = this.selectionEnd = start + 4;
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'core/email/base_email.html' %}
+
+{% block title %}Riconoscimento {{ riconoscimento.numero_riconoscimento }}{% endblock %}
+
+{% block content %}
+<div class="order-email">
+    <h2>Riconoscimento {{ riconoscimento.numero_riconoscimento }}</h2>
+    
+    <p>Gentile {{ fornitore.nome }},</p>
+    
+    <p>Vi trasmettiamo in allegato il riconoscimento relativo alle forniture effettuate nel periodo 
+    <strong>{{ riconoscimento.periodo_da|date:"d/m/Y" }} - {{ riconoscimento.periodo_a|date:"d/m/Y" }}</strong>.</p>
+    
+    <div class="order-summary">
+        <h3>Riepilogo Riconoscimento</h3>
+        <table class="details-table">
+            <tr>
+                <th>Numero Riconoscimento:</th>
+                <td>{{ riconoscimento.numero_riconoscimento }}</td>
+            </tr>
+            <tr>
+                <th>Periodo:</th>
+                <td>{{ riconoscimento.periodo_da|date:"d/m/Y" }} - {{ riconoscimento.periodo_a|date:"d/m/Y" }}</td>
+            </tr>
+            <tr>
+                <th>Righe incluse:</th>
+                <td>{{ riconoscimento.righe.count }}</td>
+            </tr>
+            <tr>
+                <th>Totale Imponibile:</th>
+                <td>€ {{ riconoscimento.totale_imponibile|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <th>Totale IVA:</th>
+                <td>€ {{ riconoscimento.totale_iva|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <th style="border-top: 2px solid #005a87;"><strong>Totale Generale:</strong></th>
+                <td style="border-top: 2px solid #005a87;"><strong>€ {{ riconoscimento.totale_riconoscimento|floatformat:2 }}</strong></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="notes">
+        <h3>Dettagli Inclusioni</h3>
+        <ul>
+            {% if riconoscimento.include_ordini_ricevuti %}
+            <li><strong>Ordini ricevuti:</strong> Include le quantità effettivamente ricevute nel periodo</li>
+            {% endif %}
+            {% if riconoscimento.include_ordini_da_ricevere %}
+            <li><strong>Ordini da ricevere:</strong> Include gli ordini inviati ma non ancora ricevuti</li>
+            {% endif %}
+            {% if riconoscimento.include_ricezioni_manuali %}
+            <li><strong>Ricezioni manuali:</strong> Include le ricezioni senza ordine di riferimento</li>
+            {% endif %}
+        </ul>
+    </div>
+
+    {% if riconoscimento.note %}
+    <div class="notes">
+        <h3>Note</h3>
+        <p>{{ riconoscimento.note|linebreaks }}</p>
+    </div>
+    {% endif %}
+
+    <div class="contact-info">
+        <h3>Prossimi Passi</h3>
+        <p>Vi preghiamo di:</p>
+        <ol>
+            <li>Verificare i dati contenuti nel riconoscimento</li>
+            <li>Confermare la correttezza delle quantità e degli importi</li>
+            <li>Procedere con l'emissione della fattura secondo le modalità concordate</li>
+        </ol>
+        
+        <p>Per qualsiasi chiarimento o correzione, non esitate a contattarci.</p>
+    </div>
+
+    <p>Cordiali saluti,<br>
+    <strong>{{ user.get_full_name }}</strong><br>
+    {{ user.email }}</p>
+</div>
+{% endblock %}

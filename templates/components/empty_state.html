@@ -1,0 +1,40 @@
+{% comment %}
+Componente Empty State
+
+Uso:
+    {% include 'components/empty_state.html' with config=empty_config %}
+
+Parametri:
+    - config: Dictionary con:
+        - icon: Icon Bootstrap (default: 'bi-inbox')
+        - title: Titolo (default: 'Nessun elemento trovato')
+        - message: Messaggio (optional)
+        - action_url: URL bottone azione (optional)
+        - action_text: Testo bottone (default: 'Crea nuovo')
+        - action_icon: Icon bottone (default: 'bi-plus-circle')
+
+Esempio:
+    {% include 'components/empty_state.html' with config=empty_config %}
+
+    empty_config = {
+        'icon': 'bi-cart-x',
+        'title': 'Nessun ordine trovato',
+        'message': 'Non ci sono ordini da visualizzare',
+        'action_url': 'vendite:ordine_create',
+        'action_text': 'Crea primo ordine',
+    }
+{% endcomment %}
+
+<div class="text-center py-5">
+    <i class="{{ config.icon|default:'bi-inbox' }} text-muted" style="font-size: 4rem;"></i>
+    <h4 class="mt-3 text-muted">{{ config.title|default:"Nessun elemento trovato" }}</h4>
+    {% if config.message %}
+    <p class="text-muted">{{ config.message }}</p>
+    {% endif %}
+    {% if config.action_url %}
+    <a href="{% url config.action_url %}" class="btn btn-primary mt-3">
+        <i class="{{ config.action_icon|default:'bi-plus-circle' }} me-1"></i>
+        {{ config.action_text|default:"Crea nuovo" }}
+    </a>
+    {% endif %}
+</div>

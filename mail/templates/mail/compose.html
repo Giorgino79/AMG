@@ -1,0 +1,50 @@
+{% extends "mail/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'mail:dashboard' %}">Mail</a></li>
+<li class="breadcrumb-item active">Nuova Email</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Nuova Email</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="compose-form">
+                    {% csrf_token %}
+                    {% crispy form %}
+
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" name="action" value="send" class="btn btn-primary">
+                            <i class="bi bi-send"></i> Invia
+                        </button>
+                        <button type="submit" name="action" value="save" class="btn btn-outline-secondary">
+                            <i class="bi bi-save"></i> Salva Bozza
+                        </button>
+                        <a href="{% url 'mail:message_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annulla
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Suggerimenti</h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li><small>Inserisci uno o più indirizzi email separati da virgola nei campi A, CC o BCC</small></li>
+                    <li><small>Puoi salvare la bozza e continuare a modificarla in seguito</small></li>
+                    <li><small>L'email verrà inviata in formato testo semplice</small></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

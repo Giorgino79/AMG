@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Elimina Sessione - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'allestimento:lista_sessioni' %}">Allestimento</a></li>
+<li class="breadcrumb-item active">Elimina</li>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Conferma Eliminazione
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <i class="bi bi-trash display-1 text-danger mb-3"></i>
+                    <h4>Sei sicuro di voler eliminare questa sessione?</h4>
+                    <p class="text-muted">
+                        <strong>{{ sessione.nome_evento }}</strong><br>
+                        {{ sessione.luogo }} - {{ sessione.data_creazione|date:"d/m/Y" }}
+                    </p>
+                    <p class="text-danger">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        Questa azione non puo essere annullata!
+                    </p>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="bi bi-trash me-2"></i>Si, Elimina
+                            </button>
+                            <a href="{% url 'allestimento:lista_sessioni' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Annulla
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

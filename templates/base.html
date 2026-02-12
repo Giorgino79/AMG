@@ -1,0 +1,356 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <title>{% block title %}ModularBEF{% endblock %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/detail_page.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="text-center py-3">
+                <img src="{% static 'img/easylogo26.png' %}" alt="EasyLog" style="max-width: 180px; height: auto;">
+            </div>
+        </div>
+
+        <div class="sidebar-nav">
+            <div class="nav-section">
+                <small class="nav-section-title">AMMINISTRAZIONE</small>
+                <a href="{% url 'admin:index' %}" class="nav-link">
+                    <i class="bi bi-gear-fill"></i>
+                    <span>Admin Panel</span>
+                </a>
+                {% if request.user.is_staff or request.user.is_superuser %}
+                <a href="{% url 'users:user_list' %}" class="nav-link">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Dipendenti</span>
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="nav-section">
+                <small class="nav-section-title">ANAGRAFICA</small>
+                <a href="{% url 'anagrafica:dashboard' %}" class="nav-link">
+                    <i class="bi bi-journal-text"></i>
+                    <span>Dashboard</span>
+                </a>
+                
+            </div>
+
+            {% block sidebar_apps %}
+            <div class="nav-section">
+                <small class="nav-section-title">COMUNICAZIONE</small>
+                <a href="{% url 'mail:dashboard' %}" class="nav-link">
+                    <i class="bi bi-envelope-fill"></i>
+                    <span>Email</span>
+                </a>
+            </div>
+            {% endblock %}
+        </div>
+        <div class="nav-section">
+                <small class="nav-section-title">CESPITI</small>
+                <a href="{% url 'automezzi:dashboard' %}" class="nav-link">
+                    <i class="bi bi-car-front"></i>
+                    <span>Automezzi</span>
+                </a>
+                <a href="{% url 'stabilimenti:list' %}" class="nav-link">
+                    <i class="bi bi-building"></i>
+                    <span>Stabilimenti</span>
+                </a>
+            </div>
+        <div class="sidebar-nav">
+            <div class="nav-section">
+                <small class="nav-section-title">ACQUISTI</small>
+                <a href="{% url 'preventivi_beni:dashboard' %}" class="nav-link">
+                    <i class="bi bi-bag"></i>
+                    <span>Preventivi Generici</span>
+                </a>
+                <a href="{% url 'trasporti:dashboard' %}" class="nav-link">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Trasporti</span>
+                </a>
+                 <a href="{% url 'acquisti:dashboard' %}" class="nav-link">
+                    <i class="bi bi-cart-check"></i>
+                    <span>Ordini Acquisto</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <small class="nav-section-title">OPERAZIONI</small>
+                <a href="{% url 'allestimento:lista_sessioni' %}" class="nav-link">
+                    <i class="bi bi-clipboard-check"></i>
+                    <span>Allestimento</span>
+                </a>
+                
+            </div>
+        </div>
+
+        <button class="sidebar-toggle d-lg-none" id="sidebarToggle">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+            <div class="container-fluid">
+                <button class="btn btn-link d-lg-none me-2" id="sidebarToggleMobile">
+                    <i class="bi bi-list fs-4"></i>
+                </button>
+
+                <div class="navbar-brand-wrapper">
+                    {% block navbar_breadcrumb %}
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="/">Home</a></li>
+                            {% block breadcrumb %}{% endblock %}
+                        </ol>
+                    </nav>
+                    {% endblock %}
+                </div>
+
+                <div class="ms-auto d-flex align-items-center gap-3">
+                    <div class="d-none d-md-flex align-items-center text-muted me-2">
+                        <i class="bi bi-calendar3 me-2"></i>
+                        <span id="currentDateTime" class="small"></span>
+                    </div>
+
+                    <div class="search-wrapper position-relative">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="bi bi-search text-muted"></i>
+                            </span>
+                            <input
+                                type="text"
+                                class="form-control border-start-0 ps-0"
+                                id="globalSearch"
+                                placeholder="Cerca in tutto il sistema..."
+                                autocomplete="off"
+                            >
+                        </div>
+
+                        <div class="search-results-dropdown d-none" id="searchResultsDropdown">
+                            <div class="search-loading text-center p-3 d-none" id="searchLoading">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Ricerca in corso...</span>
+                                </div>
+                            </div>
+
+                            <div class="search-results-container" id="searchResultsContainer"></div>
+
+                            <div class="search-no-results text-center p-3 text-muted d-none" id="searchNoResults">
+                                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                Nessun risultato trovato
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dropdown">
+                        <button class="btn btn-link text-dark" type="button" id="toolsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-grid-3x3-gap fs-5"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="toolsDropdown">
+                            <li><h6 class="dropdown-header">Strumenti</h6></li>
+                            <li>
+                                <a class="dropdown-item" href="#" id="calcolatriceBtn">
+                                    <i class="bi bi-calculator"></i> Calcolatrice
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" id="calendarioBtn">
+                                    <i class="bi bi-calendar-event"></i> Calendario
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-muted disabled" href="#">
+                                    <i class="bi bi-plus-circle"></i> Altri strumenti in arrivo...
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="dropdown">
+                        <button class="btn btn-link text-dark position-relative" type="button" id="notificheDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bell fs-5"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="notificheBadge">
+                                0
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificheDropdown" style="min-width: 300px;">
+                            <li><h6 class="dropdown-header">Notifiche</h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="text-center py-3 text-muted">
+                                <i class="bi bi-bell-slash fs-4 d-block mb-2"></i>
+                                Nessuna nuova notifica
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-link text-dark d-flex align-items-center text-decoration-none" type="button" id="profiloDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            {% if request.user.is_authenticated %}
+
+                                {% if request.user.foto_profilo %}
+                                <img src="{{ request.user.foto_profilo.url }}" alt="Profile" class="rounded-circle" width="32" height="32">
+                                {% else %}
+                                <div class="user-avatar">
+                                    {{ request.user.get_full_name|default:request.user.username|slice:":1"|upper }}
+                                </div>
+                                {% endif %}
+                                <span class="ms-2 d-none d-md-inline">{{ request.user.get_full_name|default:request.user.username }}</span>
+                            {% else %}
+                                <i class="bi bi-person-circle fs-4"></i>
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profiloDropdown">
+                            {% if request.user.is_authenticated %}
+                                <li><h6 class="dropdown-header">{{ request.user.email }}</h6></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#timbraturaModal">
+                                        <i class="bi bi-clock-history"></i> Timbratura
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'users:profilo' %}">
+                                        <i class="bi bi-person"></i> Il Mio Profilo
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'users:impostazioni' %}">
+                                        <i class="bi bi-gear"></i> Impostazioni
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="{% url 'admin:logout' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="bi bi-box-arrow-right"></i> Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            {% else %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'admin:login' %}">
+                                        <i class="bi bi-box-arrow-in-right"></i> Login
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        {% if messages %}
+        <div class="container-fluid mt-3">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <main class="main-container">
+            {% block content %}
+            
+            {% endblock %}
+        </main>
+
+        <footer class="footer mt-auto py-3 bg-light border-top">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-6">
+                        <span class="text-muted">© 2026 ModularBEF - Sistema Gestionale Modulare</span>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <span class="text-muted">Versione 1.0.0</span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <div class="modal fade" id="calcolatriceModal" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-calculator"></i> Calcolatrice
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control form-control-lg text-end mb-2" id="calcDisplay" readonly value="0">
+                    <div class="d-grid gap-1" style="grid-template-columns: repeat(4, 1fr); display: grid;">
+                        <button class="btn btn-outline-secondary calc-btn" data-value="7">7</button>
+                        <button class="btn btn-outline-secondary calc-btn" data-value="8">8</button>
+                        <button class="btn btn-outline-secondary calc-btn" data-value="9">9</button>
+                        <button class="btn btn-outline-danger calc-btn" data-value="C">C</button>
+
+                        <button class="btn btn-outline-secondary calc-btn" data-value="4">4</button>
+                        <button class="btn btn-outline-secondary calc-btn" data-value="5">5</button>
+                        <button class="btn btn-outline-secondary calc-btn" data-value="6">6</button>
+                        <button class="btn btn-outline-primary calc-btn" data-value="/">/</button>
+
+                        <button class="btn btn-outline-secondary calc-btn" data-value="1">1</button>
+                        <button class="btn btn-outline-secondary calc-btn" data-value="2">2</button>
+                        <button class="btn btn-outline-secondary calc-btn" data-value="3">3</button>
+                        <button class="btn btn-outline-primary calc-btn" data-value="*">×</button>
+
+                        <button class="btn btn-outline-secondary calc-btn" data-value="0">0</button>
+                        <button class="btn btn-outline-secondary calc-btn" data-value=".">.</button>
+                        <button class="btn btn-outline-success calc-btn" data-value="=">=</button>
+                        <button class="btn btn-outline-primary calc-btn" data-value="+">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="calendarioModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #5585b5; color: white;">
+                    <h5 class="modal-title">
+                        <i class="bi bi-calendar-event"></i> Calendario
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="calendarioContainer" class="text-center p-4">
+                        <i class="bi bi-calendar-week fs-1 text-muted d-block mb-3"></i>
+                        <p class="text-muted">Funzionalità calendario in sviluppo...</p>
+                        <small class="text-muted">Sarà integrato nelle prossime versioni</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include "users/_timbratura_modal.html" %}
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+    <script src="{% static 'js/allegati.js' %}"></script>
+    <script src="{% static 'js/search.js' %}"></script>
+    <script src="{% static 'js/base.js' %}"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

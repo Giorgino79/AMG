@@ -1,0 +1,262 @@
+{% comment %}
+Componente Layout Dettaglio Oggetto Standard
+
+Uso:
+    {% include 'components/detail_layout.html' with object=ordine config=detail_config %}
+
+Parametri:
+    - object: L'oggetto da visualizzare (required)
+    - config: Dictionary di configurazione (optional)
+        - title: Titolo pagina (default: object)
+        - subtitle: Sottotitolo (optional)
+        - sections: Lista di sezioni da visualizzare
+        - show_actions: Mostra azioni (default: True)
+        - show_metadata: Mostra metadati (default: True)
+        - show_allegati: Mostra widget allegati (default: True se AllegatiMixin)
+        - show_qrcode: Mostra QR code (default: True se QRCodeMixin)
+        - back_url: URL pulsante indietro (optional)
+        - edit_url: Nome URL per edit (optional)
+        - delete_url: Nome URL per delete (optional)
+        - pdf_url: Nome URL per PDF (optional)
+        - custom_actions: Template per azioni custom (optional)
+
+Esempio base:
+    {% include 'components/detail_layout.html' with object=ordine %}
+
+Esempio completo:
+    {% load static %}
+    {% with detail_config=config %}
+    {% include 'components/detail_layout.html' with
+        object=ordine
+        config=detail_config
+    %}
+    {% endwith %}
+
+Nel view, passa config:
+    context['detail_config'] = {
+        'title': f'Ordine {ordine.numero}',
+        'subtitle': f'Cliente: {ordine.cliente}',
+        'sections': [
+            {
+                'title': 'Dati Principali',
+                'icon': 'bi-info-circle',
+                'fields': [
+                    {'label': 'Numero', 'value': ordine.numero},
+                    {'label': 'Data', 'value': ordine.data|date:"d/m/Y"},
+                    {'label': 'Cliente', 'value': ordine.cliente, 'link': ordine.cliente.get_absolute_url()},
+                ]
+            }
+        ],
+        'back_url': 'vendite:ordine_list',
+        'edit_url': 'vendite:ordine_update',
+        'delete_url': 'vendite:ordine_delete',
+        'pdf_url': 'vendite:ordine_pdf',
+    }
+{% endcomment %}
+
+<div class="container mt-4">
+    <!-- Header -->
+    {% if config.show_header|default:True %}
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h1 class="mb-1">
+                {{ config.title|default:object }}
+            </h1>
+            {% if config.subtitle %}
+            <p class="text-muted mb-0">{{ config.subtitle }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Actions -->
+        {% if config.show_actions|default:True %}
+        <div class="btn-group" role="group">
+            {% if config.back_url %}
+            <a href="{% url config.back_url %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Indietro
+            </a>
+            {% endif %}
+
+            {% if config.pdf_url %}
+            <a href="{% url config.pdf_url object.pk %}" class="btn btn-outline-primary" target="_blank">
+                <i class="bi bi-file-pdf"></i> PDF
+            </a>
+            {% endif %}
+
+            {% if config.edit_url %}
+            <a href="{% url config.edit_url object.pk %}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Modifica
+            </a>
+            {% endif %}
+
+            {% if config.delete_url %}
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                <i class="bi bi-trash"></i> Elimina
+            </button>
+            {% endif %}
+
+            {% if config.custom_actions %}
+                {{ config.custom_actions|safe }}
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Sections -->
+            {% if config.sections %}
+                {% for section in config.sections %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        {% if section.icon %}
+                        <i class="{{ section.icon }} me-2"></i>
+                        {% endif %}
+                        <strong>{{ section.title }}</strong>
+                    </div>
+                    <div class="card-body">
+                        {% if section.template %}
+                            {% include section.template %}
+                        {% elif section.fields %}
+                        <dl class="row mb-0">
+                            {% for field in section.fields %}
+                            <dt class="col-sm-4 text-muted">{{ field.label }}</dt>
+                            <dd class="col-sm-8">
+                                {% if field.link %}
+                                <a href="{{ field.link }}">{{ field.value|default:"-" }}</a>
+                                {% elif field.badge %}
+                                <span class="badge bg-{{ field.badge_color|default:'primary' }}">
+                                    {{ field.value|default:"-" }}
+                                </span>
+                                {% else %}
+                                {{ field.value|default:"-" }}
+                                {% endif %}
+                            </dd>
+                            {% endfor %}
+                        </dl>
+                        {% elif section.html %}
+                            {{ section.html|safe }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- Default: mostra tutti i campi del model -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Dettagli</strong>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            {% for field in object._meta.get_fields %}
+                                {% if not field.many_to_many and not field.one_to_many %}
+                                <dt class="col-sm-4 text-muted">{{ field.verbose_name|title }}</dt>
+                                <dd class="col-sm-8">
+                                    {% with value=object|getattr:field.name %}
+                                    {{ value|default:"-" }}
+                                    {% endwith %}
+                                </dd>
+                                {% endif %}
+                            {% endfor %}
+                        </dl>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Allegati Widget -->
+            {% if config.show_allegati|default:True %}
+                {% if object.allegati %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <i class="bi bi-paperclip me-2"></i>
+                        <strong>Allegati</strong>
+                        <span class="badge bg-primary">{{ object.allegati.count }}</span>
+                    </div>
+                    <div class="card-body">
+                        {% include 'core/components/allegati_widget.html' with object=object %}
+                    </div>
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- QR Code -->
+            {% if config.show_qrcode|default:True %}
+                {% if object.get_qr_code_url %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <i class="bi bi-qr-code me-2"></i>
+                        <strong>QR Code</strong>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="{% url config.qr_url object.pk %}"
+                             alt="QR Code"
+                             class="img-fluid"
+                             style="max-width: 200px;">
+                        <p class="text-muted small mt-2 mb-0">
+                            Scansiona per accedere rapidamente
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+            {% endif %}
+
+            <!-- Metadata -->
+            {% if config.show_metadata|default:True %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <i class="bi bi-clock-history me-2"></i>
+                    <strong>Informazioni</strong>
+                </div>
+                <div class="card-body">
+                    <dl class="mb-0 small">
+                        <dt class="text-muted">Stato</dt>
+                        <dd>
+                            {% if object.is_active %}
+                            <span class="badge bg-success">Attivo</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inattivo</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="text-muted">Creato il</dt>
+                        <dd>{{ object.created_at|date:"d/m/Y H:i" }}</dd>
+
+                        {% if object.created_by %}
+                        <dt class="text-muted">Creato da</dt>
+                        <dd>{{ object.created_by.get_full_name|default:object.created_by.username }}</dd>
+                        {% endif %}
+
+                        <dt class="text-muted">Modificato il</dt>
+                        <dd>{{ object.updated_at|date:"d/m/Y H:i" }}</dd>
+
+                        {% if object.updated_by %}
+                        <dt class="text-muted">Modificato da</dt>
+                        <dd>{{ object.updated_by.get_full_name|default:object.updated_by.username }}</dd>
+                        {% endif %}
+
+                        {% if object.deleted_at %}
+                        <dt class="text-muted">Eliminato il</dt>
+                        <dd class="text-danger">{{ object.deleted_at|date:"d/m/Y H:i" }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Custom Sidebar Content -->
+            {% if config.sidebar_template %}
+                {% include config.sidebar_template %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Include Delete Modal se delete_url presente -->
+{% if config.delete_url %}
+    {% include 'components/delete_modal.html' with object=object delete_url=config.delete_url %}
+{% endif %}

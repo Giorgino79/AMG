@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Step 1: Invio Richieste{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1>Step 1: Invio Richieste ai Trasportatori</h1>
+    <h3>Richiesta: {{ richiesta.numero }}</h3>
+
+    <div class="card mt-4">
+        <div class="card-header bg-primary text-white">
+            <h5>Trasportatori Selezionati</h5>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Trasportatore</th>
+                        <th>Email</th>
+                        <th>Stato Invio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for to in trasportatori_offerte %}
+                    <tr>
+                        <td>{{ to.trasportatore.ragione_sociale }}</td>
+                        <td>{{ to.trasportatore.email }}</td>
+                        <td>
+                            {% if to.email_inviata %}
+                            <span class="badge bg-success">✓ Inviata</span>
+                            {% else %}
+                            <span class="badge bg-warning">Da inviare</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-lg">
+                    📧 Invia Richieste a Tutti
+                </button>
+                <a href="{% url 'trasporti:richiesta_detail' richiesta.pk %}" class="btn btn-secondary">Annulla</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

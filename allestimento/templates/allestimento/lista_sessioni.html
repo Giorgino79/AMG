@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Sessioni Allestimento - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Allestimento</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-box-seam me-2"></i>Sessioni Allestimento</h2>
+        <a href="{% url 'allestimento:upload_excel' %}" class="btn btn-primary">
+            <i class="bi bi-upload me-2"></i>Carica Lista Materiale
+        </a>
+    </div>
+
+    {% if sessioni %}
+    <div class="row">
+        {% for sessione in sessioni %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center {% if sessione.completata %}bg-success text-white{% else %}bg-primary text-white{% endif %}">
+                    <h5 class="mb-0">{{ sessione.nome_evento|default:"Sessione" }}</h5>
+                    {% if sessione.completata %}
+                    <span class="badge bg-light text-success">Completata</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        <i class="bi bi-geo-alt me-2"></i>{{ sessione.luogo|default:"N/D" }}
+                    </p>
+                    <p class="text-muted mb-2">
+                        <i class="bi bi-calendar me-2"></i>{{ sessione.data_creazione|date:"d/m/Y H:i" }}
+                    </p>
+
+                    <div class="progress mb-2" style="height: 20px;">
+                        <div class="progress-bar {% if sessione.completata %}bg-success{% else %}bg-primary{% endif %}"
+                             role="progressbar"
+                             style="width: {{ sessione.percentuale_completamento }}%;"
+                             aria-valuenow="{{ sessione.percentuale_completamento }}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            {{ sessione.percentuale_completamento }}%
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        {{ sessione.righe_completate }} / {{ sessione.righe_totali }} prodotti completati
+                    </small>
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="btn-group w-100">
+                        <a href="{% url 'allestimento:dettaglio_sessione' sessione.pk %}" class="btn btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i>Apri
+                        </a>
+                        {% if sessione.completata %}
+                        <a href="{% url 'allestimento:genera_pdf' sessione.pk %}" class="btn btn-outline-success">
+                            <i class="bi bi-file-pdf me-1"></i>PDF
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'allestimento:elimina_sessione' sessione.pk %}" class="btn btn-outline-danger">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-inbox display-1 text-muted"></i>
+        <h4 class="mt-3 text-muted">Nessuna sessione di allestimento</h4>
+        <p class="text-muted">Carica un file Excel per iniziare</p>
+        <a href="{% url 'allestimento:upload_excel' %}" class="btn btn-primary btn-lg">
+            <i class="bi bi-upload me-2"></i>Carica Lista Materiale
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

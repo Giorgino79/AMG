@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - ModularBEF{% endblock %}
+
+{% block extra_css %}
+<style>
+    .permission-card {
+        transition: all 0.2s;
+        border-left: 4px solid #5585b5;
+    }
+    .permission-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .crud-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.75rem;
+    }
+    .permission-checkbox {
+        padding: 0.75rem;
+        border: 2px solid #dee2e6;
+        border-radius: 0.375rem;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .permission-checkbox:hover {
+        border-color: #5585b5;
+        background-color: #f8f9fa;
+    }
+    .permission-checkbox input:checked + label {
+        color: #5585b5;
+        font-weight: 600;
+    }
+    .category-header {
+        background: #5585b5;
+        color: white;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .model-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #495057;
+    }
+    .select-all-btn {
+        font-size: 0.875rem;
+        padding: 0.25rem 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'users:user_list' %}">Dipendenti</a></li>
+<li class="breadcrumb-item"><a href="{% url 'users:user_detail' user_obj.pk %}">{{ user_obj.get_full_name|default:user_obj.username }}</a></li>
+<li class="breadcrumb-item active">Gestione Permessi</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">
+                <i class="bi bi-shield-lock-fill me-2"></i>Gestione Permessi
+            </h1>
+            <p class="text-muted mb-0">
+                Configura i permessi CRUD per <strong>{{ user_obj.get_full_name|default:user_obj.username }}</strong>
+            </p>
+        </div>
+        <a href="{% url 'users:user_detail' user_obj.pk %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Torna al Profilo
+        </a>
+    </div>
+
+    <!-- Template Rapido (solo per admin) -->
+    {% if perms.users.gestione_completa_users and available_templates %}
+    <div class="card mb-4 border-primary">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-folder-symlink me-2"></i>Applica Template Rapido
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'users:user_permissions_apply_template' user_obj.pk %}" id="apply-template-form">
+                {% csrf_token %}
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-6">
+                        <label for="template_select" class="form-label">Seleziona Template</label>
+                        <select name="template_id" id="template_select" class="form-select">
+                            <option value="">-- Seleziona un template --</option>
+                            {% for template in available_templates %}
+                                <option value="{{ template.pk }}"
+                                        data-description="{{ template.descrizione }}"
+                                        data-count="{{ template.get_permessi_count }}">
+                                    {{ template.nome }} ({{ template.get_permessi_count }} permessi)
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted" id="template-description"></small>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="sovrascrivi" id="sovrascrivi" class="form-check-input" value="1">
+                            <label for="sovrascrivi" class="form-check-label">
+                                Rimuovi permessi esistenti
+                            </label>
+                        </div>
+                        <small class="form-text text-muted">Se selezionato, rimuove tutti i permessi attuali prima di applicare il template</small>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100" disabled id="apply-template-btn">
+                            <i class="bi bi-lightning-fill me-2"></i>Applica Template
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Enable/disable button and show description
+        document.getElementById('template_select').addEventListener('change', function() {
+            const btn = document.getElementById('apply-template-btn');
+            const descEl = document.getElementById('template-description');
+            const selectedOption = this.options[this.selectedIndex];
+
+            if (this.value) {
+                btn.disabled = false;
+                const description = selectedOption.getAttribute('data-description');
+                descEl.textContent = description || 'Nessuna descrizione disponibile';
+            } else {
+                btn.disabled = true;
+                descEl.textContent = '';
+            }
+        });
+    </script>
+    {% endif %}
+
+    <!-- Info Box -->
+    <div class="alert alert-info d-flex align-items-center mb-4">
+        <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+        <div>
+            <strong>Come funziona:</strong> Seleziona i permessi che vuoi assegnare all'utente.
+            Ogni modello ha 4 permessi base: <strong>Crea</strong>, <strong>Visualizza</strong>,
+            <strong>Modifica</strong> e <strong>Elimina</strong>. I permessi sono organizzati per categoria.
+        </div>
+    </div>
+
+    <!-- Form -->
+    <form method="post">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger alert-dismissible fade show">
+            <strong>Errori:</strong>
+            <ul class="mb-0 mt-2">
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
+        <!-- Categories Loop -->
+        {% for category, category_data in fields_by_category.items %}
+        <div class="category-header">
+            <h3 class="mb-0">
+                <i class="bi bi-folder-fill me-2"></i>{{ category }}
+            </h3>
+        </div>
+
+        <div class="row g-4 mb-5">
+            {% for model_name, model_data in category_data.models.items %}
+            <div class="col-lg-6 col-xl-4">
+                <div class="card permission-card h-100">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <div class="model-name">
+                            <i class="{{ model_data.info.icon }} me-2"></i>{{ model_name }}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary select-all-btn"
+                                onclick="toggleAllPermissions(this, '{{ model_data.info.app_label }}_{{ model_data.info.model_name }}')">
+                            <i class="bi bi-check-all me-1"></i>Tutti
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="crud-grid" data-model="{{ model_data.info.app_label }}_{{ model_data.info.model_name }}">
+                            {% for field_data in model_data.fields %}
+                            <div class="permission-checkbox">
+                                <div class="form-check">
+                                    {{ field_data.field }}
+                                    <label class="form-check-label w-100" for="id_{{ field_data.name }}">
+                                        {% if field_data.permission_info.action == 'add' %}
+                                            <i class="bi bi-plus-circle text-success me-1"></i>
+                                        {% elif field_data.permission_info.action == 'view' %}
+                                            <i class="bi bi-eye text-info me-1"></i>
+                                        {% elif field_data.permission_info.action == 'change' %}
+                                            <i class="bi bi-pencil text-warning me-1"></i>
+                                        {% elif field_data.permission_info.action == 'delete' %}
+                                            <i class="bi bi-trash text-danger me-1"></i>
+                                        {% endif %}
+                                        {{ field_data.permission_info.label }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% empty %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Nessun modello registrato per la gestione permessi.
+        </div>
+        {% endfor %}
+
+        <!-- Actions -->
+        <div class="card border-0 bg-light sticky-bottom">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{% url 'users:user_detail' user_obj.pk %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-2"></i>Annulla
+                    </a>
+                    <div>
+                        <button type="button" class="btn btn-outline-danger me-2" onclick="clearAllPermissions()">
+                            <i class="bi bi-x-square me-2"></i>Deseleziona Tutto
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Salva Permessi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/**
+ * Toggle all permissions for a specific model
+ */
+function toggleAllPermissions(button, modelKey) {
+    const container = document.querySelector(`[data-model="${modelKey}"]`);
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+
+    // Check if all are currently checked
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+    // Toggle: if all checked, uncheck all; otherwise, check all
+    checkboxes.forEach(cb => {
+        cb.checked = !allChecked;
+    });
+
+    // Update button text
+    const icon = button.querySelector('i');
+    if (!allChecked) {
+        button.innerHTML = '<i class="bi bi-x-square me-1"></i>Nessuno';
+    } else {
+        button.innerHTML = '<i class="bi bi-check-all me-1"></i>Tutti';
+    }
+}
+
+/**
+ * Clear all permissions in the form
+ */
+function clearAllPermissions() {
+    if (confirm('Sei sicuro di voler deselezionare tutti i permessi?')) {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            cb.checked = false;
+        });
+
+        // Reset all "Tutti" buttons
+        const buttons = document.querySelectorAll('.select-all-btn');
+        buttons.forEach(btn => {
+            btn.innerHTML = '<i class="bi bi-check-all me-1"></i>Tutti';
+        });
+    }
+}
+
+</script>
+{% endblock %}

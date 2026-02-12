@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Configura Contratto Payroll - {{ user_obj.get_full_name }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'users:user_list' %}">Dipendenti</a></li>
+<li class="breadcrumb-item"><a href="{% url 'users:user_detail' user_obj.pk %}">{{ user_obj.get_full_name }}</a></li>
+<li class="breadcrumb-item active">Configura Contratto Payroll</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h2><i class="bi bi-cash-coin me-2"></i>Configura Contratto Payroll</h2>
+                    <p class="text-muted">Dipendente: <strong>{{ user_obj.get_full_name }}</strong></p>
+                </div>
+                <div>
+                    <a href="{% url 'payroll:manuale_payroll' %}" target="_blank" class="btn btn-info">
+                        <i class="bi bi-book me-1"></i>Manuale di Compilazione
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert informativo -->
+    <div class="row mb-3">
+        <div class="col">
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Hai dubbi sulla compilazione?</strong> Consulta il
+                <a href="{% url 'payroll:manuale_payroll' %}" target="_blank" class="alert-link">
+                    Manuale di Compilazione <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+                per normative, esempi pratici e best practices.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        <!-- Dati Contrattuali -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>Dati Contrattuali</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="ccnl" class="form-label">CCNL *</label>
+                        <select class="form-select" id="ccnl" name="ccnl" required>
+                            <option value="">Seleziona CCNL...</option>
+                            {% for ccnl in ccnl_list %}
+                            <option value="{{ ccnl.pk }}" {% if dati_payroll and dati_payroll.ccnl.pk == ccnl.pk %}selected{% endif %}>
+                                {{ ccnl.nome }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="livello" class="form-label">Livello *</label>
+                        <select class="form-select" id="livello" name="livello" required>
+                            <option value="">Seleziona Livello...</option>
+                            {% for livello in livelli_list %}
+                            <option value="{{ livello.pk }}" data-ccnl="{{ livello.ccnl.pk }}" {% if dati_payroll and dati_payroll.livello.pk == livello.pk %}selected{% endif %}>
+                                {{ livello.ccnl.nome }} - Liv. {{ livello.codice }}: {{ livello.descrizione }} (€ {{ livello.paga_base_mensile|floatformat:2 }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="tipo_contratto" class="form-label">Tipo Contratto *</label>
+                        <select class="form-select" id="tipo_contratto" name="tipo_contratto" required>
+                            <option value="TEMPO_INDETERMINATO" {% if dati_payroll and dati_payroll.tipo_contratto == 'TEMPO_INDETERMINATO' %}selected{% endif %}>Tempo Indeterminato</option>
+                            <option value="TEMPO_DETERMINATO" {% if dati_payroll and dati_payroll.tipo_contratto == 'TEMPO_DETERMINATO' %}selected{% endif %}>Tempo Determinato</option>
+                            <option value="APPRENDISTATO" {% if dati_payroll and dati_payroll.tipo_contratto == 'APPRENDISTATO' %}selected{% endif %}>Apprendistato</option>
+                            <option value="SOMMINISTRAZIONE" {% if dati_payroll and dati_payroll.tipo_contratto == 'SOMMINISTRAZIONE' %}selected{% endif %}>Somministrazione</option>
+                            <option value="PART_TIME" {% if dati_payroll and dati_payroll.tipo_contratto == 'PART_TIME' %}selected{% endif %}>Part Time</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="data_fine_contratto" class="form-label">Data Fine Contratto</label>
+                        <input type="date" class="form-control" id="data_fine_contratto" name="data_fine_contratto" value="{% if dati_payroll.data_fine_contratto %}{{ dati_payroll.data_fine_contratto|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="data_cessazione" class="form-label">Data Cessazione</label>
+                        <input type="date" class="form-control" id="data_cessazione" name="data_cessazione" value="{% if dati_payroll.data_cessazione %}{{ dati_payroll.data_cessazione|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orario e Retribuzione -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Orario e Retribuzione</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="ore_settimanali" class="form-label">Ore Settimanali *</label>
+                        <input type="number" step="0.01" class="form-control" id="ore_settimanali" name="ore_settimanali" value="{% if dati_payroll %}{{ dati_payroll.ore_settimanali }}{% else %}40.00{% endif %}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="percentuale_part_time" class="form-label">% Part Time *</label>
+                        <input type="number" step="0.01" class="form-control" id="percentuale_part_time" name="percentuale_part_time" value="{% if dati_payroll %}{{ dati_payroll.percentuale_part_time }}{% else %}100.00{% endif %}" required>
+                        <small class="form-text text-muted">100 = Full Time</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="superminimo" class="form-label">Superminimo €</label>
+                        <input type="number" step="0.01" class="form-control" id="superminimo" name="superminimo" value="{% if dati_payroll %}{{ dati_payroll.superminimo }}{% else %}0.00{% endif %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dati Fiscali -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Dati Fiscali</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="aliquota_addizionale_regionale" class="form-label">Addizionale Regionale %</label>
+                        <input type="number" step="0.01" class="form-control" id="aliquota_addizionale_regionale" name="aliquota_addizionale_regionale" value="{% if dati_payroll %}{{ dati_payroll.aliquota_addizionale_regionale }}{% else %}0.00{% endif %}">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="aliquota_addizionale_comunale" class="form-label">Addizionale Comunale %</label>
+                        <input type="number" step="0.01" class="form-control" id="aliquota_addizionale_comunale" name="aliquota_addizionale_comunale" value="{% if dati_payroll %}{{ dati_payroll.aliquota_addizionale_comunale }}{% else %}0.00{% endif %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detrazioni -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-percent me-2"></i>Detrazioni</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="detrazione_lavoro_dipendente" name="detrazione_lavoro_dipendente" {% if not dati_payroll or dati_payroll.detrazione_lavoro_dipendente %}checked{% endif %}>
+                            <label class="form-check-label" for="detrazione_lavoro_dipendente">
+                                Detrazione Lavoro Dipendente
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="numero_figli_a_carico" class="form-label">Numero Figli a Carico</label>
+                        <input type="number" class="form-control" id="numero_figli_a_carico" name="numero_figli_a_carico" value="{% if dati_payroll %}{{ dati_payroll.numero_figli_a_carico }}{% else %}0{% endif %}">
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" id="coniuge_a_carico" name="coniuge_a_carico" {% if dati_payroll and dati_payroll.coniuge_a_carico %}checked{% endif %}>
+                            <label class="form-check-label" for="coniuge_a_carico">
+                                Coniuge a Carico
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="altri_familiari_a_carico" class="form-label">Altri Familiari a Carico</label>
+                        <input type="number" class="form-control" id="altri_familiari_a_carico" name="altri_familiari_a_carico" value="{% if dati_payroll %}{{ dati_payroll.altri_familiari_a_carico }}{% else %}0{% endif %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- IBAN -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="bi bi-bank me-2"></i>Dati Bancari</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label for="iban" class="form-label">IBAN</label>
+                        <input type="text" class="form-control" id="iban" name="iban" value="{% if dati_payroll %}{{ dati_payroll.iban }}{% endif %}" maxlength="27">
+                        <small class="form-text text-muted">Formato: IT60X0542811101000000123456</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pulsanti -->
+        <div class="d-flex justify-content-between">
+            <a href="{% url 'users:user_detail' user_obj.pk %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Annulla
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-1"></i>Salva Configurazione
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Filtra livelli in base al CCNL selezionato
+document.getElementById('ccnl').addEventListener('change', function() {
+    const ccnlId = this.value;
+    const livelloSelect = document.getElementById('livello');
+    const options = livelloSelect.getElementsByTagName('option');
+
+    for (let i = 1; i < options.length; i++) {
+        const option = options[i];
+        if (!ccnlId || option.getAttribute('data-ccnl') === ccnlId) {
+            option.style.display = '';
+        } else {
+            option.style.display = 'none';
+        }
+    }
+
+    // Reset selezione livello se non compatibile
+    const selectedOption = livelloSelect.options[livelloSelect.selectedIndex];
+    if (selectedOption && selectedOption.getAttribute('data-ccnl') !== ccnlId) {
+        livelloSelect.value = '';
+    }
+});
+
+// Trigger al caricamento
+document.getElementById('ccnl').dispatchEvent(new Event('change'));
+</script>
+{% endblock %}

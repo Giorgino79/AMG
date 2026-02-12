@@ -1,0 +1,32 @@
+{% comment %}
+Componente Breadcrumb
+
+Uso:
+    {% include 'components/breadcrumb.html' with breadcrumbs=breadcrumbs %}
+
+Parametri:
+    - breadcrumbs: Lista di dict con 'label' e 'url' (required)
+      Esempio: [
+          {'label': 'Home', 'url': '/'},
+          {'label': 'Vendite', 'url': '/vendite/'},
+          {'label': 'Ordini', 'url': None},  # None = pagina corrente
+      ]
+{% endcomment %}
+
+{% if breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        {% for item in breadcrumbs %}
+            {% if item.url %}
+            <li class="breadcrumb-item">
+                <a href="{{ item.url }}">{{ item.label }}</a>
+            </li>
+            {% else %}
+            <li class="breadcrumb-item active" aria-current="page">
+                {{ item.label }}
+            </li>
+            {% endif %}
+        {% endfor %}
+    </ol>
+</nav>
+{% endif %}

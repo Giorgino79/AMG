@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'users:user_list' %}">Dipendenti</a></li>
+<li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-person-plus me-2"></i>{{ title }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Errori:</strong>
+                            <ul class="mb-0 mt-2">
+                                {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endif %}
+
+                        <!-- Dati Accesso -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2"><i class="bi bi-key-fill me-2"></i>Credenziali Accesso</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.username.id_for_label }}" class="form-label">Username *</label>
+                                {{ form.username }}
+                                {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>{% endif %}
+                                {% if form.username.help_text %}<div class="form-text">{{ form.username.help_text }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">Email *</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>{% endif %}
+                                {% if form.email.help_text %}<div class="form-text">{{ form.email.help_text }}</div>{% endif %}
+                            </div>
+                            {% if form.password1 %}
+                            <div class="col-md-6">
+                                <label for="{{ form.password1.id_for_label }}" class="form-label">Password *</label>
+                                {{ form.password1 }}
+                                {% if form.password1.errors %}<div class="text-danger small mt-1">{{ form.password1.errors.0 }}</div>{% endif %}
+                                {% if form.password1.help_text %}<div class="form-text">{{ form.password1.help_text }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.password2.id_for_label }}" class="form-label">Conferma Password *</label>
+                                {{ form.password2 }}
+                                {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors.0 }}</div>{% endif %}
+                                {% if form.password2.help_text %}<div class="form-text">{{ form.password2.help_text }}</div>{% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Dati Anagrafici -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2"><i class="bi bi-person-lines-fill me-2"></i>Dati Anagrafici</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">Nome</label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}<div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">Cognome</label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}<div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.codice_fiscale.id_for_label }}" class="form-label">Codice Fiscale *</label>
+                                {{ form.codice_fiscale }}
+                                {% if form.codice_fiscale.errors %}<div class="text-danger small mt-1">{{ form.codice_fiscale.errors.0 }}</div>{% endif %}
+                                {% if form.codice_fiscale.help_text %}<div class="form-text">{{ form.codice_fiscale.help_text }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.data_nascita.id_for_label }}" class="form-label">Data di Nascita</label>
+                                {{ form.data_nascita }}
+                                {% if form.data_nascita.errors %}<div class="text-danger small mt-1">{{ form.data_nascita.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.luogo_nascita.id_for_label }}" class="form-label">Luogo di Nascita</label>
+                                {{ form.luogo_nascita }}
+                                {% if form.luogo_nascita.errors %}<div class="text-danger small mt-1">{{ form.luogo_nascita.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.foto_profilo.id_for_label }}" class="form-label">Foto Profilo</label>
+                                {{ form.foto_profilo }}
+                                {% if form.foto_profilo.errors %}<div class="text-danger small mt-1">{{ form.foto_profilo.errors.0 }}</div>{% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Documenti -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2"><i class="bi bi-file-earmark-text me-2"></i>Documenti</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.carta_d_identita.id_for_label }}" class="form-label">Carta d'Identità</label>
+                                {{ form.carta_d_identita }}
+                                {% if form.carta_d_identita.errors %}<div class="text-danger small mt-1">{{ form.carta_d_identita.errors.0 }}</div>{% endif %}
+                                {% if form.carta_d_identita.help_text %}<div class="form-text">{{ form.carta_d_identita.help_text }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.data_scadenza_ci.id_for_label }}" class="form-label">Scadenza Carta d'Identità</label>
+                                {{ form.data_scadenza_ci }}
+                                {% if form.data_scadenza_ci.errors %}<div class="text-danger small mt-1">{{ form.data_scadenza_ci.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.foto_carta_identita.id_for_label }}" class="form-label">Foto Carta d'Identità</label>
+                                {{ form.foto_carta_identita }}
+                                {% if form.foto_carta_identita.errors %}<div class="text-danger small mt-1">{{ form.foto_carta_identita.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.foto_codice_fiscale.id_for_label }}" class="form-label">Foto Codice Fiscale</label>
+                                {{ form.foto_codice_fiscale }}
+                                {% if form.foto_codice_fiscale.errors %}<div class="text-danger small mt-1">{{ form.foto_codice_fiscale.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.patente_di_guida.id_for_label }}" class="form-label">Patente di Guida</label>
+                                {{ form.patente_di_guida }}
+                                {% if form.patente_di_guida.errors %}<div class="text-danger small mt-1">{{ form.patente_di_guida.errors.0 }}</div>{% endif %}
+                                {% if form.patente_di_guida.help_text %}<div class="form-text">{{ form.patente_di_guida.help_text }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.categorie_patente.id_for_label }}" class="form-label">Categorie Patente</label>
+                                {{ form.categorie_patente }}
+                                {% if form.categorie_patente.errors %}<div class="text-danger small mt-1">{{ form.categorie_patente.errors.0 }}</div>{% endif %}
+                                {% if form.categorie_patente.help_text %}<div class="form-text">{{ form.categorie_patente.help_text }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.data_scadenza_patente.id_for_label }}" class="form-label">Scadenza Patente</label>
+                                {{ form.data_scadenza_patente }}
+                                {% if form.data_scadenza_patente.errors %}<div class="text-danger small mt-1">{{ form.data_scadenza_patente.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.foto_patente.id_for_label }}" class="form-label">Foto Patente</label>
+                                {{ form.foto_patente }}
+                                {% if form.foto_patente.errors %}<div class="text-danger small mt-1">{{ form.foto_patente.errors.0 }}</div>{% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Posizioni Contributive -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2"><i class="bi bi-building me-2"></i>Posizioni Contributive</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.posizione_inail.id_for_label }}" class="form-label">Posizione INAIL</label>
+                                {{ form.posizione_inail }}
+                                {% if form.posizione_inail.errors %}<div class="text-danger small mt-1">{{ form.posizione_inail.errors.0 }}</div>{% endif %}
+                                {% if form.posizione_inail.help_text %}<div class="form-text">{{ form.posizione_inail.help_text }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.posizione_inps.id_for_label }}" class="form-label">Posizione INPS</label>
+                                {{ form.posizione_inps }}
+                                {% if form.posizione_inps.errors %}<div class="text-danger small mt-1">{{ form.posizione_inps.errors.0 }}</div>{% endif %}
+                                {% if form.posizione_inps.help_text %}<div class="form-text">{{ form.posizione_inps.help_text }}</div>{% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Contatti -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2"><i class="bi bi-telephone-fill me-2"></i>Contatti</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.telefono.id_for_label }}" class="form-label">Telefono</label>
+                                {{ form.telefono }}
+                                {% if form.telefono.errors %}<div class="text-danger small mt-1">{{ form.telefono.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.telefono_emergenza.id_for_label }}" class="form-label">Telefono Emergenza</label>
+                                {{ form.telefono_emergenza }}
+                                {% if form.telefono_emergenza.errors %}<div class="text-danger small mt-1">{{ form.telefono_emergenza.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-12">
+                                <label for="{{ form.indirizzo.id_for_label }}" class="form-label">Indirizzo</label>
+                                {{ form.indirizzo }}
+                                {% if form.indirizzo.errors %}<div class="text-danger small mt-1">{{ form.indirizzo.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-5">
+                                <label for="{{ form.citta.id_for_label }}" class="form-label">Città</label>
+                                {{ form.citta }}
+                                {% if form.citta.errors %}<div class="text-danger small mt-1">{{ form.citta.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.cap.id_for_label }}" class="form-label">CAP</label>
+                                {{ form.cap }}
+                                {% if form.cap.errors %}<div class="text-danger small mt-1">{{ form.cap.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                <label for="{{ form.provincia.id_for_label }}" class="form-label">Provincia</label>
+                                {{ form.provincia }}
+                                {% if form.provincia.errors %}<div class="text-danger small mt-1">{{ form.provincia.errors.0 }}</div>{% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Dati Lavorativi -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2"><i class="bi bi-briefcase-fill me-2"></i>Dati Lavorativi</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.qualifica.id_for_label }}" class="form-label">Qualifica</label>
+                                {{ form.qualifica }}
+                                {% if form.qualifica.errors %}<div class="text-danger small mt-1">{{ form.qualifica.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.reparto.id_for_label }}" class="form-label">Reparto</label>
+                                {{ form.reparto }}
+                                {% if form.reparto.errors %}<div class="text-danger small mt-1">{{ form.reparto.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.stato.id_for_label }}" class="form-label">Stato *</label>
+                                {{ form.stato }}
+                                {% if form.stato.errors %}<div class="text-danger small mt-1">{{ form.stato.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.data_assunzione.id_for_label }}" class="form-label">Data Assunzione</label>
+                                {{ form.data_assunzione }}
+                                {% if form.data_assunzione.errors %}<div class="text-danger small mt-1">{{ form.data_assunzione.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.giorni_ferie_anno.id_for_label }}" class="form-label">Giorni Ferie Annuali</label>
+                                {{ form.giorni_ferie_anno }}
+                                {% if form.giorni_ferie_anno.errors %}<div class="text-danger small mt-1">{{ form.giorni_ferie_anno.errors.0 }}</div>{% endif %}
+                                <div class="form-text">Default: 26 giorni</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.ore_permesso_residue.id_for_label }}" class="form-label">Ore Permesso Residue</label>
+                                {{ form.ore_permesso_residue }}
+                                {% if form.ore_permesso_residue.errors %}<div class="text-danger small mt-1">{{ form.ore_permesso_residue.errors.0 }}</div>{% endif %}
+                                <div class="form-text">Ore permesso disponibili</div>
+                            </div>
+                        </div>
+
+                        <!-- Note -->
+                        {% if form.note %}
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2"><i class="bi bi-sticky me-2"></i>Note</h5>
+                            </div>
+                            <div class="col-md-12">
+                                <label for="{{ form.note.id_for_label }}" class="form-label">Note</label>
+                                {{ form.note }}
+                                {% if form.note.errors %}<div class="text-danger small mt-1">{{ form.note.errors.0 }}</div>{% endif %}
+                                {% if form.note.help_text %}<div class="form-text">{{ form.note.help_text }}</div>{% endif %}
+                            </div>
+                            {% if form.note_interne %}
+                            <div class="col-md-12">
+                                <label for="{{ form.note_interne.id_for_label }}" class="form-label">Note Interne <span class="badge bg-warning">Riservate</span></label>
+                                {{ form.note_interne }}
+                                {% if form.note_interne.errors %}<div class="text-danger small mt-1">{{ form.note_interne.errors.0 }}</div>{% endif %}
+                                {% if form.note_interne.help_text %}<div class="form-text">{{ form.note_interne.help_text }}</div>{% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Data Cessazione (solo in modifica) -->
+                        {% if form.data_cessazione %}
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2"><i class="bi bi-calendar-x me-2"></i>Cessazione</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.data_cessazione.id_for_label }}" class="form-label">Data Cessazione</label>
+                                {{ form.data_cessazione }}
+                                {% if form.data_cessazione.errors %}<div class="text-danger small mt-1">{{ form.data_cessazione.errors.0 }}</div>{% endif %}
+                                <div class="form-text">Compilare solo se il dipendente ha cessato il rapporto di lavoro</div>
+                            </div>
+                            {% if form.giorni_ferie_residui %}
+                            <div class="col-md-6">
+                                <label for="{{ form.giorni_ferie_residui.id_for_label }}" class="form-label">Giorni Ferie Residui</label>
+                                {{ form.giorni_ferie_residui }}
+                                {% if form.giorni_ferie_residui.errors %}<div class="text-danger small mt-1">{{ form.giorni_ferie_residui.errors.0 }}</div>{% endif %}
+                                <div class="form-text">Giorni ferie rimanenti (modificabile solo in modifica)</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Permessi e Ruoli -->
+                        {% if form.template_permessi %}
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2"><i class="bi bi-shield-lock me-2"></i>Permessi e Ruoli</h5>
+                            </div>
+                            <div class="col-md-12">
+                                <label for="{{ form.template_permessi.id_for_label }}" class="form-label">Template Permessi</label>
+                                {{ form.template_permessi }}
+                                {% if form.template_permessi.errors %}<div class="text-danger small mt-1">{{ form.template_permessi.errors.0 }}</div>{% endif %}
+                                <div class="form-text">Seleziona il profilo di permessi da assegnare all'utente</div>
+                            </div>
+                            {% if form.permessi_custom %}
+                            <div class="col-md-12" id="permessi-custom-container" style="display: none;">
+                                <label for="{{ form.permessi_custom.id_for_label }}" class="form-label">Permessi Personalizzati</label>
+                                {{ form.permessi_custom }}
+                                {% if form.permessi_custom.errors %}<div class="text-danger small mt-1">{{ form.permessi_custom.errors.0 }}</div>{% endif %}
+                                <div class="form-text">Seleziona i permessi specifici (solo se Template = Personalizzato)</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Pulsanti -->
+                        <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                            <a href="{% url 'users:user_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-2"></i>Annulla
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-2"></i>Salva Dipendente
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add form-control class to all inputs
+    document.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]), select, textarea').forEach(input => {
+        if (!input.classList.contains('form-control') && !input.classList.contains('form-select')) {
+            if (input.tagName === 'SELECT') {
+                input.classList.add('form-select');
+            } else {
+                input.classList.add('form-control');
+            }
+        }
+    });
+
+    // Toggle permessi custom visibility based on template selection
+    const templatePermessi = document.querySelector('select[name="template_permessi"]');
+    const permessiCustomContainer = document.getElementById('permessi-custom-container');
+
+    if (templatePermessi && permessiCustomContainer) {
+        templatePermessi.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                permessiCustomContainer.style.display = 'block';
+            } else {
+                permessiCustomContainer.style.display = 'none';
+            }
+        });
+
+        // Check initial value
+        if (templatePermessi.value === 'custom') {
+            permessiCustomContainer.style.display = 'block';
+        }
+    }
+});
+</script>
+{% endblock %}

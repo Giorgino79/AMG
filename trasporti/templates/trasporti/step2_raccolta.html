@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Step 2: Raccolta Offerte{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1>Step 2: Raccolta Offerte</h1>
+    <h3>Richiesta: {{ richiesta.numero }}</h3>
+
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Trasportatori Contattati</h5>
+                    <h2 class="text-primary">{{ totale_trasportatori }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Offerte Ricevute</h5>
+                    <h2 class="text-success">{{ offerte.count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>In Attesa</h5>
+                    <h2 class="text-warning">{{ totale_trasportatori|add:"-"|add:trasportatori_risposto }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <a href="{% url 'trasporti:offerta_create' richiesta.pk %}" class="btn btn-primary btn-lg w-100" style="height: 100%;">
+                + Inserisci Offerta
+            </a>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Offerte Ricevute</h5>
+        </div>
+        <div class="card-body">
+            {% if offerte %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Trasportatore</th>
+                        <th>Importo</th>
+                        <th>Ritiro</th>
+                        <th>Consegna</th>
+                        <th>Transito</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for offerta in offerte %}
+                    <tr>
+                        <td>{{ offerta.trasportatore.ragione_sociale }}</td>
+                        <td><strong>€{{ offerta.importo_totale }}</strong></td>
+                        <td>{{ offerta.data_ritiro_proposta|date:"d/m/Y" }}</td>
+                        <td>{{ offerta.data_consegna_prevista|date:"d/m/Y" }}</td>
+                        <td>{{ offerta.tempo_transito_giorni }} gg</td>
+                        <td>
+                            <a href="{% url 'trasporti:offerta_detail' offerta.pk %}" class="btn btn-sm btn-info">Dettagli</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success btn-lg">
+                    ✓ Finalizza Raccolta e Passa alla Valutazione
+                </button>
+            </form>
+            {% else %}
+            <div class="alert alert-info">
+                Nessuna offerta ricevuta ancora. Inserisci almeno 2 offerte per procedere.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

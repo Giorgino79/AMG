@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ user_obj.get_full_name }} - ModularBEF{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+{% include 'components/breadcrumb.html' with breadcrumbs=breadcrumbs %}
+
+<!-- Alerts -->
+{% include 'components/alerts.html' %}
+
+<!-- Header con pulsanti azione -->
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h1 class="mb-1">{{ user_obj.get_full_name|default:user_obj.username }}</h1>
+            <p class="text-muted mb-0">Codice Dipendente: {{ user_obj.codice_dipendente }} | Username: {{ user_obj.username }}</p>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{% url 'users:user_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Indietro
+            </a>
+            <a href="{% url 'users:user_update' user_obj.pk %}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Modifica
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Layout Component -->
+{% include 'components/detail_layout.html' with object=user_obj config=detail_config %}
+{% endblock %}

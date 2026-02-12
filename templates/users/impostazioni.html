@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Impostazioni - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Impostazioni</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="h2 mb-4"><i class="bi bi-gear me-2"></i>Impostazioni</h1>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Notifiche</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="notifEmail" checked>
+                        <label class="form-check-label" for="notifEmail">
+                            Email per nuove richieste ferie/permessi
+                        </label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="notifSistema" checked>
+                        <label class="form-check-label" for="notifSistema">
+                            Notifiche di sistema
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="notifLettera" checked>
+                        <label class="form-check-label" for="notifLettera">
+                            Alert per lettere di richiamo
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Privacy</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="profileVisible" checked>
+                        <label class="form-check-label" for="profileVisible">
+                            Profilo visibile agli altri dipendenti
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                Le impostazioni verranno implementate nelle prossime versioni
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'home' %}" class="btn btn-secondary">Indietro</a>
+                <button type="button" class="btn btn-primary disabled">Salva Impostazioni</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Offerta {{ offerta.fornitore }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'preventivi_beni:dashboard' %}">Preventivi Beni</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'preventivi_beni:richiesta_detail' offerta.richiesta.pk %}">{{ offerta.richiesta.numero }}</a></li>
+                    <li class="breadcrumb-item active">Offerta</li>
+                </ol>
+            </nav>
+            <h1>Offerta di {{ offerta.fornitore }}</h1>
+            <p class="text-muted">Richiesta: {{ offerta.richiesta.numero }} - {{ offerta.richiesta.titolo }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Importi -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Importi</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Importo Merce/Servizi</th>
+                            <td class="text-end">€{{ offerta.importo_merce|floatformat:2 }}</td>
+                        </tr>
+                        {% if offerta.importo_trasporto %}
+                        <tr>
+                            <th>Trasporto</th>
+                            <td class="text-end">€{{ offerta.importo_trasporto|floatformat:2 }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if offerta.importo_imballo %}
+                        <tr>
+                            <th>Imballo</th>
+                            <td class="text-end">€{{ offerta.importo_imballo|floatformat:2 }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if offerta.importo_installazione %}
+                        <tr>
+                            <th>Installazione</th>
+                            <td class="text-end">€{{ offerta.importo_installazione|floatformat:2 }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if offerta.importo_extra %}
+                        <tr>
+                            <th>Extra ({{ offerta.descrizione_extra }})</th>
+                            <td class="text-end">€{{ offerta.importo_extra|floatformat:2 }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if offerta.sconto_percentuale or offerta.sconto_importo %}
+                        <tr class="table-success">
+                            <th>Sconto
+                                {% if offerta.sconto_percentuale %}({{ offerta.sconto_percentuale|floatformat:2 }}%){% endif %}
+                            </th>
+                            <td class="text-end">- €{{ offerta.sconto_importo|floatformat:2 }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr class="table-primary">
+                            <th><strong>TOTALE</strong></th>
+                            <td class="text-end"><strong>€{{ offerta.importo_totale|floatformat:2 }}</strong></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Consegna -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Consegna</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p><strong>Tempo Consegna:</strong><br>
+                            {% if offerta.tempo_consegna_giorni %}{{ offerta.tempo_consegna_giorni }} giorni{% else %}-{% endif %}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Data Proposta:</strong><br>
+                            {% if offerta.data_consegna_proposta %}{{ offerta.data_consegna_proposta|date:"d/m/Y" }}{% else %}-{% endif %}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Validità Offerta:</strong><br>
+                            {{ offerta.validita_offerta_giorni }} giorni
+                            {% if offerta.is_scaduta %}<span class="badge bg-danger">Scaduta</span>{% endif %}</p>
+                        </div>
+                    </div>
+                    {% if offerta.note_consegna %}
+                    <p><strong>Note Consegna:</strong><br>{{ offerta.note_consegna }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Condizioni -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Condizioni Commerciali</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Termini Pagamento:</strong><br>
+                            {{ offerta.get_termini_pagamento_display|default:"-" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Garanzia:</strong><br>
+                            {% if offerta.garanzia_mesi %}{{ offerta.garanzia_mesi }} mesi{% else %}-{% endif %}</p>
+                        </div>
+                    </div>
+                    {% if offerta.note_garanzia %}
+                    <p><strong>Note Garanzia:</strong><br>{{ offerta.note_garanzia }}</p>
+                    {% endif %}
+                    <div class="mt-3">
+                        {% if offerta.trasporto_incluso %}<span class="badge bg-success me-2">Trasporto Incluso</span>{% endif %}
+                        {% if offerta.installazione_inclusa %}<span class="badge bg-success me-2">Installazione Inclusa</span>{% endif %}
+                        {% if offerta.formazione_inclusa %}<span class="badge bg-success me-2">Formazione Inclusa</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Note -->
+            {% if offerta.note_tecniche or offerta.note_commerciali %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Note</h5>
+                </div>
+                <div class="card-body">
+                    {% if offerta.note_tecniche %}
+                    <p><strong>Note Tecniche:</strong><br>{{ offerta.note_tecniche|linebreaks }}</p>
+                    {% endif %}
+                    {% if offerta.note_commerciali %}
+                    <p><strong>Note Commerciali:</strong><br>{{ offerta.note_commerciali|linebreaks }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <!-- Info Fornitore -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Fornitore</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>{{ offerta.fornitore.ragione_sociale }}</strong></p>
+                    {% if offerta.fornitore.email %}
+                    <p>{{ offerta.fornitore.email }}</p>
+                    {% endif %}
+                    {% if offerta.fornitore.telefono %}
+                    <p>{{ offerta.fornitore.telefono }}</p>
+                    {% endif %}
+                    {% if offerta.numero_offerta %}
+                    <p><strong>N° Offerta:</strong> {{ offerta.numero_offerta }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Allegato -->
+            {% if offerta.file_offerta %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Allegato</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ offerta.file_offerta.url }}" class="btn btn-primary" target="_blank">
+                        Scarica Allegato
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Stato -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Stato</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Ricevuta il:</strong><br>{{ offerta.data_ricevimento|date:"d/m/Y H:i" }}</p>
+                    {% if offerta.confermata %}
+                    <p><strong>Confermata il:</strong><br>{{ offerta.data_conferma|date:"d/m/Y H:i" }}</p>
+                    <span class="badge bg-success">CONFERMATA</span>
+                    {% endif %}
+                    {% if offerta.is_scaduta %}
+                    <span class="badge bg-danger">SCADUTA</span>
+                    {% elif offerta.giorni_validita_rimanenti != None %}
+                    <p class="mt-2"><strong>Validità rimanente:</strong> {{ offerta.giorni_validita_rimanenti }} giorni</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Azioni -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'preventivi_beni:richiesta_detail' offerta.richiesta.pk %}" class="btn btn-secondary">
+                            Torna alla Richiesta
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
