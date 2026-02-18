@@ -10,6 +10,9 @@ redis==5.0.8
 django-celery-beat==2.8.1
 django-crispy-forms==2.1
 crispy-bootstrap5==0.7
+django-bootstrap5==24.3
+django-select2==8.1.2
+django-qr-code==4.0.1
 python-decouple==3.8
 Pillow==10.1.0
 reportlab==4.0.7
