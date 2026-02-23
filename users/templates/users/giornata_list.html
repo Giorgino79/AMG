@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Le Mie Giornate - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Giornate Lavorative</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-calendar3 me-2"></i>Le Mie Giornate Lavorative</h2>
+        <div class="btn-group">
+            <a href="{% url 'users:giornate_export_excel' %}" class="btn btn-success">
+                <i class="bi bi-file-earmark-excel me-1"></i>Esporta Excel
+            </a>
+            <a href="{% url 'users:giornate_export_pdf' %}" class="btn btn-danger">
+                <i class="bi bi-file-earmark-pdf me-1"></i>Esporta PDF
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted mb-1">Ore Totali</h6>
+                    <h3 class="mb-0">{{ ore_totali }}h</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted mb-1">Straordinari</h6>
+                    <h3 class="mb-0 text-danger">{{ straordinari }}h</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            {% if giornate %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Mattina</th>
+                            <th>Pomeriggio</th>
+                            <th>Notte</th>
+                            <th>Totale</th>
+                            <th>Straordinari</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for g in giornate %}
+                        <tr>
+                            <td><strong>{{ g.data|date:"d/m/Y" }}</strong></td>
+                            <td style="background-color: {{ g.colore_mattina }};">{{ g.ore_mattina }}h</td>
+                            <td style="background-color: {{ g.colore_pomeriggio }};">{{ g.ore_pomeriggio }}h</td>
+                            <td style="background-color: {{ g.colore_notte }}; color: white;">{{ g.ore_notte }}h</td>
+                            <td><strong>{{ g.ore_totali }}h</strong></td>
+                            <td class="text-danger"><strong>{{ g.ore_straordinarie }}h</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                <p class="text-muted">Nessuna giornata registrata</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

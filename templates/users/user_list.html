@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Lista Dipendenti - ModularBEF{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filters-card {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+    }
+    @media (max-width: 768px) {
+        .filters-card {
+            margin-bottom: 1rem;
+        }
+    }
+    .hover-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .hover-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Dipendenti</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header con titolo e azione -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1"><i class="bi bi-people-fill me-2"></i>Dipendenti</h1>
+            <p class="text-muted mb-0">Totale: <strong>{{ total }}</strong> dipendenti</p>
+        </div>
+        {% if perms.users.add_user %}
+        <a href="{% url 'users:user_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Nuovo Dipendente
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Pannello Amministrazione (Solo per Admin) -->
+    {% if user.is_staff %}
+    <div class="mb-4">
+        <h5 class="border-bottom pb-2 mb-3">
+            <i class="bi bi-speedometer2 me-2"></i>Pannello Amministrazione
+        </h5>
+        <div class="row g-3">
+            <!-- Card 1: Gestione Utenti -->
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card hover-card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-people-fill fs-1 text-primary mb-2"></i>
+                        <h6 class="card-title mb-2">Gestione Utenti</h6>
+                        <a href="{% url 'users:user_list' %}" class="btn btn-sm btn-outline-primary stretched-link">
+                            <i class="bi bi-arrow-right-circle me-1"></i>Vai
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Nuovo Dipendente -->
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card hover-card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-person-plus-fill fs-1 text-success mb-2"></i>
+                        <h6 class="card-title mb-2">Nuovo Dipendente</h6>
+                        <a href="{% url 'users:user_create' %}" class="btn btn-sm btn-outline-success stretched-link">
+                            <i class="bi bi-plus-circle me-1"></i>Crea
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Gestione Ferie -->
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card hover-card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-calendar-check-fill fs-1 text-info mb-2"></i>
+                        <h6 class="card-title mb-2">Gestione Ferie</h6>
+                        <a href="{% url 'users:richieste_ferie_admin_list' %}" class="btn btn-sm btn-outline-info stretched-link">
+                            <i class="bi bi-arrow-right-circle me-1"></i>Vai
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Gestione Permessi -->
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card hover-card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-clock-fill fs-1 text-warning mb-2"></i>
+                        <h6 class="card-title mb-2">Gestione Permessi</h6>
+                        <a href="{% url 'users:richieste_permessi_admin_list' %}" class="btn btn-sm btn-outline-warning stretched-link">
+                            <i class="bi bi-arrow-right-circle me-1"></i>Vai
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 5: Lettere Richiamo (lista completa) -->
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card hover-card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-file-earmark-text-fill fs-1 text-danger mb-2"></i>
+                        <h6 class="card-title mb-2">Lettere Richiamo</h6>
+                        <a href="{% url 'users:lettera_richiamo_list' %}" class="btn btn-sm btn-outline-danger stretched-link">
+                            <i class="bi bi-arrow-right-circle me-1"></i>Vai
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 6: Nuova Lettera Richiamo -->
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card hover-card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-file-earmark-plus-fill fs-1 text-danger mb-2"></i>
+                        <h6 class="card-title mb-2">Nuova Lettera Richiamo</h6>
+                        <a href="{% url 'users:lettera_richiamo_create' %}" class="btn btn-sm btn-outline-danger stretched-link">
+                            <i class="bi bi-plus-circle me-1"></i>Crea
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 7: Giornate Lavorative -->
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card hover-card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-calendar3 fs-1 text-secondary mb-2"></i>
+                        <h6 class="card-title mb-2">Giornate Lavorative</h6>
+                        <a href="{% url 'users:giornata_list' %}" class="btn btn-sm btn-outline-secondary stretched-link">
+                            <i class="bi bi-arrow-right-circle me-1"></i>Vai
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 8: Tutte le Timbrature -->
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card hover-card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-clock-history fs-1 text-secondary mb-2"></i>
+                        <h6 class="card-title mb-2">Tutte le Timbrature</h6>
+                        <a href="{% url 'users:timbratura_list' %}" class="btn btn-sm btn-outline-secondary stretched-link">
+                            <i class="bi bi-arrow-right-circle me-1"></i>Vai
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 9: Gestione Permessi Utente -->
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card hover-card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-shield-lock-fill fs-1 text-primary mb-2"></i>
+                        <h6 class="card-title mb-2">Gestione Permessi</h6>
+                        <p class="small text-muted mb-2">Assegna permessi CRUD agli utenti</p>
+                        <a href="#" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#selectUserModal">
+                            <i class="bi bi-gear me-1"></i>Configura
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <!-- Card 10: Gestione Permessi Utente -->
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card hover-card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-shield-lock-fill fs-1 text-primary mb-2"></i>
+                        <h6 class="card-title mb-2">Template Permessi</h6>
+                        <p class="small text-muted mb-2">Gestisci preset riutilizzabili</p>
+                        <a href="{% url 'core:permission_template_list'%}" class="btn btn-sm btn-outline-primary" >
+                            <i class="bi bi-gear me-1"></i>Configura
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <!-- Card 11: Manuale Payroll -->
+            {% if perms.payroll.view_manualepayroll %}
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card hover-card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-book-fill fs-1 text-primary mb-2"></i>
+                        <h6 class="card-title mb-2">Manuale Payroll</h6>
+                        <a href="{% url 'payroll:manuale_payroll' %}" class="btn btn-sm btn-outline-primary stretched-link">
+                            <i class="bi bi-arrow-right-circle me-1"></i>Vai
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Modal: Select User for Permissions -->
+    <div class="modal fade" id="selectUserModal" tabindex="-1" aria-labelledby="selectUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="selectUserModalLabel">
+                        <i class="bi bi-shield-lock-fill me-2"></i>Seleziona Utente
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">Seleziona l'utente per cui vuoi configurare i permessi:</p>
+                    <div class="list-group">
+                        {% for user in users %}
+                        <a href="{% url 'users:user_permissions_manage' user.pk %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                {% if user.foto_profilo %}
+                                <img src="{{ user.foto_profilo.url }}" alt="{{ user.get_full_name }}"
+                                     class="rounded-circle me-3" width="40" height="40" style="object-fit: cover;">
+                                {% else %}
+                                <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center text-white me-3"
+                                     style="width: 40px; height: 40px; font-size: 1rem;">
+                                    {{ user.get_full_name|default:user.username|slice:":1"|upper }}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <strong>{{ user.get_full_name|default:user.username }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ user.codice_dipendente }} - {{ user.get_qualifica_display|default:"Non specificato" }}</small>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtri -->
+    <div class="card filters-card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3" id="filtersForm">
+                <div class="col-lg-3 col-md-6">
+                    <label for="statoFilter" class="form-label small text-muted">Stato</label>
+                    <select name="stato" id="statoFilter" class="form-select">
+                        <option value="">Tutti gli stati</option>
+                        <option value="attivo" {% if request.GET.stato == 'attivo' %}selected{% endif %}>Attivo</option>
+                        <option value="sospeso" {% if request.GET.stato == 'sospeso' %}selected{% endif %}>Sospeso</option>
+                        <option value="cessato" {% if request.GET.stato == 'cessato' %}selected{% endif %}>Cessato</option>
+                        <option value="in_prova" {% if request.GET.stato == 'in_prova' %}selected{% endif %}>In Prova</option>
+                    </select>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <label for="qualificaFilter" class="form-label small text-muted">Qualifica</label>
+                    <input type="text" name="qualifica" id="qualificaFilter" class="form-control"
+                           placeholder="Es: Operaio, Impiegato..." value="{{ request.GET.qualifica }}">
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <label for="repartoFilter" class="form-label small text-muted">Reparto</label>
+                    <input type="text" name="reparto" id="repartoFilter" class="form-control"
+                           placeholder="Es: Produzione, Ufficio..." value="{{ request.GET.reparto }}">
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <label for="searchFilter" class="form-label small text-muted">Ricerca</label>
+                    <div class="input-group">
+                        <input type="text" name="q" id="searchFilter" class="form-control"
+                               placeholder="Nome, codice, email..." value="{{ request.GET.q }}">
+                        <button type="submit" class="btn btn-outline-secondary">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-funnel me-2"></i>Applica Filtri
+                    </button>
+                    <a href="{% url 'users:user_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x-circle me-2"></i>Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista Users - Tabella -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Dipendente</th>
+                            <th>Codice</th>
+                            <th>Qualifica</th>
+                            <th>Reparto</th>
+                            <th>Email</th>
+                            <th>Stato</th>
+                            <th>Assunzione</th>
+                            <th class="text-end">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr style="cursor: pointer;" onclick="window.location.href='{% url 'users:user_detail' user.pk %}'">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if user.foto_profilo %}
+                                    <img src="{{ user.foto_profilo.url }}" alt="{{ user.get_full_name }}"
+                                         class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
+                                    {% else %}
+                                    <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center text-white me-2"
+                                         style="width: 40px; height: 40px; font-size: 1rem;">
+                                        {{ user.get_full_name|default:user.username|slice:":1"|upper }}
+                                    </div>
+                                    {% endif %}
+                                    <strong>{{ user.get_full_name|default:user.username }}</strong>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-secondary">{{ user.codice_dipendente }}</span></td>
+                            <td>{{ user.get_qualifica_display|default:"Non specificato" }}</td>
+                            <td>{{ user.reparto|default:"-" }}</td>
+                            <td>{{ user.email|default:"-" }}</td>
+                            <td>
+                                {% if user.stato == 'attivo' %}
+                                    <span class="badge bg-success">Attivo</span>
+                                {% elif user.stato == 'sospeso' %}
+                                    <span class="badge bg-warning">Sospeso</span>
+                                {% elif user.stato == 'cessato' %}
+                                    <span class="badge bg-danger">Cessato</span>
+                                {% elif user.stato == 'in_prova' %}
+                                    <span class="badge bg-info">In Prova</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.data_assunzione|date:"d/m/Y"|default:"N/D" }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'users:user_detail' user.pk %}" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();">
+                                    <i class="bi bi-eye me-1"></i>Dettagli
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
+                                    <h5>Nessun dipendente trovato</h5>
+                                    <p class="mb-0">Prova a modificare i filtri di ricerca</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paginazione -->
+    {% if users.has_other_pages %}
+    <nav aria-label="Paginazione dipendenti" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if users.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.stato %}&stato={{ request.GET.stato }}{% endif %}{% if request.GET.qualifica %}&qualifica={{ request.GET.qualifica }}{% endif %}{% if request.GET.reparto %}&reparto={{ request.GET.reparto }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                        <i class="bi bi-chevron-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ users.previous_page_number }}{% if request.GET.stato %}&stato={{ request.GET.stato }}{% endif %}{% if request.GET.qualifica %}&qualifica={{ request.GET.qualifica }}{% endif %}{% if request.GET.reparto %}&reparto={{ request.GET.reparto }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+            {% endif %}
+
+            <li class="page-item disabled">
+                <span class="page-link">
+                    Pagina {{ users.number }} di {{ users.paginator.num_pages }}
+                </span>
+            </li>
+
+            {% if users.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ users.next_page_number }}{% if request.GET.stato %}&stato={{ request.GET.stato }}{% endif %}{% if request.GET.qualifica %}&qualifica={{ request.GET.qualifica }}{% endif %}{% if request.GET.reparto %}&reparto={{ request.GET.reparto }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ users.paginator.num_pages }}{% if request.GET.stato %}&stato={{ request.GET.stato }}{% endif %}{% if request.GET.qualifica %}&qualifica={{ request.GET.qualifica }}{% endif %}{% if request.GET.reparto %}&reparto={{ request.GET.reparto }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                        <i class="bi bi-chevron-double-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-submit filtri su cambio
+document.getElementById('statoFilter').addEventListener('change', function() {
+    document.getElementById('filtersForm').submit();
+});
+</script>
+{% endblock %}

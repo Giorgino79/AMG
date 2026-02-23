@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Logistica - {{ data_selezionata|date:"d/m/Y" }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+    {# Header con navigazione giorno #}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="d-flex justify-content-between align-items-center text-white">
+                <a href="{% url 'logistica:calendario_giorno' giorno_prec.year giorno_prec.month giorno_prec.day %}"
+                   class="btn btn-light btn-sm">
+                    <i class="bi bi-chevron-left"></i> {{ giorno_prec|date:"d/m/Y" }}
+                </a>
+
+                <div class="text-center">
+                    <h3 class="mb-0">
+                        <i class="bi bi-calendar-day me-2"></i>
+                        {{ data_selezionata|date:"l d F Y" }}
+                    </h3>
+                    {% if is_oggi %}
+                    <span class="badge bg-warning text-dark mt-2">Oggi</span>
+                    {% endif %}
+                </div>
+
+                <a href="{% url 'logistica:calendario_giorno' giorno_succ.year giorno_succ.month giorno_succ.day %}"
+                   class="btn btn-light btn-sm">
+                    {{ giorno_succ|date:"d/m/Y" }} <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <a href="{% url 'logistica:calendario_mese' data_selezionata.year data_selezionata.month %}"
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-calendar3"></i> Torna al Calendario Mensile
+                    </a>
+                    <a href="{% url 'logistica:dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-house"></i> Dashboard
+                    </a>
+                </div>
+                <div>
+                    <span class="badge bg-primary fs-6 me-2">
+                        <i class="bi bi-box-arrow-down"></i> {{ consegne|length }} Consegne
+                    </span>
+                    <span class="badge bg-success fs-6">
+                        <i class="bi bi-box-arrow-up"></i> {{ ritiri|length }} Ritiri
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {# Consegne del Giorno #}
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-box-arrow-down me-2"></i>
+                        Consegne Programmate ({{ consegne|length }})
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if consegne %}
+                    <div class="list-group list-group-flush">
+                        {% for progetto in consegne %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="mb-0">
+                                            <a href="{% url 'progetti_eventi:progetto_detail' progetto.pk %}"
+                                               class="text-decoration-none">
+                                                {{ progetto.codice }}
+                                            </a>
+                                        </h5>
+                                        <span class="badge bg-primary">
+                                            {{ progetto.data_consegna_richiesta|date:"H:i" }}
+                                        </span>
+                                    </div>
+
+                                    <h6 class="text-dark mb-2">{{ progetto.nome_evento }}</h6>
+
+                                    <div class="row text-muted small mb-2">
+                                        <div class="col-md-6">
+                                            <i class="bi bi-building"></i>
+                                            <strong>Cliente:</strong> {{ progetto.cliente.ragione_sociale }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <i class="bi bi-person"></i>
+                                            <strong>Commerciale:</strong> {{ progetto.commerciale.get_full_name }}
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <i class="bi bi-geo-alt text-danger"></i>
+                                        <strong>Destinazione:</strong><br>
+                                        {{ progetto.location }}<br>
+                                        <small class="text-muted">
+                                            {{ progetto.indirizzo_location }}, {{ progetto.citta_location }}
+                                        </small>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <strong>Reparti coinvolti:</strong><br>
+                                        {% for reparto in progetto.reparti_coinvolti %}
+                                        <span class="badge bg-secondary me-1">{{ reparto|upper }}</span>
+                                        {% endfor %}
+                                    </div>
+
+                                    {% if progetto.note_logistica %}
+                                    <div class="alert alert-info mb-0 mt-2 small">
+                                        <strong>Note Logistica:</strong><br>
+                                        {{ progetto.note_logistica }}
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="mt-3">
+                                        <a href="{% url 'progetti_eventi:progetto_detail' progetto.pk %}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> Dettagli Progetto
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                        <p class="mb-0">Nessuna consegna programmata per questo giorno</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# Ritiri del Giorno #}
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-box-arrow-up me-2"></i>
+                        Ritiri Programmati ({{ ritiri|length }})
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if ritiri %}
+                    <div class="list-group list-group-flush">
+                        {% for progetto in ritiri %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="mb-0">
+                                            <a href="{% url 'progetti_eventi:progetto_detail' progetto.pk %}"
+                                               class="text-decoration-none">
+                                                {{ progetto.codice }}
+                                            </a>
+                                        </h5>
+                                        <span class="badge bg-success">
+                                            {{ progetto.data_ritiro_richiesta|date:"H:i" }}
+                                        </span>
+                                    </div>
+
+                                    <h6 class="text-dark mb-2">{{ progetto.nome_evento }}</h6>
+
+                                    <div class="row text-muted small mb-2">
+                                        <div class="col-md-6">
+                                            <i class="bi bi-building"></i>
+                                            <strong>Cliente:</strong> {{ progetto.cliente.ragione_sociale }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <i class="bi bi-person"></i>
+                                            <strong>Commerciale:</strong> {{ progetto.commerciale.get_full_name }}
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <i class="bi bi-geo-alt text-danger"></i>
+                                        <strong>Luogo Ritiro:</strong><br>
+                                        {{ progetto.location }}<br>
+                                        <small class="text-muted">
+                                            {{ progetto.indirizzo_location }}, {{ progetto.citta_location }}
+                                        </small>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <strong>Reparti coinvolti:</strong><br>
+                                        {% for reparto in progetto.reparti_coinvolti %}
+                                        <span class="badge bg-secondary me-1">{{ reparto|upper }}</span>
+                                        {% endfor %}
+                                    </div>
+
+                                    {% if progetto.note_logistica %}
+                                    <div class="alert alert-info mb-0 mt-2 small">
+                                        <strong>Note Logistica:</strong><br>
+                                        {{ progetto.note_logistica }}
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="mt-3">
+                                        <a href="{% url 'progetti_eventi:progetto_detail' progetto.pk %}"
+                                           class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-eye"></i> Dettagli Progetto
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                        <p class="mb-0">Nessun ritiro programmato per questo giorno</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

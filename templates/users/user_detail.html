@@ -1,0 +1,480 @@
+{% extends "commons_templates/base_detail.html" %}
+{% load static %}
+{% load allegati_tags %}
+
+{% block title %}Dettaglio {{ user_obj.get_full_name|default:user_obj.username }} - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'users:user_list' %}">Dipendenti</a></li>
+<li class="breadcrumb-item active">{{ user_obj.get_full_name|default:user_obj.username }}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.hover-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.hover-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+</style>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-person-badge me-2"></i>{{ user_obj.get_full_name|default:user_obj.username }}
+{% endblock %}
+
+{% block page_subtitle %}
+<p class="text-muted mb-0">
+    <span class="badge bg-secondary">{{ user_obj.codice_dipendente }}</span>
+    <span class="ms-2">{{ user_obj.get_qualifica_display|default:"Non specificato" }}</span>
+</p>
+{% endblock %}
+
+{% block status_badge %}
+{% if user_obj.stato == 'attivo' %}
+    <span class="badge bg-success fs-6">Attivo</span>
+{% elif user_obj.stato == 'sospeso' %}
+    <span class="badge bg-warning fs-6">Sospeso</span>
+{% elif user_obj.stato == 'cessato' %}
+    <span class="badge bg-danger fs-6">Cessato</span>
+{% elif user_obj.stato == 'in_prova' %}
+    <span class="badge bg-info fs-6">In Prova</span>
+{% endif %}
+{% endblock %}
+
+{% block detail_content %}
+<div class="row g-4">
+    <!-- Colonna Sinistra: Foto e Info Base -->
+    <div class="col-lg-4 col-md-5">
+        <div class="text-center mb-4">
+            {% if user_obj.foto_profilo %}
+                <img src="{{ user_obj.foto_profilo.url }}" alt="{{ user_obj.get_full_name }}" class="rounded-circle img-thumbnail mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+            {% else %}
+                <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center text-white mb-3" style="width: 150px; height: 150px; font-size: 4rem;">
+                    {{ user_obj.get_full_name|default:user_obj.username|slice:":1"|upper }}
+                </div>
+            {% endif %}
+            <h4 class="mb-1">{{ user_obj.get_full_name|default:user_obj.username }}</h4>
+            <p class="text-muted mb-0">{{ user_obj.email }}</p>
+        </div>
+
+        <!-- Statistiche Card -->
+        <div class="card bg-light mb-3">
+            <div class="card-body">
+                <h6 class="card-title mb-3"><i class="bi bi-graph-up me-2"></i>Statistiche Mese</h6>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Timbrature:</span>
+                    <strong>{{ timbrature_mese }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Ore Lavorate:</span>
+                    <strong>{{ ore_mese }}h</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Ferie Pending:</span>
+                    <strong class="text-warning">{{ ferie_pending }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Permessi Pending:</span>
+                    <strong class="text-warning">{{ permessi_pending }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Lettere Richiamo -->
+        {% if lettere_non_lette > 0 %}
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>{{ lettere_non_lette }}</strong> lettera/e di richiamo non letta/e
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Colonna Destra: Dettagli Completi -->
+    <div class="col-lg-8 col-md-7">
+        <!-- Dati Anagrafici -->
+        <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3"><i class="bi bi-person-lines-fill me-2"></i>Dati Anagrafici</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Nome</label>
+                    <strong>{{ user_obj.first_name|default:"-" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Cognome</label>
+                    <strong>{{ user_obj.last_name|default:"-" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Codice Fiscale</label>
+                    <strong>{{ user_obj.codice_fiscale|default:"-" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Data di Nascita</label>
+                    <strong>{{ user_obj.data_nascita|date:"d/m/Y"|default:"-" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Telefono</label>
+                    <strong>{{ user_obj.telefono|default:"-" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Email</label>
+                    <strong>{{ user_obj.email|default:"-" }}</strong>
+                </div>
+                <div class="col-12">
+                    <label class="small text-muted d-block">Indirizzo</label>
+                    <strong>{{ user_obj.indirizzo|default:"-" }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documenti -->
+        <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3"><i class="bi bi-file-earmark-text me-2"></i>Documenti</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Carta d'Identità</label>
+                    <strong>{{ user_obj.carta_d_identita|default:"-" }}</strong>
+                    {% if user_obj.data_scadenza_ci %}
+                    <br><small class="text-muted">Scadenza: {{ user_obj.data_scadenza_ci|date:"d/m/Y" }}</small>
+                    {% endif %}
+                    {% if user_obj.foto_carta_identita %}
+                    <br><a href="{{ user_obj.foto_carta_identita.url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">
+                        <i class="bi bi-eye me-1"></i>Visualizza
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Patente di Guida</label>
+                    <strong>{{ user_obj.patente_di_guida|default:"-" }}</strong>
+                    {% if user_obj.categorie_patente %}
+                    <br><small class="text-muted">Categorie: {{ user_obj.categorie_patente }}</small>
+                    {% endif %}
+                    {% if user_obj.data_scadenza_patente %}
+                    <br><small class="text-muted">Scadenza: {{ user_obj.data_scadenza_patente|date:"d/m/Y" }}</small>
+                    {% endif %}
+                    {% if user_obj.foto_patente %}
+                    <br><a href="{{ user_obj.foto_patente.url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">
+                        <i class="bi bi-eye me-1"></i>Visualizza
+                    </a>
+                    {% endif %}
+                </div>
+                {% if user_obj.foto_codice_fiscale %}
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Tessera Codice Fiscale</label>
+                    <a href="{{ user_obj.foto_codice_fiscale.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye me-1"></i>Visualizza
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Posizioni Contributive -->
+        <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3"><i class="bi bi-building me-2"></i>Posizioni Contributive</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Posizione INAIL</label>
+                    <strong>{{ user_obj.posizione_inail|default:"-" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Posizione INPS</label>
+                    <strong>{{ user_obj.posizione_inps|default:"-" }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dati Lavorativi -->
+        <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3"><i class="bi bi-briefcase-fill me-2"></i>Dati Lavorativi</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Codice Dipendente</label>
+                    <strong class="badge bg-secondary">{{ user_obj.codice_dipendente }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Qualifica</label>
+                    <strong>{{ user_obj.get_qualifica_display|default:"-" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Reparto</label>
+                    <strong>{{ user_obj.reparto|default:"-" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Livello</label>
+                    <strong>{{ user_obj.get_livello_display|default:"-" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Data Assunzione</label>
+                    <strong>{{ user_obj.data_assunzione|date:"d/m/Y"|default:"-" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Contratto</label>
+                    <strong>{{ user_obj.get_tipo_contratto_display|default:"-" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Ore Settimanali</label>
+                    <strong>{{ user_obj.ore_settimanali|default:"-" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Turno Preferito</label>
+                    <strong>{{ user_obj.get_turno_preferito_display|default:"-" }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dati Payroll (Solo per Admin) -->
+        {% if perms.payroll.view_daticontrattualiPayroll %}
+        <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3">
+                <i class="bi bi-cash-coin me-2"></i>Dati Contrattuali Payroll
+                {% if perms.payroll.change_daticontrattualiPayroll %}
+                <a href="{% url 'payroll:dati_payroll_form' user_obj.pk %}" class="btn btn-sm btn-primary float-end">
+                    <i class="bi bi-gear-fill me-1"></i>Configura Contratto
+                </a>
+                {% endif %}
+            </h5>
+            {% if user_obj.dati_payroll %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">CCNL</label>
+                    <strong>{{ user_obj.dati_payroll.ccnl.nome|default:"-" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Livello</label>
+                    <strong>{{ user_obj.dati_payroll.livello.codice|default:"-" }} - {{ user_obj.dati_payroll.livello.descrizione|default:"" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Paga Base Mensile</label>
+                    <strong class="text-success">€ {{ user_obj.dati_payroll.livello.paga_base_mensile|floatformat:2|default:"-" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Superminimo</label>
+                    <strong>€ {{ user_obj.dati_payroll.superminimo|floatformat:2|default:"0.00" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Paga Oraria</label>
+                    <strong class="text-primary">€ {{ user_obj.dati_payroll.calcola_paga_oraria|floatformat:2 }}/h</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Tipo Contratto</label>
+                    <strong>{{ user_obj.dati_payroll.get_tipo_contratto_display }}</strong>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Dati payroll non configurati.
+                {% if perms.payroll.add_daticontrattualiPayroll %}
+                <a href="{% url 'payroll:dati_payroll_form' user_obj.pk %}" class="alert-link">Configura ora</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Ferie e Permessi -->
+        <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3"><i class="bi bi-calendar-check me-2"></i>Ferie e Permessi</h5>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="card bg-light border-0">
+                        <div class="card-body text-center">
+                            <small class="text-muted d-block">Ferie Totali</small>
+                            <h4 class="mb-0">{{ user_obj.giorni_ferie_anno }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-success bg-opacity-10 border-success border-opacity-25">
+                        <div class="card-body text-center">
+                            <small class="text-success d-block">Ferie Residue</small>
+                            <h4 class="mb-0 text-success">{{ user_obj.giorni_ferie_residui }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-warning bg-opacity-10 border-warning border-opacity-25">
+                        <div class="card-body text-center">
+                            <small class="text-warning d-block">Ore Permesso</small>
+                            <h4 class="mb-0 text-warning">{{ user_obj.ore_permesso_residue }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informazioni Sistema -->
+        <div>
+            <h5 class="border-bottom pb-2 mb-3"><i class="bi bi-info-circle me-2"></i>Informazioni Sistema</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Username</label>
+                    <strong>{{ user_obj.username }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Ultimo Accesso</label>
+                    <strong>{{ user_obj.last_login|date:"d/m/Y H:i"|default:"Mai" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Registrato il</label>
+                    <strong>{{ user_obj.date_joined|date:"d/m/Y H:i" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Account Attivo</label>
+                    {% if user_obj.is_active %}
+                        <span class="badge bg-success">Attivo</span>
+                    {% else %}
+                        <span class="badge bg-danger">Disattivato</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Staff</label>
+                    {% if user_obj.is_staff %}
+                        <span class="badge bg-primary">Sì</span>
+                    {% else %}
+                        <span class="badge bg-secondary">No</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Superuser</label>
+                    {% if user_obj.is_superuser %}
+                        <span class="badge bg-danger">Sì</span>
+                    {% else %}
+                        <span class="badge bg-secondary">No</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Azioni Rapide (Per questo dipendente) -->
+        {% if user.is_staff %}
+        <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3">
+                <i class="bi bi-lightning-fill me-2"></i>Azioni Rapide per {{ user_obj.first_name }}
+            </h5>
+            <div class="row g-3">
+                <!-- Modifica Dipendente -->
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'users:user_update' user_obj.pk %}" class="text-decoration-none">
+                        <div class="card border-0 bg-light h-100 hover-card">
+                            <div class="card-body text-center">
+                                <i class="bi bi-pencil-square fs-1 text-primary mb-2"></i>
+                                <h6 class="mb-0">Modifica Profilo</h6>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <!-- Contratto Payroll -->
+                {% if perms.payroll.view_daticontrattualiPayroll %}
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'payroll:dati_payroll_form' user_obj.pk %}" class="text-decoration-none">
+                        <div class="card border-0 bg-light h-100 hover-card border-success" style="border-width: 2px !important;">
+                            <div class="card-body text-center">
+                                <i class="bi bi-cash-coin fs-1 text-success mb-2"></i>
+                                <h6 class="mb-0">Contratto Payroll</h6>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+                <!-- Buste Paga -->
+                {% if perms.payroll.view_bustapaga %}
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'payroll:busta_paga_list' user_obj.pk %}" class="text-decoration-none">
+                        <div class="card border-0 bg-light h-100 hover-card border-success" style="border-width: 2px !important;">
+                            <div class="card-body text-center">
+                                <i class="bi bi-receipt-cutoff fs-1 text-success mb-2"></i>
+                                <h6 class="mb-0">Buste Paga</h6>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+                <!-- Elabora Busta Paga -->
+                {% if perms.payroll.add_bustapaga %}
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'payroll:busta_paga_elabora' user_obj.pk %}" class="text-decoration-none">
+                        <div class="card border-0 bg-light h-100 hover-card border-success" style="border-width: 2px !important;">
+                            <div class="card-body text-center">
+                                <i class="bi bi-calculator fs-1 text-success mb-2"></i>
+                                <h6 class="mb-0">Elabora Busta Paga</h6>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+                <!-- Ferie e Permessi Payroll -->
+                {% if perms.payroll.view_feriepermessipayroll %}
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'payroll:ferie_permessi_list' user_obj.pk %}" class="text-decoration-none">
+                        <div class="card border-0 bg-light h-100 hover-card border-success" style="border-width: 2px !important;">
+                            <div class="card-body text-center">
+                                <i class="bi bi-calendar-range fs-1 text-success mb-2"></i>
+                                <h6 class="mb-0">Ferie/Permessi Payroll</h6>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+                <!-- Gestione Permessi Utente -->
+                {% if perms.users.change_user %}
+                <div class="col-md-3 col-sm-6">
+                    <a href="{% url 'users:user_permissions_manage' user_obj.pk %}" class="text-decoration-none">
+                        <div class="card border-0 bg-light h-100 hover-card border-primary" style="border-width: 2px !important;">
+                            <div class="card-body text-center">
+                                <i class="bi bi-shield-lock-fill fs-1 text-primary mb-2"></i>
+                                <h6 class="mb-0">Gestione Permessi</h6>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_content %}
+<!-- Note Aggiuntive (se presenti) -->
+{% if user_obj.note %}
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0"><i class="bi bi-sticky me-2"></i>Note</h5>
+    </div>
+    <div class="card-body">
+        <p class="mb-0">{{ user_obj.note|linebreaksbr }}</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Note Interne (solo per staff) -->
+{% if user.is_staff and user_obj.note_interne %}
+<div class="card shadow-sm mt-4 border-warning">
+    <div class="card-header bg-warning bg-opacity-10">
+        <h5 class="mb-0"><i class="bi bi-lock-fill me-2"></i>Note Interne <small class="text-muted">(riservate)</small></h5>
+    </div>
+    <div class="card-body">
+        <p class="mb-0">{{ user_obj.note_interne|linebreaksbr }}</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block detail_extra_js %}
+{% get_content_type_id user_obj as ct_id %}
+<script>
+// JavaScript specifico per dettaglio user (se necessario)
+console.log('User detail page loaded for user: {{ user_obj.pk }}');
+
+// Configurazione allegati per questo oggetto
+window.allegatoConfig = {
+    contentType: {{ ct_id }},
+    objectId: {{ user_obj.pk }}
+};
+</script>
+{% endblock %}

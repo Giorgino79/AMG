@@ -1,0 +1,377 @@
+{% extends "commons_templates/base_detail.html" %}
+{% load static %}
+{% load humanize %}
+{% load allegati_tags %}
+
+{% block title %}Offerta {{ offerta.trasportatore.nome }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'trasporti:dashboard' %}">Trasporti</a></li>
+<li class="breadcrumb-item"><a href="{% url 'trasporti:richieste_list' %}">Richieste</a></li>
+<li class="breadcrumb-item"><a href="{% url 'trasporti:richiesta_detail' offerta.richiesta.pk %}">{{ offerta.richiesta.numero }}</a></li>
+<li class="breadcrumb-item active">Offerta {{ offerta.trasportatore.nome }}</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-file-earmark-check me-2 text-primary"></i>Offerta di Trasporto
+{% endblock %}
+
+{% block page_subtitle %}
+<p class="text-muted mb-0">
+    <i class="bi bi-truck me-1"></i>{{ offerta.trasportatore.nome }} - {{ offerta.richiesta.numero }}
+</p>
+{% endblock %}
+
+{% block status_badge %}
+<div class="text-end">
+    {% if offerta == offerta.richiesta.offerta_approvata %}
+    <span class="badge bg-success fs-6 mb-2">
+        <i class="bi bi-check-circle me-1"></i>Offerta Approvata
+    </span>
+    <br>
+    {% endif %}
+    <span class="h4 text-primary fw-bold">&euro;{{ offerta.importo_totale|floatformat:2 }}</span>
+</div>
+{% endblock %}
+
+{% block detail_content %}
+<!-- Info Trasportatore -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-truck me-2 text-primary"></i>Trasportatore
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <h4>{{ offerta.trasportatore.nome }}</h4>
+            {% if not offerta.trasportatore.attivo %}
+            <span class="badge bg-warning text-dark mb-2">Non Accreditato</span>
+            {% endif %}
+            <dl class="row mb-0">
+                <dt class="col-sm-4 text-muted">Email</dt>
+                <dd class="col-sm-8"><i class="bi bi-envelope me-1"></i>{{ offerta.trasportatore.email }}</dd>
+                {% if offerta.trasportatore.telefono %}
+                <dt class="col-sm-4 text-muted">Telefono</dt>
+                <dd class="col-sm-8"><i class="bi bi-telephone me-1"></i>{{ offerta.trasportatore.telefono }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+        <div class="col-md-6">
+            <dl class="row mb-0">
+                {% if offerta.numero_offerta %}
+                <dt class="col-sm-5 text-muted">N. Offerta</dt>
+                <dd class="col-sm-7">{{ offerta.numero_offerta }}</dd>
+                {% endif %}
+                <dt class="col-sm-5 text-muted">Data Ricezione</dt>
+                <dd class="col-sm-7">{{ offerta.data_ricevimento|date:"d/m/Y H:i" }}</dd>
+                {% if offerta.data_scadenza_offerta %}
+                <dt class="col-sm-5 text-muted">Valida fino al</dt>
+                <dd class="col-sm-7">{{ offerta.data_scadenza_offerta|date:"d/m/Y" }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+</div>
+
+<!-- Dettaglio Prezzi -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-currency-euro me-2 text-primary"></i>Dettaglio Prezzi
+    </h5>
+    <table class="table table-borderless mb-0">
+        <tbody>
+            <tr>
+                <td><strong>Importo Trasporto:</strong></td>
+                <td class="text-end">&euro;{{ offerta.importo_trasporto|floatformat:2 }}</td>
+            </tr>
+            {% if offerta.importo_assicurazione > 0 %}
+            <tr>
+                <td>Assicurazione:</td>
+                <td class="text-end">&euro;{{ offerta.importo_assicurazione|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            {% if offerta.importo_pedaggi > 0 %}
+            <tr>
+                <td>Pedaggi:</td>
+                <td class="text-end">&euro;{{ offerta.importo_pedaggi|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            {% if offerta.importo_extra > 0 %}
+            <tr>
+                <td>
+                    Costi Extra
+                    {% if offerta.descrizione_extra %}
+                    <br><small class="text-muted">{{ offerta.descrizione_extra }}</small>
+                    {% endif %}
+                </td>
+                <td class="text-end">&euro;{{ offerta.importo_extra|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            <tr class="border-top">
+                <td><strong class="fs-5">TOTALE:</strong></td>
+                <td class="text-end"><strong class="fs-4 text-success">&euro;{{ offerta.importo_totale|floatformat:2 }}</strong></td>
+            </tr>
+            <tr>
+                <td colspan="2" class="text-muted small">
+                    Valuta: {{ offerta.valuta }}
+                    {% if offerta.prezzo_per_km %}
+                    | Prezzo/km: &euro;{{ offerta.prezzo_per_km|floatformat:2 }}
+                    {% endif %}
+                    {% if offerta.prezzo_per_kg %}
+                    | Prezzo/kg: &euro;{{ offerta.prezzo_per_kg|floatformat:2 }}
+                    {% endif %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Tempi di Trasporto -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-calendar-check me-2 text-primary"></i>Tempi di Trasporto
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card bg-light border-0">
+                <div class="card-body">
+                    <h6 class="text-success"><i class="bi bi-arrow-up-circle me-2"></i>RITIRO PROPOSTO</h6>
+                    <p class="mb-1"><strong>Data:</strong> {{ offerta.data_ritiro_proposta|date:"d/m/Y" }}</p>
+                    {% if offerta.ora_ritiro_dalle %}
+                    <p class="mb-0"><strong>Orario:</strong> {{ offerta.ora_ritiro_dalle|time:"H:i" }} - {{ offerta.ora_ritiro_alle|time:"H:i" }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-light border-0">
+                <div class="card-body">
+                    <h6 class="text-primary"><i class="bi bi-arrow-down-circle me-2"></i>CONSEGNA PREVISTA</h6>
+                    <p class="mb-1"><strong>Data:</strong> {{ offerta.data_consegna_prevista|date:"d/m/Y" }}</p>
+                    {% if offerta.ora_consegna_dalle %}
+                    <p class="mb-0"><strong>Orario:</strong> {{ offerta.ora_consegna_dalle|time:"H:i" }} - {{ offerta.ora_consegna_alle|time:"H:i" }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="text-center mt-3">
+        <span class="badge bg-success fs-6">
+            <i class="bi bi-clock me-1"></i>Tempo di Transito: {{ offerta.tempo_transito_giorni }} giorn{{ offerta.tempo_transito_giorni|pluralize:"o,i" }}
+        </span>
+    </div>
+</div>
+
+<!-- Mezzo e Servizi -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-truck-front me-2 text-primary"></i>Mezzo e Servizi
+    </h5>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <dl class="row mb-0">
+                <dt class="col-sm-5 text-muted">Tipo Mezzo</dt>
+                <dd class="col-sm-7">{{ offerta.get_tipo_mezzo_display }}</dd>
+                {% if offerta.targa_mezzo %}
+                <dt class="col-sm-5 text-muted">Targa</dt>
+                <dd class="col-sm-7">{{ offerta.targa_mezzo }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+        <div class="col-md-6">
+            <dl class="row mb-0">
+                {% if offerta.nome_conducente %}
+                <dt class="col-sm-5 text-muted">Conducente</dt>
+                <dd class="col-sm-7">{{ offerta.nome_conducente }}</dd>
+                {% endif %}
+                {% if offerta.telefono_conducente %}
+                <dt class="col-sm-5 text-muted">Telefono</dt>
+                <dd class="col-sm-7">{{ offerta.telefono_conducente }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <strong>Servizi Inclusi:</strong>
+            <ul class="list-unstyled mt-2 mb-0">
+                {% if offerta.tracking_incluso %}
+                <li><i class="bi bi-check-circle-fill text-success me-2"></i>Tracking GPS</li>
+                {% endif %}
+                {% if offerta.assicurazione_inclusa %}
+                <li><i class="bi bi-check-circle-fill text-success me-2"></i>Assicurazione</li>
+                {% endif %}
+                {% if offerta.scarico_a_piano_incluso %}
+                <li><i class="bi bi-check-circle-fill text-success me-2"></i>Scarico a Piano</li>
+                {% endif %}
+                {% if not offerta.tracking_incluso and not offerta.assicurazione_inclusa and not offerta.scarico_a_piano_incluso %}
+                <li class="text-muted">Nessun servizio aggiuntivo incluso</li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Note -->
+{% if offerta.note_tecniche or offerta.note_commerciali %}
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-sticky me-2 text-primary"></i>Note
+    </h5>
+    {% if offerta.note_tecniche %}
+    <div class="mb-3">
+        <strong>Note Tecniche:</strong>
+        <p class="mb-0 mt-1">{{ offerta.note_tecniche|linebreaks }}</p>
+    </div>
+    {% endif %}
+    {% if offerta.note_commerciali %}
+    <div>
+        <strong>Note Commerciali:</strong>
+        <p class="mb-0 mt-1">{{ offerta.note_commerciali|linebreaks }}</p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- File Offerta -->
+{% if offerta.file_offerta %}
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-file-pdf me-2 text-primary"></i>Allegato Offerta
+    </h5>
+    <a href="{{ offerta.file_offerta.url }}" class="btn btn-success" target="_blank">
+        <i class="bi bi-download me-2"></i>Scarica File Offerta
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_content %}
+<!-- Card Richiesta di Trasporto -->
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="bi bi-link-45deg me-2"></i>Richiesta di Trasporto</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-muted">Numero</dt>
+                    <dd class="col-sm-8"><strong>{{ offerta.richiesta.numero }}</strong></dd>
+                    <dt class="col-sm-4 text-muted">Titolo</dt>
+                    <dd class="col-sm-8">{{ offerta.richiesta.titolo }}</dd>
+                    <dt class="col-sm-4 text-muted">Tipo</dt>
+                    <dd class="col-sm-8">{{ offerta.richiesta.get_tipo_trasporto_display }}</dd>
+                </dl>
+            </div>
+            <div class="col-md-6">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-muted">Da</dt>
+                    <dd class="col-sm-8"><i class="bi bi-geo-alt me-1"></i>{{ offerta.richiesta.citta_ritiro }} ({{ offerta.richiesta.provincia_ritiro }})</dd>
+                    <dt class="col-sm-4 text-muted">A</dt>
+                    <dd class="col-sm-8"><i class="bi bi-geo-alt-fill me-1"></i>{{ offerta.richiesta.citta_consegna }} ({{ offerta.richiesta.provincia_consegna }})</dd>
+                    {% if offerta.richiesta.distanza_km %}
+                    <dt class="col-sm-4 text-muted">Distanza</dt>
+                    <dd class="col-sm-8">{{ offerta.richiesta.distanza_km }} km</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confronto con altre offerte -->
+{% if offerta.richiesta.offerte.count > 1 %}
+<div class="card shadow-sm mt-3">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Confronto Offerte</h6>
+    </div>
+    <div class="card-body">
+        <table class="table table-sm table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Trasportatore</th>
+                    <th class="text-end">Importo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for altra_offerta in offerta.richiesta.offerte.all %}
+                <tr {% if altra_offerta.pk == offerta.pk %}class="table-success"{% endif %}>
+                    <td>
+                        {% if altra_offerta.pk == offerta.pk %}
+                        <strong><i class="bi bi-check-circle me-1"></i>{{ altra_offerta.trasportatore.nome }}</strong>
+                        {% else %}
+                        {{ altra_offerta.trasportatore.nome }}
+                        {% endif %}
+                        {% if altra_offerta == offerta.richiesta.offerta_approvata %}
+                        <span class="badge bg-success ms-1">Approvata</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <strong>&euro;{{ altra_offerta.importo_totale|floatformat:2 }}</strong>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Parametri di Valutazione -->
+{% if offerta.parametri.exists %}
+<div class="card shadow-sm mt-3">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="bi bi-list-check me-2"></i>Parametri di Valutazione</h6>
+    </div>
+    <div class="card-body">
+        <ul class="list-unstyled mb-0">
+            {% for param in offerta.parametri.all %}
+            <li class="mb-2">
+                <strong>{{ param.descrizione }}:</strong><br>
+                <span class="text-muted">{{ param.valore }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block custom_actions %}
+<!-- Azioni specifiche offerta -->
+<a href="{% url 'trasporti:richiesta_detail' offerta.richiesta.pk %}" class="list-group-item list-group-item-action">
+    <i class="bi bi-arrow-left text-secondary"></i> Torna alla Richiesta
+</a>
+{% if offerta == offerta.richiesta.offerta_approvata %}
+<a href="{% url 'trasporti:offerta_tracking' offerta.pk %}" class="list-group-item list-group-item-action">
+    <i class="bi bi-geo-alt text-info"></i> Tracking
+</a>
+{% endif %}
+{% if offerta.file_offerta %}
+<a href="{{ offerta.file_offerta.url }}" class="list-group-item list-group-item-action" target="_blank">
+    <i class="bi bi-file-pdf text-danger"></i> File Offerta
+</a>
+{% endif %}
+{% endblock %}
+
+{% block sidebar_extra %}
+<!-- Info Sistema -->
+<div class="card shadow-sm mt-3">
+    <div class="card-header bg-secondary text-white">
+        <h6 class="mb-0"><i class="bi bi-info-circle"></i> Info Sistema</h6>
+    </div>
+    <div class="card-body small">
+        <dl class="mb-0">
+            <dt class="text-muted">Creato il</dt>
+            <dd>{{ offerta.created_at|date:"d/m/Y H:i" }}</dd>
+            {% if offerta.data_conferma %}
+            <dt class="text-muted">Confermato il</dt>
+            <dd>{{ offerta.data_conferma|date:"d/m/Y H:i" }}</dd>
+            {% endif %}
+            <dt class="text-muted">Modificato il</dt>
+            <dd class="mb-0">{{ offerta.updated_at|date:"d/m/Y H:i" }}</dd>
+        </dl>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,379 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Modifica Prodotto: {{ object.nome_prodotto }}{% else %}Nuovo Prodotto{% endif %}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">Home</a></li>
+<li class="breadcrumb-item"><a href="{% url 'prodotti:dashboard' %}">Prodotti</a></li>
+<li class="breadcrumb-item"><a href="{% url 'prodotti:prodotto_list' %}">Lista Prodotti</a></li>
+{% if object %}
+    <li class="breadcrumb-item"><a href="{% url 'prodotti:prodotto_detail' object.pk %}">{{ object.nome_prodotto|truncatechars:30 }}</a></li>
+    <li class="breadcrumb-item active">Modifica</li>
+{% else %}
+    <li class="breadcrumb-item active">Nuovo Prodotto</li>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            {% if object %}
+                <h1 class="h3 mb-1"><i class="bi bi-pencil me-2"></i>Modifica Prodotto</h1>
+                <p class="text-muted mb-0">{{ object.nome_prodotto }}</p>
+            {% else %}
+                <h1 class="h3 mb-1"><i class="bi bi-plus-lg me-2"></i>Nuovo Prodotto</h1>
+                <p class="text-muted mb-0">Aggiungi un nuovo prodotto al catalogo</p>
+            {% endif %}
+        </div>
+        <div>
+            <a href="{% if object %}{% url 'prodotti:prodotto_detail' object.pk %}{% else %}{% url 'prodotti:prodotto_list' %}{% endif %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Annulla
+            </a>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="prodotto-form">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+                <p class="mb-0">{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-lg-8">
+
+                <!-- Relazioni -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-link-45deg me-2"></i>Relazioni</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.categoria.id_for_label }}" class="form-label">{{ form.categoria.label }} *</label>
+                                {{ form.categoria }}
+                                {% if form.categoria.errors %}<div class="invalid-feedback d-block">{% for e in form.categoria.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.fornitore_principale.id_for_label }}" class="form-label">{{ form.fornitore_principale.label }}</label>
+                                {{ form.fornitore_principale }}
+                                {% if form.fornitore_principale.errors %}<div class="invalid-feedback d-block">{% for e in form.fornitore_principale.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informazioni base -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Informazioni Base</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ form.nome_prodotto.id_for_label }}" class="form-label">{{ form.nome_prodotto.label }} *</label>
+                            {{ form.nome_prodotto }}
+                            {% if form.nome_prodotto.errors %}<div class="invalid-feedback d-block">{% for e in form.nome_prodotto.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.descrizione_breve.id_for_label }}" class="form-label">{{ form.descrizione_breve.label }}</label>
+                            {{ form.descrizione_breve }}
+                            {% if form.descrizione_breve.errors %}<div class="invalid-feedback d-block">{% for e in form.descrizione_breve.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.descrizione_completa.id_for_label }}" class="form-label">{{ form.descrizione_completa.label }}</label>
+                            {{ form.descrizione_completa }}
+                            {% if form.descrizione_completa.errors %}<div class="invalid-feedback d-block">{% for e in form.descrizione_completa.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Codici -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-upc me-2"></i>Codici</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.ean.id_for_label }}" class="form-label">{{ form.ean.label }}</label>
+                                {{ form.ean }}
+                                {% if form.ean.errors %}<div class="invalid-feedback d-block">{% for e in form.ean.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3 d-flex align-items-end">
+                                <div class="form-check">
+                                    {{ form.valida_ean }}
+                                    <label for="{{ form.valida_ean.id_for_label }}" class="form-check-label">{{ form.valida_ean.label }}</label>
+                                    {% if form.valida_ean.help_text %}<div class="form-text">{{ form.valida_ean.help_text }}</div>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.codice_interno.id_for_label }}" class="form-label">{{ form.codice_interno.label }}</label>
+                                {{ form.codice_interno }}
+                                {% if form.codice_interno.errors %}<div class="invalid-feedback d-block">{% for e in form.codice_interno.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.codice_fornitore.id_for_label }}" class="form-label">{{ form.codice_fornitore.label }}</label>
+                                {{ form.codice_fornitore }}
+                                {% if form.codice_fornitore.errors %}<div class="invalid-feedback d-block">{% for e in form.codice_fornitore.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QR Code -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-qr-code me-2"></i>QR Code</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.qrcode_opzione.label }}</label>
+                            <div id="qrcode-opzioni">
+                                {% for radio in form.qrcode_opzione %}
+                                <div class="form-check">
+                                    {{ radio.tag }}
+                                    <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div id="qrcode-data-field" class="mb-3" style="display: none;">
+                            <label for="{{ form.qrcode_data.id_for_label }}" class="form-label">{{ form.qrcode_data.label }}</label>
+                            {{ form.qrcode_data }}
+                            {% if form.qrcode_data.errors %}<div class="invalid-feedback d-block">{% for e in form.qrcode_data.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                        </div>
+                        <div id="qrcode-image-field" class="mb-3" style="display: none;">
+                            <label for="{{ form.qrcode_image.id_for_label }}" class="form-label">{{ form.qrcode_image.label }}</label>
+                            {{ form.qrcode_image }}
+                            {% if object and object.qrcode_image %}
+                                <div class="mt-2">
+                                    <small class="text-muted">Attuale:</small>
+                                    <img src="{{ object.qrcode_image.url }}" alt="QR Code" class="border rounded ms-2" width="60">
+                                </div>
+                            {% endif %}
+                            {% if form.qrcode_image.errors %}<div class="invalid-feedback d-block">{% for e in form.qrcode_image.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barcode -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-upc-scan me-2"></i>Barcode</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.barcode_opzione.label }}</label>
+                            <div id="barcode-opzioni">
+                                {% for radio in form.barcode_opzione %}
+                                <div class="form-check">
+                                    {{ radio.tag }}
+                                    <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div id="barcode-data-field" class="mb-3" style="display: none;">
+                            <label for="{{ form.barcode_data.id_for_label }}" class="form-label">{{ form.barcode_data.label }}</label>
+                            {{ form.barcode_data }}
+                            {% if form.barcode_data.errors %}<div class="invalid-feedback d-block">{% for e in form.barcode_data.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                        </div>
+                        <div id="barcode-image-field" class="mb-3" style="display: none;">
+                            <label for="{{ form.barcode_image.id_for_label }}" class="form-label">{{ form.barcode_image.label }}</label>
+                            {{ form.barcode_image }}
+                            {% if object and object.barcode_image %}
+                                <div class="mt-2">
+                                    <small class="text-muted">Attuale:</small>
+                                    <img src="{{ object.barcode_image.url }}" alt="Barcode" class="border rounded ms-2" width="120">
+                                </div>
+                            {% endif %}
+                            {% if form.barcode_image.errors %}<div class="invalid-feedback d-block">{% for e in form.barcode_image.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Caratteristiche -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-rulers me-2"></i>Caratteristiche</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.tipo_prodotto.id_for_label }}" class="form-label">{{ form.tipo_prodotto.label }}</label>
+                                {{ form.tipo_prodotto }}
+                                {% if form.tipo_prodotto.errors %}<div class="invalid-feedback d-block">{% for e in form.tipo_prodotto.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.misura.id_for_label }}" class="form-label">{{ form.misura.label }}</label>
+                                {{ form.misura }}
+                                {% if form.misura.errors %}<div class="invalid-feedback d-block">{% for e in form.misura.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3 d-flex align-items-end">
+                                <div class="form-check">
+                                    {{ form.merce_deperibile }}
+                                    <label for="{{ form.merce_deperibile.id_for_label }}" class="form-check-label">{{ form.merce_deperibile.label }}</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.peso_netto.id_for_label }}" class="form-label">{{ form.peso_netto.label }}</label>
+                                {{ form.peso_netto }}
+                                {% if form.peso_netto.errors %}<div class="invalid-feedback d-block">{% for e in form.peso_netto.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.peso_lordo.id_for_label }}" class="form-label">{{ form.peso_lordo.label }}</label>
+                                {{ form.peso_lordo }}
+                                {% if form.peso_lordo.errors %}<div class="invalid-feedback d-block">{% for e in form.peso_lordo.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.volume.id_for_label }}" class="form-label">{{ form.volume.label }}</label>
+                                {{ form.volume }}
+                                {% if form.volume.errors %}<div class="invalid-feedback d-block">{% for e in form.volume.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.dimensioni.id_for_label }}" class="form-label">{{ form.dimensioni.label }}</label>
+                                {{ form.dimensioni }}
+                                {% if form.dimensioni.errors %}<div class="invalid-feedback d-block">{% for e in form.dimensioni.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Colonna laterale -->
+            <div class="col-lg-4">
+
+                <!-- Fiscale -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Fiscale</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ form.aliquota_iva.id_for_label }}" class="form-label">{{ form.aliquota_iva.label }}</label>
+                            {{ form.aliquota_iva }}
+                            {% if form.aliquota_iva.errors %}<div class="invalid-feedback d-block">{% for e in form.aliquota_iva.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stato -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-toggle-on me-2"></i>Stato</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check mb-2">
+                            {{ form.attivo }}
+                            <label for="{{ form.attivo.id_for_label }}" class="form-check-label">{{ form.attivo.label }}</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            {{ form.novita }}
+                            <label for="{{ form.novita.id_for_label }}" class="form-check-label">{{ form.novita.label }}</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            {{ form.in_evidenza }}
+                            <label for="{{ form.in_evidenza.id_for_label }}" class="form-check-label">{{ form.in_evidenza.label }}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Media -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-image me-2"></i>Media</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if object and object.immagine %}
+                        <div class="mb-3 text-center">
+                            <p class="text-muted mb-2">Immagine attuale:</p>
+                            <img src="{{ object.immagine.url }}" alt="Immagine prodotto" class="img-fluid rounded border" style="max-width: 200px;">
+                        </div>
+                        {% endif %}
+                        <div class="mb-3">
+                            <label for="{{ form.immagine.id_for_label }}" class="form-label">{{ form.immagine.label }}</label>
+                            {{ form.immagine }}
+                            {% if form.immagine.errors %}<div class="invalid-feedback d-block">{% for e in form.immagine.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Note -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-sticky me-2"></i>Note</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ form.note_interne.id_for_label }}" class="form-label">{{ form.note_interne.label }}</label>
+                            {{ form.note_interne }}
+                            {% if form.note_interne.errors %}<div class="invalid-feedback d-block">{% for e in form.note_interne.errors %}{{ e }}{% endfor %}</div>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Bottoni azione -->
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <a href="{% if object %}{% url 'prodotti:prodotto_detail' object.pk %}{% else %}{% url 'prodotti:prodotto_list' %}{% endif %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-lg me-1"></i>Annulla
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>Salva
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // QR Code: show/hide fields based on radio selection
+    function updateQrcodeFields() {
+        var selected = document.querySelector('input[name="qrcode_opzione"]:checked');
+        var dataField = document.getElementById('qrcode-data-field');
+        var imageField = document.getElementById('qrcode-image-field');
+        if (!selected) return;
+        dataField.style.display = (selected.value === 'genera') ? 'block' : 'none';
+        imageField.style.display = (selected.value === 'importa') ? 'block' : 'none';
+    }
+    document.querySelectorAll('input[name="qrcode_opzione"]').forEach(function(radio) {
+        radio.addEventListener('change', updateQrcodeFields);
+    });
+    updateQrcodeFields();
+
+    // Barcode: show/hide fields based on radio selection
+    function updateBarcodeFields() {
+        var selected = document.querySelector('input[name="barcode_opzione"]:checked');
+        var dataField = document.getElementById('barcode-data-field');
+        var imageField = document.getElementById('barcode-image-field');
+        if (!selected) return;
+        dataField.style.display = (selected.value === 'da_ean') ? 'block' : 'none';
+        imageField.style.display = (selected.value === 'importa') ? 'block' : 'none';
+    }
+    document.querySelectorAll('input[name="barcode_opzione"]').forEach(function(radio) {
+        radio.addEventListener('change', updateBarcodeFields);
+    });
+    updateBarcodeFields();
+});
+</script>
+{% endblock %}

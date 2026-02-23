@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Elenco Progetti Eventi{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+    {# ========== HEADER ========== #}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-list me-2 text-primary"></i>Progetti Eventi
+        </h1>
+        <div class="btn-group">
+            <a href="{% url 'progetti_eventi:dashboard' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            <a href="{% url 'progetti_eventi:progetto_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nuovo Progetto
+            </a>
+        </div>
+    </div>
+
+    {# ========== FILTRI ========== #}
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="q" class="form-label small">Cerca</label>
+                    <input type="text" name="q" id="q" class="form-control"
+                           placeholder="Codice, nome, cliente..."
+                           value="{{ search_query }}">
+                </div>
+
+                <div class="col-md-2">
+                    <label for="stato" class="form-label small">Stato</label>
+                    <select name="stato" id="stato" class="form-select">
+                        <option value="">Tutti</option>
+                        <option value="bozza" {% if filtro_stato == 'bozza' %}selected{% endif %}>Bozza</option>
+                        <option value="in_engineering" {% if filtro_stato == 'in_engineering' %}selected{% endif %}>In Engineering</option>
+                        <option value="engineering_completato" {% if filtro_stato == 'engineering_completato' %}selected{% endif %}>Engineering Completato</option>
+                        <option value="in_preparazione" {% if filtro_stato == 'in_preparazione' %}selected{% endif %}>In Preparazione</option>
+                        <option value="pronto" {% if filtro_stato == 'pronto' %}selected{% endif %}>Pronto</option>
+                        <option value="in_corso" {% if filtro_stato == 'in_corso' %}selected{% endif %}>In Corso</option>
+                        <option value="completato" {% if filtro_stato == 'completato' %}selected{% endif %}>Completato</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label for="reparto" class="form-label small">Reparto</label>
+                    <select name="reparto" id="reparto" class="form-select">
+                        <option value="">Tutti</option>
+                        <option value="audio" {% if filtro_reparto == 'audio' %}selected{% endif %}>Audio</option>
+                        <option value="video" {% if filtro_reparto == 'video' %}selected{% endif %}>Video</option>
+                        <option value="luci" {% if filtro_reparto == 'luci' %}selected{% endif %}>Luci</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label for="data_da" class="form-label small">Data Da</label>
+                    <input type="date" name="data_da" id="data_da" class="form-control" value="{{ filtro_data_da }}">
+                </div>
+
+                <div class="col-md-2">
+                    <label for="data_a" class="form-label small">Data A</label>
+                    <input type="date" name="data_a" id="data_a" class="form-control" value="{{ filtro_data_a }}">
+                </div>
+
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+
+            {# Filtro urgenti #}
+            <div class="mt-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="solo_urgenti" value="1"
+                           id="solo_urgenti" {% if filtro_urgenti == '1' %}checked{% endif %}
+                           onchange="this.form.submit()">
+                    <label class="form-check-label text-danger" for="solo_urgenti">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Solo urgenti (< 7 giorni)
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ========== TABELLA PROGETTI ========== #}
+    {% if progetti %}
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Codice</th>
+                        <th>Nome Evento</th>
+                        <th>Cliente</th>
+                        <th>Data Evento</th>
+                        <th>Location</th>
+                        <th>Reparti</th>
+                        <th>Stato</th>
+                        <th class="text-center">Avanzamento</th>
+                        <th class="text-end">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for progetto in progetti %}
+                    <tr {% if progetto.is_urgente %}class="table-danger"{% endif %}>
+                        <td>
+                            <a href="{{ progetto.get_absolute_url }}" class="fw-bold">
+                                {{ progetto.codice }}
+                            </a>
+                        </td>
+                        <td>
+                            {{ progetto.nome_evento|truncatewords:5 }}
+                            {% if progetto.is_urgente %}
+                                <br><span class="badge bg-danger small">URGENTE</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ progetto.cliente.get_absolute_url }}">
+                                {{ progetto.cliente.ragione_sociale|truncatewords:3 }}
+                            </a>
+                        </td>
+                        <td>
+                            {{ progetto.data_evento|date:"d/m/Y" }}
+                            <br><small class="text-muted">
+                                {% if progetto.giorni_mancanti is not None %}
+                                    {% if progetto.giorni_mancanti > 0 %}
+                                        tra {{ progetto.giorni_mancanti }} gg
+                                    {% elif progetto.giorni_mancanti == 0 %}
+                                        OGGI
+                                    {% else %}
+                                        {{ progetto.giorni_mancanti|add:"0"|abs }} gg fa
+                                    {% endif %}
+                                {% endif %}
+                            </small>
+                        </td>
+                        <td>
+                            {{ progetto.citta_location }}
+                        </td>
+                        <td>
+                            {% for reparto in progetto.reparti.all %}
+                                <span class="badge bg-secondary">{{ reparto.get_tipo_reparto_display }}</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ progetto.stato_badge_color }}">
+                                {{ progetto.get_stato_display }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="progress" style="height: 20px; width: 100px; margin: auto;">
+                                <div class="progress-bar bg-success"
+                                     role="progressbar"
+                                     style="width: {{ progetto.percentuale_completamento }}%">
+                                    {{ progetto.percentuale_completamento }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ progetto.get_absolute_url }}"
+                                   class="btn btn-outline-primary"
+                                   title="Visualizza">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'progetti_eventi:progetto_update' progetto.pk %}"
+                                   class="btn btn-outline-warning"
+                                   title="Modifica">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# ========== PAGINAZIONE ========== #}
+    {% if is_paginated %}
+    <div class="mt-4">
+        {% include 'components/pagination.html' with page_obj=page_obj %}
+    </div>
+    {% endif %}
+
+    {% else %}
+
+    {# ========== EMPTY STATE ========== #}
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-inbox fs-1 text-muted"></i>
+            <h5 class="mt-3">Nessun progetto trovato</h5>
+            <p class="text-muted">
+                {% if search_query or filtro_stato or filtro_reparto %}
+                    Prova a modificare i filtri di ricerca
+                {% else %}
+                    Inizia creando il tuo primo progetto evento
+                {% endif %}
+            </p>
+            {% if not search_query and not filtro_stato %}
+            <a href="{% url 'progetti_eventi:progetto_create' %}" class="btn btn-primary mt-3">
+                <i class="bi bi-plus-circle"></i> Crea Primo Progetto
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% comment %}
+Componente Form Layout Standard
+
+Uso:
+    {% include 'components/form_layout.html' with form=form config=form_config %}
+
+Parametri:
+    - form: Il form da visualizzare (required)
+    - config: Dictionary configurazione (optional)
+        - title: Titolo form
+        - subtitle: Sottotitolo
+        - submit_text: Testo bottone submit (default: 'Salva')
+        - cancel_url: URL per bottone annulla (default: vai indietro)
+        - show_required_legend: Mostra legenda campi obbligatori (default: True)
+        - form_class: CSS class custom per form
+        - card_class: CSS class custom per card
+
+Esempio:
+    {% include 'components/form_layout.html' with
+        form=form
+        config=form_config
+    %}
+
+Nel view:
+    context['form_config'] = {
+        'title': 'Nuovo Ordine',
+        'subtitle': 'Compila i campi per creare un nuovo ordine',
+        'submit_text': 'Crea Ordine',
+        'cancel_url': 'vendite:ordine_list',
+    }
+{% endcomment %}
+{% load crispy_forms_tags %}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card {{ config.card_class|default:'' }}">
+                {% if config.title %}
+                <div class="card-header">
+                    <h4 class="mb-0">{{ config.title }}</h4>
+                    {% if config.subtitle %}
+                    <p class="text-muted small mb-0 mt-1">{{ config.subtitle }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="card-body">
+                    <!-- Form Errors (se non usi crispy) -->
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Errori:</strong>
+                        <ul class="mb-0">
+                            {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endif %}
+
+                    <!-- Form -->
+                    <form method="post" enctype="multipart/form-data" class="{{ config.form_class|default:'' }}" novalidate>
+                        {% csrf_token %}
+
+                        {% if form.helper %}
+                            <!-- Crispy Forms -->
+                            {% crispy form %}
+                        {% else %}
+                            <!-- Fallback: render manuale -->
+                            {% for field in form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    {{ field.label }}
+                                    {% if field.field.required %}
+                                    <span class="text-danger">*</span>
+                                    {% endif %}
+                                </label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                <div class="form-text">{{ field.help_text }}</div>
+                                {% endif %}
+                                {% if field.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in field.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+
+                            <!-- Bottoni -->
+                            <div class="d-flex justify-content-between mt-4">
+                                <a href="{% if config.cancel_url %}{% url config.cancel_url %}{% else %}javascript:history.back(){% endif %}"
+                                   class="btn btn-secondary">
+                                    <i class="bi bi-x-circle me-1"></i> Annulla
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-1"></i> {{ config.submit_text|default:"Salva" }}
+                                </button>
+                            </div>
+                        {% endif %}
+                    </form>
+
+                    <!-- Required Legend -->
+                    {% if config.show_required_legend|default:True %}
+                    <div class="text-muted small mt-3">
+                        <span class="text-danger">*</span> = Campo obbligatorio
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Auto-focus primo campo -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const firstInput = document.querySelector('form input:not([type=hidden]):not([readonly]), form select, form textarea');
+    if (firstInput) {
+        firstInput.focus();
+    }
+});
+</script>

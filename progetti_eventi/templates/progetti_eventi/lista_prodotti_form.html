@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Nuova Lista Prodotti{% endblock %}
+
+{% block extra_css %}
+<style>
+    .formset-row {
+        background-color: #f8f9fa;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 5px;
+        border-left: 3px solid #0d6efd;
+    }
+    .formset-row.to-delete {
+        opacity: 0.5;
+        border-left-color: #dc3545;
+    }
+    .delete-row {
+        cursor: pointer;
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    {# Breadcrumb #}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'progetti_eventi:progetto_list' %}">Progetti</a></li>
+            <li class="breadcrumb-item">
+                <a href="{{ progetto_reparto.progetto.get_absolute_url }}">
+                    {{ progetto_reparto.progetto.codice }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active">Nuova Lista Prodotti</li>
+        </ol>
+    </nav>
+
+    {# Header #}
+    <div class="mb-4">
+        <h1 class="h3">
+            <i class="bi bi-list-check me-2"></i>
+            Nuova Lista Prodotti - Reparto {{ progetto_reparto.get_tipo_reparto_display }}
+        </h1>
+        <p class="text-muted">
+            Progetto: <strong>{{ progetto_reparto.progetto.codice }}</strong> - {{ progetto_reparto.progetto.nome_evento }}
+        </p>
+    </div>
+
+    {# Form #}
+    <form method="post" id="lista-form">
+        {% csrf_token %}
+
+        {# Info Lista #}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Informazioni Lista</h5>
+            </div>
+            <div class="card-body">
+                {{ form.as_p }}
+            </div>
+        </div>
+
+        {# Formset Prodotti #}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Prodotti</h5>
+                <button type="button" class="btn btn-sm btn-light" id="add-product">
+                    <i class="bi bi-plus-circle"></i> Aggiungi Prodotto
+                </button>
+            </div>
+            <div class="card-body">
+
+                {{ formset.management_form }}
+
+                <div id="prodotti-container">
+                    {% for form in formset %}
+                    <div class="formset-row" data-form-index="{{ forloop.counter0 }}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">Prodotto #<span class="product-number">{{ forloop.counter }}</span></h6>
+                            <span class="delete-row" onclick="deleteRow(this)">
+                                <i class="bi bi-trash"></i> Rimuovi
+                            </span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="form-label small">Codice Prodotto *</label>
+                                {{ form.codice_prodotto }}
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label small">Nome Prodotto *</label>
+                                {{ form.nome_prodotto }}
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Categoria</label>
+                                {{ form.categoria_prodotto }}
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Quantità *</label>
+                                {{ form.quantita }}
+                            </div>
+                        </div>
+
+                        <div class="row mt-2">
+                            <div class="col-md-2">
+                                <label class="form-label small">Lunghezza (cm)</label>
+                                {{ form.lunghezza_cm }}
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Larghezza (cm)</label>
+                                {{ form.larghezza_cm }}
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Altezza (cm)</label>
+                                {{ form.altezza_cm }}
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Peso (kg)</label>
+                                {{ form.peso_kg }}
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Priorità</label>
+                                {{ form.priorita }}
+                            </div>
+                            <div class="col-md-2">
+                                {{ form.DELETE }}
+                            </div>
+                        </div>
+
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <label class="form-label small">Note</label>
+                                {{ form.note }}
+                            </div>
+                        </div>
+
+                        {% if form.errors %}
+                        <div class="alert alert-danger mt-2">
+                            {{ form.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if formset.non_form_errors %}
+                <div class="alert alert-danger">
+                    {{ formset.non_form_errors }}
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+        {# Actions #}
+        <div class="d-flex justify-content-between">
+            <a href="{{ progetto_reparto.get_absolute_url }}" class="btn btn-secondary btn-lg">
+                <i class="bi bi-arrow-left"></i> Annulla
+            </a>
+            <button type="submit" class="btn btn-success btn-lg">
+                <i class="bi bi-check-circle"></i> Salva Lista Prodotti
+            </button>
+        </div>
+
+    </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Gestione formset dinamico
+    function deleteRow(element) {
+        const row = element.closest('.formset-row');
+        const deleteCheckbox = row.querySelector('input[type="checkbox"][name*="DELETE"]');
+
+        if (deleteCheckbox) {
+            deleteCheckbox.checked = true;
+            row.classList.add('to-delete');
+            row.style.display = 'none';
+        } else {
+            row.remove();
+        }
+
+        updateFormNumbers();
+    }
+
+    function updateFormNumbers() {
+        const rows = document.querySelectorAll('.formset-row:not(.to-delete)');
+        rows.forEach((row, index) => {
+            const numberSpan = row.querySelector('.product-number');
+            if (numberSpan) {
+                numberSpan.textContent = index + 1;
+            }
+        });
+    }
+
+    // Aggiungi prodotto (clona ultimo form)
+    document.getElementById('add-product').addEventListener('click', function() {
+        const container = document.getElementById('prodotti-container');
+        const totalForms = document.querySelector('input[name$="TOTAL_FORMS"]');
+        const formNum = parseInt(totalForms.value);
+
+        // Clona template (usa l'ultimo form come template)
+        const lastForm = container.querySelector('.formset-row:last-child');
+        const newForm = lastForm.cloneNode(true);
+
+        // Aggiorna indici
+        newForm.innerHTML = newForm.innerHTML.replace(
+            new RegExp(`-${formNum - 1}-`, 'g'),
+            `-${formNum}-`
+        );
+
+        // Reset valori
+        newForm.querySelectorAll('input, select, textarea').forEach(input => {
+            if (input.type === 'checkbox') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+        });
+
+        // Rimuovi classe to-delete
+        newForm.classList.remove('to-delete');
+        newForm.style.display = 'block';
+
+        // Aggiungi al container
+        container.appendChild(newForm);
+
+        // Incrementa TOTAL_FORMS
+        totalForms.value = formNum + 1;
+
+        updateFormNumbers();
+    });
+
+    // Aggiorna numeri all'avvio
+    updateFormNumbers();
+</script>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Conferma Eliminazione Progetto{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Conferma Eliminazione
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">
+                        Sei sicuro di voler eliminare il progetto:
+                    </p>
+
+                    <div class="alert alert-warning">
+                        <strong>{{ object.codice }}</strong> - {{ object.nome_evento }}<br>
+                        <small>Cliente: {{ object.cliente.ragione_sociale }}</small><br>
+                        <small>Data Evento: {{ object.data_evento|date:"d/m/Y" }}</small>
+                    </div>
+
+                    <div class="alert alert-danger">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Attenzione:</strong> Questa azione eliminerà anche:
+                        <ul class="mb-0 mt-2">
+                            <li>Tutti i reparti associati ({{ object.reparti.count }})</li>
+                            <li>Tutte le liste prodotti</li>
+                            <li>Tutti i task engineering</li>
+                        </ul>
+                    </div>
+
+                    <form method="post" class="d-flex justify-content-between">
+                        {% csrf_token %}
+                        <a href="{{ object.get_absolute_url }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Annulla
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Conferma Eliminazione
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% comment %}
+Componente Loading Spinner
+
+Uso:
+    {% include 'components/loading_spinner.html' %}
+    o
+    {% include 'components/loading_spinner.html' with text='Caricamento...' %}
+{% endcomment %}
+
+<div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Caricamento...</span>
+    </div>
+    {% if text %}
+    <p class="mt-3 text-muted">{{ text }}</p>
+    {% endif %}
+</div>

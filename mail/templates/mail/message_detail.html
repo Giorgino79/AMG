@@ -1,0 +1,286 @@
+{% extends "mail/base.html" %}
+{% load static %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'mail:dashboard' %}">Mail</a></li>
+<li class="breadcrumb-item"><a href="{% url 'mail:message_list' %}">Messaggi</a></li>
+<li class="breadcrumb-item active">Dettaglio</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <a href="{% url 'mail:message_list' %}" class="btn btn-sm btn-outline-secondary me-3">
+                        <i class="bi bi-arrow-left"></i> Indietro
+                    </a>
+                    <h5 class="mb-0">
+                        {% if message.direction == 'outgoing' %}
+                            <span class="badge bg-success me-2">
+                                <i class="bi bi-arrow-up-right"></i> INVIATO
+                            </span>
+                        {% else %}
+                            <span class="badge bg-primary me-2">
+                                <i class="bi bi-arrow-down-left"></i> RICEVUTO
+                            </span>
+                        {% endif %}
+                        {{ message.subject }}
+                    </h5>
+                </div>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-outline-primary" title="Rispondi">
+                        <i class="bi bi-reply"></i> Rispondi
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" title="Inoltra">
+                        <i class="bi bi-forward"></i> Inoltra
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="toggleFlag('{{ message.id }}');" title="Importante">
+                        <i class="bi bi-star{% if message.is_flagged %}-fill{% endif %}"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" title="Elimina">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <!-- Informazioni mittente/destinatario -->
+                <div class="border-bottom pb-3 mb-3">
+                    <div class="row">
+                        <div class="col-md-8">
+                            {% if message.direction == 'outgoing' %}
+                                <!-- Email inviata -->
+                                <div class="mb-2">
+                                    <strong>Da:</strong>
+                                    <span class="ms-2">{{ message.sender_config.display_name }} &lt;{{ message.sender_config.email_address }}&gt;</span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>A:</strong>
+                                    <span class="ms-2">
+                                        {% for email in message.to_addresses %}
+                                            <span class="badge bg-secondary">{{ email }}</span>
+                                        {% endfor %}
+                                    </span>
+                                </div>
+                                {% if message.cc_addresses %}
+                                <div class="mb-2">
+                                    <strong>CC:</strong>
+                                    <span class="ms-2">
+                                        {% for email in message.cc_addresses %}
+                                            <span class="badge bg-info">{{ email }}</span>
+                                        {% endfor %}
+                                    </span>
+                                </div>
+                                {% endif %}
+                            {% else %}
+                                <!-- Email ricevuta -->
+                                <div class="mb-2">
+                                    <strong>Da:</strong>
+                                    <span class="ms-2">{{ message.from_name|default:message.from_address }} &lt;{{ message.from_address }}&gt;</span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>A:</strong>
+                                    <span class="ms-2">{{ message.sender_config.email_address }}</span>
+                                </div>
+                                {% if message.reply_to %}
+                                <div class="mb-2">
+                                    <strong>Reply-To:</strong>
+                                    <span class="ms-2">{{ message.reply_to }}</span>
+                                </div>
+                                {% endif %}
+                            {% endif %}
+
+                            <div class="mb-2">
+                                <strong>Data:</strong>
+                                <span class="ms-2">{{ message.created_at|date:"d/m/Y H:i:s" }}</span>
+                            </div>
+
+                            <!-- Labels -->
+                            {% if message.labels.all %}
+                            <div class="mb-2">
+                                <strong>Etichette:</strong>
+                                <span class="ms-2">
+                                    {% for label in message.labels.all %}
+                                        <span class="badge me-1" style="background-color: {{ label.color }};">
+                                            <i class="bi bi-{{ label.icon }}"></i> {{ label.name }}
+                                        </span>
+                                    {% endfor %}
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-4 text-end">
+                            <!-- Status badge -->
+                            <div class="mb-2">
+                                {% if message.status == 'draft' %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-file-earmark"></i> Bozza
+                                    </span>
+                                {% elif message.status == 'sent' %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Inviato
+                                    </span>
+                                {% elif message.status == 'delivered' %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle-fill"></i> Consegnato
+                                    </span>
+                                {% elif message.status == 'failed' %}
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-x-circle"></i> Fallito
+                                    </span>
+                                {% elif message.status == 'pending' %}
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-clock"></i> In attesa
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            {% if message.is_read %}
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="bi bi-eye"></i> Letto il {{ message.read_at|date:"d/m/Y H:i" }}
+                                </small>
+                            </div>
+                            {% endif %}
+
+                            {% if message.is_flagged %}
+                            <div class="mb-2">
+                                <span class="text-warning">
+                                    <i class="bi bi-star-fill"></i> Importante
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Allegati -->
+                {% if message.has_attachments %}
+                <div class="border-bottom pb-3 mb-3">
+                    <h6><i class="bi bi-paperclip"></i> Allegati ({{ message.attachments_info|length }})</h6>
+                    <div class="list-group">
+                        {% for attachment in message.attachments_info %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-file-earmark"></i>
+                                <span class="ms-2">{{ attachment.filename }}</span>
+                                <small class="text-muted ms-2">({{ attachment.size|filesizeformat }})</small>
+                            </div>
+                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-download"></i> Scarica
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Contenuto messaggio -->
+                <div class="message-content">
+                    <h6 class="mb-3">Messaggio</h6>
+                    {% if message.content_html %}
+                        <div class="border rounded p-3 bg-light">
+                            {{ message.content_html|safe }}
+                        </div>
+                    {% elif message.content_text %}
+                        <div class="border rounded p-3 bg-light">
+                            <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ message.content_text }}</pre>
+                        </div>
+                    {% else %}
+                        <div class="text-muted text-center py-4">
+                            <i class="bi bi-inbox"></i>
+                            <p>Nessun contenuto disponibile</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Info aggiuntive -->
+                {% if message.template_used %}
+                <div class="mt-3 text-muted">
+                    <small>
+                        <i class="bi bi-file-text"></i> Template utilizzato:
+                        <strong>{{ message.template_used.nome }}</strong>
+                    </small>
+                </div>
+                {% endif %}
+
+                {% if message.error_message %}
+                <div class="mt-3">
+                    <div class="alert alert-danger">
+                        <strong><i class="bi bi-exclamation-triangle"></i> Errore:</strong>
+                        {{ message.error_message }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Oggetto collegato -->
+                {% if message.related_object %}
+                <div class="mt-3 border-top pt-3">
+                    <h6><i class="bi bi-link-45deg"></i> Oggetto Collegato</h6>
+                    <p class="text-muted">{{ message.related_description|default:"Nessuna descrizione" }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted">
+                        <small>
+                            ID Messaggio: <code>{{ message.id }}</code>
+                            {% if message.message_id %}
+                                | Message-ID: <code>{{ message.message_id|truncatechars:50 }}</code>
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary me-2">
+                            <i class="bi bi-reply"></i> Rispondi
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-forward"></i> Inoltra
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function toggleFlag(messageId) {
+    const csrftoken = getCookie('csrftoken');
+    fetch(`/mail/messages/${messageId}/toggle-flag/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %}

@@ -1,0 +1,328 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invia la tua Offerta - {{ richiesta.numero }}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Color Palette - BEF Management Green Theme */
+        :root {
+            --color-first: #d3f6d1;
+            --color-second: #a7d7c5;
+            --color-third: #74b49b;
+            --color-fourth: #5c8d89;
+            --color-text: #393e46;
+        }
+
+        body {
+            font-family: 'Ubuntu', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--color-third) 0%, var(--color-fourth) 100%);
+            min-height: 100vh;
+            padding: 40px 0;
+        }
+
+        .container-public {
+            max-width: 900px;
+        }
+
+        .card-public {
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(92, 141, 137, 0.3);
+            border: none;
+        }
+
+        .header-public {
+            background: linear-gradient(135deg, var(--color-third) 0%, var(--color-fourth) 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .info-box-public {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--color-third);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .btn-submit-public {
+            background: linear-gradient(135deg, var(--color-third) 0%, var(--color-fourth) 100%);
+            border: none;
+            padding: 12px 40px;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+
+        .btn-submit-public:hover {
+            background: linear-gradient(135deg, var(--color-fourth) 0%, var(--color-third) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(92, 141, 137, 0.4);
+        }
+
+        .alert-public {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .table-dettaglio {
+            font-size: 0.9rem;
+        }
+
+        .table-dettaglio th {
+            background-color: var(--color-first);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .badge-iva {
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            background-color: var(--color-third);
+            color: white;
+            border-radius: 5px;
+            margin-left: 10px;
+        }
+
+        .ritiro-box {
+            background-color: var(--color-first);
+            border-left: 4px solid var(--color-third);
+        }
+
+        .consegna-box {
+            background-color: var(--color-second);
+            border-left: 4px solid var(--color-fourth);
+        }
+    </style>
+</head>
+<body>
+    <div class="container container-public">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-public alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="card card-public">
+            <div class="header-public text-center">
+                <h1 class="mb-2"><i class="fas fa-truck me-2"></i>Richiesta Preventivo Trasporto</h1>
+                <p class="mb-0">{{ richiesta.numero }} - {{ richiesta.titolo }}</p>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Info Fornitore -->
+                <div class="alert alert-info alert-public mb-4">
+                    <i class="fas fa-building me-2"></i>
+                    <strong>{{ trasportatore.nome }}</strong>
+                    {% if offerta_esistente %}
+                        <span class="badge bg-success ms-2">Offerta già inviata - Puoi aggiornarla</span>
+                    {% endif %}
+                </div>
+
+                <!-- Dettagli Richiesta -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="info-box-public ritiro-box">
+                            <h5 class="mb-3" style="color: var(--color-fourth);"><i class="fas fa-arrow-up me-2"></i>RITIRO</h5>
+                            <p class="mb-1"><strong>Indirizzo:</strong> {{ richiesta.indirizzo_ritiro }}</p>
+                            <p class="mb-1"><strong>Città:</strong> {{ richiesta.cap_ritiro }} {{ richiesta.citta_ritiro }} ({{ richiesta.provincia_ritiro }})</p>
+                            <p class="mb-1"><strong>Data:</strong> {{ richiesta.data_ritiro_richiesta|date:"d/m/Y" }}</p>
+                            {% if richiesta.ora_ritiro_dalle %}
+                            <p class="mb-0"><strong>Orario:</strong> {{ richiesta.ora_ritiro_dalle|time:"H:i" }} - {{ richiesta.ora_ritiro_alle|time:"H:i" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-box-public consegna-box">
+                            <h5 class="mb-3" style="color: var(--color-fourth);"><i class="fas fa-arrow-down me-2"></i>CONSEGNA</h5>
+                            <p class="mb-1"><strong>Indirizzo:</strong> {{ richiesta.indirizzo_consegna }}</p>
+                            <p class="mb-1"><strong>Città:</strong> {{ richiesta.cap_consegna }} {{ richiesta.citta_consegna }} ({{ richiesta.provincia_consegna }})</p>
+                            <p class="mb-1"><strong>Data:</strong> {{ richiesta.data_consegna_richiesta|date:"d/m/Y" }}</p>
+                            {% if richiesta.ora_consegna_dalle %}
+                            <p class="mb-0"><strong>Orario:</strong> {{ richiesta.ora_consegna_dalle|time:"H:i" }} - {{ richiesta.ora_consegna_alle|time:"H:i" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dettagli Merce -->
+                <div class="info-box-public mb-4">
+                    <h5 class="mb-3" style="color: var(--color-fourth);"><i class="fas fa-box me-2"></i>DETTAGLI MERCE</h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <p class="mb-2"><strong>Tipo Merce:</strong><br>{{ richiesta.tipo_merce }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="mb-2"><strong>N° Colli:</strong><br>{{ richiesta.numero_colli_totali }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="mb-2"><strong>Peso Totale:</strong><br>{{ richiesta.peso_totale_kg|floatformat:0 }} kg</p>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="mb-2"><strong>Volume Totale:</strong><br>{{ richiesta.volume_totale_m3|floatformat:2 }} m³</p>
+                        </div>
+                    </div>
+
+                    {% if richiesta.colli.exists %}
+                    <hr>
+                    <h6 class="mb-3"><strong>Dettaglio Colli:</strong></h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered table-dettaglio">
+                            <thead>
+                                <tr>
+                                    <th>Q.tà</th>
+                                    <th>Tipo</th>
+                                    <th>Dimensioni (cm)</th>
+                                    <th>Peso (kg)</th>
+                                    <th>Volume (m³)</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for collo in richiesta.colli.all %}
+                                <tr>
+                                    <td>{{ collo.quantita }}</td>
+                                    <td>{{ collo.get_tipo_display }}</td>
+                                    <td>{{ collo.lunghezza_cm }} × {{ collo.larghezza_cm }} × {{ collo.altezza_cm }}</td>
+                                    <td>{{ collo.peso_kg }}</td>
+                                    <td>{{ collo.volume_m3 }}</td>
+                                    <td>
+                                        {{ collo.descrizione|default:"" }}
+                                        {% if collo.fragile %}<span class="badge bg-danger">FRAGILE</span>{% endif %}
+                                        {% if not collo.stackable %}<span class="badge bg-secondary">Non impilabile</span>{% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if richiesta.note_interne %}
+                <div class="alert alert-warning alert-public mb-4">
+                    <strong><i class="fas fa-sticky-note me-2"></i>Note:</strong><br>
+                    {{ richiesta.note_interne }}
+                </div>
+                {% endif %}
+
+                <hr class="my-4">
+
+                <!-- Form Offerta -->
+                <h4 class="mb-4"><i class="fas fa-file-invoice-dollar me-2"></i>Invia la tua Offerta</h4>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Errori generali -->
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger alert-public">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <!-- Importo -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.importo_imponibile.id_for_label }}" class="form-label">
+                                {{ form.importo_imponibile.label }}
+                                <span class="badge-iva">+ IVA</span>
+                            </label>
+                            {{ form.importo_imponibile }}
+                            <small class="form-text text-muted d-block">{{ form.importo_imponibile.help_text }}</small>
+                            {% if form.importo_imponibile.errors %}
+                            <div class="alert alert-danger alert-public mt-2">{{ form.importo_imponibile.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Allegato -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.allegato.id_for_label }}" class="form-label">
+                                {{ form.allegato.label }}
+                            </label>
+                            {{ form.allegato }}
+                            <small class="form-text text-muted d-block">{{ form.allegato.help_text }}</small>
+                            {% if form.allegato.errors %}
+                            <div class="alert alert-danger alert-public mt-2">{{ form.allegato.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Data Ritiro -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.data_ritiro_garantita.id_for_label }}" class="form-label">
+                                {{ form.data_ritiro_garantita.label }}
+                            </label>
+                            {{ form.data_ritiro_garantita }}
+                            <small class="form-text text-muted d-block">{{ form.data_ritiro_garantita.help_text }}</small>
+                            {% if form.data_ritiro_garantita.errors %}
+                            <div class="alert alert-danger alert-public mt-2">{{ form.data_ritiro_garantita.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Data Consegna -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.data_consegna_garantita.id_for_label }}" class="form-label">
+                                {{ form.data_consegna_garantita.label }}
+                            </label>
+                            {{ form.data_consegna_garantita }}
+                            <small class="form-text text-muted d-block">{{ form.data_consegna_garantita.help_text }}</small>
+                            {% if form.data_consegna_garantita.errors %}
+                            <div class="alert alert-danger alert-public mt-2">{{ form.data_consegna_garantita.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Note -->
+                        <div class="col-12 mb-4">
+                            <label for="{{ form.note.id_for_label }}" class="form-label">
+                                {{ form.note.label }}
+                            </label>
+                            {{ form.note }}
+                            {% if form.note.errors %}
+                            <div class="alert alert-danger alert-public mt-2">{{ form.note.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg btn-submit-public">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            {% if offerta_esistente %}Aggiorna Offerta{% else %}Invia Offerta{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card-footer text-center text-muted bg-light" style="border-radius: 0 0 15px 15px;">
+                <small>
+                    <i class="fas fa-lock me-1"></i>
+                    Pagina sicura - Sistema di Gestione Trasporti
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

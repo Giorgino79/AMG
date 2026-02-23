@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Registra Rifornimento - {{ affidamento.automezzo.targa }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'automezzi:dashboard' %}">Automezzi</a></li>
+<li class="breadcrumb-item"><a href="{% url 'automezzi:mio_affidamento' %}">Il Mio Mezzo</a></li>
+<li class="breadcrumb-item active">Nuovo Rifornimento</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2 py-md-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-gas-pump me-2"></i>Registra Rifornimento
+            </h1>
+            <p class="text-muted mb-0">Mezzo: <strong>{{ affidamento.automezzo.targa }}</strong> - {{ affidamento.automezzo.marca }} {{ affidamento.automezzo.modello }}</p>
+        </div>
+        <a href="{% url 'automezzi:mio_affidamento' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Torna al Mio Mezzo
+        </a>
+    </div>
+
+    {% if affidamento.automezzo.carta_carburante %}
+    <div class="alert alert-info">
+        <i class="fas fa-credit-card me-2"></i>
+        <strong>Carta Carburante:</strong> {{ affidamento.automezzo.carta_carburante }}
+        {% if affidamento.automezzo.pin_carta_carburante %}
+        &mdash; <strong>PIN:</strong> {{ affidamento.automezzo.pin_carta_carburante }}
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>Errori nella compilazione:</h5>
+                {{ form.errors }}
+            </div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                {# Automezzo nascosto (preimpostato) #}
+                <input type="hidden" name="automezzo" value="{{ affidamento.automezzo.pk }}">
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.data.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-calendar-alt me-2 text-warning"></i>Data Rifornimento *
+                            </label>
+                            <input type="date" name="{{ form.data.name }}"
+                                   class="form-control{% if form.data.errors %} is-invalid{% endif %}"
+                                   id="{{ form.data.id_for_label }}"
+                                   value="{{ form.data.value|default:'' }}"
+                                   required>
+                            {% if form.data.errors %}
+                            <div class="invalid-feedback">{{ form.data.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.litri.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-fill-drip me-2 text-info"></i>Litri *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" name="{{ form.litri.name }}"
+                                       class="form-control{% if form.litri.errors %} is-invalid{% endif %}"
+                                       id="{{ form.litri.id_for_label }}"
+                                       value="{{ form.litri.value|default:'' }}"
+                                       step="0.01" min="0" placeholder="0.00" required>
+                                <span class="input-group-text">L</span>
+                            </div>
+                            {% if form.litri.errors %}
+                            <div class="invalid-feedback">{{ form.litri.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.costo_totale.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-euro-sign me-2 text-success"></i>Costo Totale *
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">&euro;</span>
+                                <input type="number" name="{{ form.costo_totale.name }}"
+                                       class="form-control{% if form.costo_totale.errors %} is-invalid{% endif %}"
+                                       id="{{ form.costo_totale.id_for_label }}"
+                                       value="{{ form.costo_totale.value|default:'' }}"
+                                       step="0.01" min="0" placeholder="0.00" required>
+                            </div>
+                            {% if form.costo_totale.errors %}
+                            <div class="invalid-feedback">{{ form.costo_totale.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.chilometri.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-tachometer-alt me-2 text-primary"></i>Chilometri *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" name="{{ form.chilometri.name }}"
+                                       class="form-control{% if form.chilometri.errors %} is-invalid{% endif %}"
+                                       id="{{ form.chilometri.id_for_label }}"
+                                       value="{{ form.chilometri.value|default:'' }}"
+                                       min="0" required>
+                                <span class="input-group-text">km</span>
+                            </div>
+                            {% if form.chilometri.errors %}
+                            <div class="invalid-feedback">{{ form.chilometri.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">Chilometri al momento del rifornimento</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.scontrino.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-receipt me-2 text-secondary"></i>Scontrino
+                            </label>
+                            <input type="file" name="{{ form.scontrino.name }}"
+                                   class="form-control{% if form.scontrino.errors %} is-invalid{% endif %}"
+                                   id="{{ form.scontrino.id_for_label }}"
+                                   accept=".pdf,.jpg,.jpeg,.png">
+                            {% if form.scontrino.errors %}
+                            <div class="invalid-feedback">{{ form.scontrino.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">Foto o scansione dello scontrino</div>
+                        </div>
+
+                        <!-- Prezzo al litro calcolato -->
+                        <div class="alert alert-light border mt-3">
+                            <strong>Prezzo al litro:</strong> <span id="prezzoLitro">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'automezzi:mio_affidamento' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Annulla
+                    </a>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-save me-2"></i>Registra Rifornimento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const litriField = document.getElementById('{{ form.litri.id_for_label }}');
+    const costoField = document.getElementById('{{ form.costo_totale.id_for_label }}');
+    const prezzoSpan = document.getElementById('prezzoLitro');
+
+    function calcolaPrezzoLitro() {
+        const litri = parseFloat(litriField.value) || 0;
+        const costo = parseFloat(costoField.value) || 0;
+        if (litri > 0 && costo > 0) {
+            prezzoSpan.textContent = '\u20AC' + (costo / litri).toFixed(3) + '/L';
+        } else {
+            prezzoSpan.textContent = '-';
+        }
+    }
+
+    if (litriField && costoField) {
+        litriField.addEventListener('input', calcolaPrezzoLitro);
+        costoField.addEventListener('input', calcolaPrezzoLitro);
+        calcolaPrezzoLitro();
+    }
+});
+</script>
+{% endblock %}

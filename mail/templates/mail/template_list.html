@@ -1,0 +1,34 @@
+{% extends "mail/base.html" %}
+{% load static %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'mail:dashboard' %}">Mail</a></li>
+<li class="breadcrumb-item active">Template</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2>Template Email</h2>
+                <p class="text-muted">Gestisci i template riutilizzabili per le email</p>
+            </div>
+            <a href="{% url 'mail:template_create' %}" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Nuovo Template
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <p class="text-muted">Lista template da implementare</p>
+                <p><small>TODO: Implementare lista template con filtri e ricerca</small></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

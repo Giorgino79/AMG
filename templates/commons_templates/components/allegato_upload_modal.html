@@ -1,0 +1,67 @@
+{% load crispy_forms_tags %}
+
+<!-- Modal Upload Allegato -->
+<div class="modal fade" id="allegatoUploadModal" tabindex="-1" aria-labelledby="allegatoUploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="allegatoUploadModalLabel">
+                    <i class="bi bi-cloud-upload-fill"></i> Carica Nuovo Allegato
+                    <small class="d-block mt-1" id="uploadModalObjectInfo" style="font-size: 0.85rem; opacity: 0.9;"></small>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="allegatoUploadForm" method="post" enctype="multipart/form-data">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" id="upload_content_type" name="content_type">
+                    <input type="hidden" id="upload_object_id" name="object_id">
+
+                    <div class="mb-3">
+                        <label for="id_file" class="form-label">File *</label>
+                        <input type="file"
+                               class="form-control"
+                               id="id_file"
+                               name="file"
+                               required
+                               accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip">
+                        <div class="form-text">
+                            Formati supportati: PDF, Immagini, Documenti Office, ZIP. Max 10MB.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_descrizione" class="form-label">Descrizione</label>
+                        <textarea class="form-control"
+                                  id="id_descrizione"
+                                  name="descrizione"
+                                  rows="3"
+                                  placeholder="Descrizione opzionale del file..."></textarea>
+                    </div>
+
+                    {# Progress bar durante upload #}
+                    <div id="uploadProgress" class="d-none">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                 role="progressbar"
+                                 style="width: 0%"
+                                 id="uploadProgressBar"></div>
+                        </div>
+                        <small class="text-muted mt-1 d-block">Caricamento in corso...</small>
+                    </div>
+
+                    {# Alert errori #}
+                    <div id="uploadErrors" class="alert alert-danger d-none mt-3" role="alert"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Annulla
+                    </button>
+                    <button type="submit" class="btn btn-success" id="uploadSubmitBtn">
+                        <i class="bi bi-upload"></i> Carica File
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

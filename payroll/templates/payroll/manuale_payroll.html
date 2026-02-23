@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ manuale.titolo }} - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Manuale Payroll</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header con azioni -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="bi bi-book me-2"></i>{{ manuale.titolo }}</h2>
+                    <p class="text-muted mb-0">
+                        <small>
+                            <i class="bi bi-tag me-1"></i>Versione {{ manuale.versione }}
+                            | <i class="bi bi-calendar-event me-1"></i>Ultimo aggiornamento: {{ manuale.data_ultima_modifica|date:"d/m/Y H:i" }}
+                            {% if manuale.modificato_da %}
+                            | <i class="bi bi-person me-1"></i>{{ manuale.modificato_da.get_full_name }}
+                            {% endif %}
+                        </small>
+                    </p>
+                </div>
+                <div>
+                    {% if puo_modificare %}
+                    <a href="{% url 'payroll:manuale_payroll_edit' %}" class="btn btn-warning">
+                        <i class="bi bi-pencil-square me-1"></i>Modifica Manuale
+                    </a>
+                    {% endif %}
+                    <button onclick="window.print()" class="btn btn-secondary">
+                        <i class="bi bi-printer me-1"></i>Stampa
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra ricerca e fonti -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="input-group">
+                <span class="input-group-text bg-primary text-white">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" class="form-control" id="search-input" placeholder="Cerca nel manuale (es. IRPEF, ferie, straordinari...)">
+                <button class="btn btn-outline-secondary" type="button" id="clear-search">
+                    <i class="bi bi-x-lg"></i> Cancella
+                </button>
+            </div>
+            <div id="search-results" class="mt-2 text-muted small"></div>
+        </div>
+        <div class="col-lg-4">
+            <div class="dropdown">
+                <button class="btn btn-info dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-link-45deg me-1"></i>Fonti Ufficiali
+                </button>
+                <ul class="dropdown-menu w-100">
+                    <li><h6 class="dropdown-header">Normativa e Legislazione</h6></li>
+                    <li><a class="dropdown-item" href="https://www.normattiva.it/" target="_blank">
+                        <i class="bi bi-file-earmark-text me-2"></i>Normattiva (Gazzetta Ufficiale)
+                    </a></li>
+                    <li><a class="dropdown-item" href="https://www.altalex.com/documents/codici-altalex/2015/01/02/codice-civile" target="_blank">
+                        <i class="bi bi-book me-2"></i>Codice Civile
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><h6 class="dropdown-header">Enti Pubblici</h6></li>
+                    <li><a class="dropdown-item" href="https://www.inps.it" target="_blank">
+                        <i class="bi bi-bank me-2"></i>INPS - Contributi e Previdenza
+                    </a></li>
+                    <li><a class="dropdown-item" href="https://www.agenziaentrate.gov.it" target="_blank">
+                        <i class="bi bi-receipt me-2"></i>Agenzia delle Entrate - IRPEF
+                    </a></li>
+                    <li><a class="dropdown-item" href="https://www.inail.it" target="_blank">
+                        <i class="bi bi-shield-check me-2"></i>INAIL - Infortuni
+                    </a></li>
+                    <li><a class="dropdown-item" href="https://www.ispettorato.gov.it" target="_blank">
+                        <i class="bi bi-eye me-2"></i>Ispettorato del Lavoro
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><h6 class="dropdown-header">CCNL e Contrattazione</h6></li>
+                    <li><a class="dropdown-item" href="https://www.cnel.it/Archivio-Contratti" target="_blank">
+                        <i class="bi bi-file-earmark-ruled me-2"></i>CNEL - Archivio CCNL
+                    </a></li>
+                    <li><a class="dropdown-item" href="https://www.fiscoetasse.com/lavoro-previdenza/ccnl.html" target="_blank">
+                        <i class="bi bi-files me-2"></i>Database CCNL
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><h6 class="dropdown-header">Addizionali Regionali/Comunali</h6></li>
+                    <li><a class="dropdown-item" href="https://www.finanze.gov.it/it/fiscalita-regionale-e-locale/addizionali-irpef/" target="_blank">
+                        <i class="bi bi-map me-2"></i>MEF - Addizionali IRPEF
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenuto manuale -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <div id="manuale-content" class="markdown-content">
+                        {{ manuale.contenuto|linebreaks }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Stili per il contenuto del manuale */
+.markdown-content {
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 100%;
+}
+
+.markdown-content h1 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.markdown-content h2 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: #0d6efd;
+}
+
+.markdown-content h3 {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: #198754;
+}
+
+.markdown-content h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.markdown-content h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.markdown-content p {
+    margin-bottom: 1rem;
+}
+
+.markdown-content strong {
+    font-weight: 600;
+}
+
+.markdown-content code {
+    background-color: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #d63384;
+}
+
+.markdown-content pre {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 5px;
+    border-left: 4px solid #0d6efd;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.markdown-content li {
+    margin-bottom: 0.5rem;
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid #ffc107;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.markdown-content table {
+    width: 100%;
+    margin: 1rem 0;
+    border-collapse: collapse;
+}
+
+.markdown-content table th {
+    background-color: #0d6efd;
+    color: white;
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+}
+
+.markdown-content table td {
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+}
+
+.markdown-content table tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.markdown-content hr {
+    margin: 2rem 0;
+    border: none;
+    border-top: 2px solid #dee2e6;
+}
+
+/* Highlight per risultati ricerca */
+.search-highlight {
+    background-color: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+    color: #000;
+}
+
+/* Stili per la stampa */
+@media print {
+    .breadcrumb,
+    .btn,
+    .navbar,
+    .sidebar,
+    .input-group,
+    .dropdown,
+    #search-results {
+        display: none !important;
+    }
+
+    .markdown-content {
+        font-size: 11pt;
+    }
+
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    @page {
+        margin: 2cm;
+    }
+}
+</style>
+
+<script>
+// Converti markdown semplice in HTML
+document.addEventListener('DOMContentLoaded', function() {
+    const content = document.getElementById('manuale-content');
+    let html = content.innerHTML;
+
+    // Gestione titoli (già gestiti da linebreaks, ma miglioriamo)
+    // Tabelle semplici (già formattate)
+    // Link
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+    // Bold
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+    // Italic
+    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+    // Code inline
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Checkbox
+    html = html.replace(/✅/g, '<i class="bi bi-check-circle-fill text-success"></i>');
+    html = html.replace(/❌/g, '<i class="bi bi-x-circle-fill text-danger"></i>');
+    html = html.replace(/⭐/g, '<i class="bi bi-star-fill text-warning"></i>');
+    html = html.replace(/⚠️/g, '<i class="bi bi-exclamation-triangle-fill text-warning"></i>');
+
+    content.innerHTML = html;
+
+    // ========================================
+    // FUNZIONALITÀ RICERCA NEL MANUALE
+    // ========================================
+
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    const clearButton = document.getElementById('clear-search');
+    const manualeContent = document.getElementById('manuale-content');
+
+    let originalContent = manualeContent.innerHTML; // Salva contenuto originale
+
+    // Funzione di ricerca
+    function searchInManuale(query) {
+        if (!query || query.trim().length < 2) {
+            // Ripristina contenuto originale
+            manualeContent.innerHTML = originalContent;
+            searchResults.innerHTML = '';
+            return;
+        }
+
+        query = query.trim();
+
+        // Ripristina contenuto originale prima della ricerca
+        manualeContent.innerHTML = originalContent;
+
+        // Cerca e evidenzia
+        const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+        let newContent = manualeContent.innerHTML;
+        let matchCount = 0;
+
+        // Conta occorrenze
+        const matches = newContent.match(regex);
+        if (matches) {
+            matchCount = matches.length;
+
+            // Sostituisci con highlight (evita tag HTML)
+            newContent = newContent.replace(regex, '<span class="search-highlight">$1</span>');
+            manualeContent.innerHTML = newContent;
+
+            // Scroll al primo risultato
+            const firstHighlight = document.querySelector('.search-highlight');
+            if (firstHighlight) {
+                firstHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // Mostra risultati
+        if (matchCount > 0) {
+            searchResults.innerHTML = `<i class="bi bi-check-circle text-success me-1"></i>Trovate <strong>${matchCount}</strong> occorrenze di "<strong>${query}</strong>"`;
+        } else {
+            searchResults.innerHTML = `<i class="bi bi-x-circle text-danger me-1"></i>Nessun risultato per "<strong>${query}</strong>"`;
+        }
+    }
+
+    // Escape regex special characters
+    function escapeRegex(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // Event listener ricerca (con debounce)
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            searchInManuale(this.value);
+        }, 300);
+    });
+
+    // Event listener Enter
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            clearTimeout(searchTimeout);
+            searchInManuale(this.value);
+        }
+    });
+
+    // Clear button
+    clearButton.addEventListener('click', function() {
+        searchInput.value = '';
+        manualeContent.innerHTML = originalContent;
+        searchResults.innerHTML = '';
+        searchInput.focus();
+    });
+
+    // Salva nuovo contenuto originale dopo conversione markdown
+    setTimeout(() => {
+        originalContent = manualeContent.innerHTML;
+    }, 100);
+});
+</script>
+{% endblock %}

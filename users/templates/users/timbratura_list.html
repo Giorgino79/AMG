@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Le Mie Timbrature - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Timbrature</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-clock-history me-2"></i>Le Mie Timbrature</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#timbraturaModal">
+            <i class="bi bi-plus-circle me-1"></i>Nuova Timbratura
+        </button>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            {% if timbrature %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Ora</th>
+                            <th>Tipo</th>
+                            <th>Turno</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in timbrature %}
+                        <tr>
+                            <td>{{ t.data|date:"d/m/Y" }}</td>
+                            <td><strong>{{ t.ora|date:"H:i" }}</strong></td>
+                            <td>
+                                {% if t.tipo == 'ingresso' %}
+                                <span class="badge bg-success">Ingresso</span>
+                                {% else %}
+                                <span class="badge bg-danger">Uscita</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if t.turno == 'mattina' %}
+                                <span class="badge badge-turno-mattina">Mattina</span>
+                                {% elif t.turno == 'pomeriggio' %}
+                                <span class="badge badge-turno-pomeriggio">Pomeriggio</span>
+                                {% else %}
+                                <span class="badge badge-turno-notte">Notte</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ t.note|default:"-" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                <p class="text-muted">Nessuna timbratura registrata</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% include "users/_timbratura_modal.html" %}
+{% endblock %}

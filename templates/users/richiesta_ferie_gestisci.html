@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Gestisci Richiesta Ferie - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'users:richieste_ferie_admin_list' %}">Richieste Ferie</a></li>
+<li class="breadcrumb-item active">Gestisci</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Gestisci Richiesta Ferie</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="small text-muted">Dipendente</label>
+                            <h5>{{ richiesta.user.get_full_name }}</h5>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted">Periodo</label>
+                            <h5>{{ richiesta.data_inizio|date:"d/m/Y" }} - {{ richiesta.data_fine|date:"d/m/Y" }}</h5>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted">Giorni Richiesti</label>
+                            <h5>{{ richiesta.giorni_richiesti }}</h5>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small text-muted">Giorni Residui Dipendente</label>
+                            <h5>{{ richiesta.user.giorni_ferie_residui }}</h5>
+                        </div>
+                        <div class="col-12">
+                            <label class="small text-muted">Motivazione</label>
+                            <p>{{ richiesta.motivazione|default:"Nessuna motivazione fornita" }}</p>
+                        </div>
+                    </div>
+
+                    <form method="post" class="border-top pt-3">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'users:richieste_ferie_admin_list' %}" class="btn btn-secondary">Indietro</a>
+                            <button type="submit" class="btn btn-primary">Conferma Azione</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Modifica Categoria: {{ object.nome_categoria }}{% else %}Nuova Categoria{% endif %}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">Home</a></li>
+<li class="breadcrumb-item"><a href="{% url 'prodotti:dashboard' %}">Prodotti</a></li>
+<li class="breadcrumb-item"><a href="{% url 'prodotti:categoria_list' %}">Categorie</a></li>
+{% if object %}
+    <li class="breadcrumb-item"><a href="{% url 'prodotti:categoria_detail' object.pk %}">{{ object.nome_categoria }}</a></li>
+    <li class="breadcrumb-item active">Modifica</li>
+{% else %}
+    <li class="breadcrumb-item active">Nuova Categoria</li>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            {% if object %}
+                <h1 class="h3 mb-1"><i class="bi bi-pencil me-2"></i>Modifica Categoria</h1>
+                <p class="text-muted mb-0">{{ object.nome_categoria }}</p>
+            {% else %}
+                <h1 class="h3 mb-1"><i class="bi bi-plus-lg me-2"></i>Nuova Categoria</h1>
+                <p class="text-muted mb-0">Compila i dati per creare una nuova categoria</p>
+            {% endif %}
+        </div>
+        <div>
+            <a href="{% if object %}{% url 'prodotti:categoria_detail' object.pk %}{% else %}{% url 'prodotti:categoria_list' %}{% endif %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Annulla
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-tag me-2"></i>Dati Categoria</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                <p class="mb-0">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Icona attuale -->
+                        {% if object and object.icona %}
+                        <div class="mb-3 text-center">
+                            <p class="text-muted mb-2">Icona attuale:</p>
+                            <img src="{{ object.icona.url }}" alt="Icona categoria" class="rounded-circle border" width="80" height="80" style="object-fit: cover;">
+                        </div>
+                        {% endif %}
+
+                        <!-- Nome Categoria -->
+                        <div class="mb-3">
+                            <label for="{{ form.nome_categoria.id_for_label }}" class="form-label">{{ form.nome_categoria.label }}</label>
+                            {{ form.nome_categoria }}
+                            {% if form.nome_categoria.errors %}
+                                <div class="invalid-feedback d-block">{% for e in form.nome_categoria.errors %}{{ e }}{% endfor %}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Icona -->
+                        <div class="mb-3">
+                            <label for="{{ form.icona.id_for_label }}" class="form-label">{{ form.icona.label }}</label>
+                            {{ form.icona }}
+                            {% if form.icona.errors %}
+                                <div class="invalid-feedback d-block">{% for e in form.icona.errors %}{{ e }}{% endfor %}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Descrizione -->
+                        <div class="mb-3">
+                            <label for="{{ form.descrizione.id_for_label }}" class="form-label">{{ form.descrizione.label }}</label>
+                            {{ form.descrizione }}
+                            {% if form.descrizione.errors %}
+                                <div class="invalid-feedback d-block">{% for e in form.descrizione.errors %}{{ e }}{% endfor %}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Attiva -->
+                        <div class="mb-3 form-check">
+                            {{ form.attiva }}
+                            <label for="{{ form.attiva.id_for_label }}" class="form-check-label">{{ form.attiva.label }}</label>
+                            {% if form.attiva.errors %}
+                                <div class="invalid-feedback d-block">{% for e in form.attiva.errors %}{{ e }}{% endfor %}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Bottoni -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% if object %}{% url 'prodotti:categoria_detail' object.pk %}{% else %}{% url 'prodotti:categoria_list' %}{% endif %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg me-1"></i>Annulla
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i>Salva
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

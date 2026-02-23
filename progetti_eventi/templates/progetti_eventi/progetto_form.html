@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ form_config.title }}{% endblock %}
+
+{% block extra_css %}
+{{ form.media.css }}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    {# Breadcrumb #}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'progetti_eventi:progetto_list' %}">Progetti</a></li>
+            <li class="breadcrumb-item active">{{ form_config.title }}</li>
+        </ol>
+    </nav>
+
+    {# Header #}
+    <div class="mb-4">
+        <h1 class="h3">{{ form_config.title }}</h1>
+        <p class="text-muted">{{ form_config.subtitle }}</p>
+    </div>
+
+    {# Form #}
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% crispy form %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ form.media.js }}
+{% endblock %}

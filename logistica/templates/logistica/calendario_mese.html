@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Calendario Logistica - {{ nome_mese }} {{ anno }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendario-container {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .calendario-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .giorni-settimana {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        background: #e0e0e0;
+        padding: 0;
+        margin: 0;
+    }
+
+    .giorno-settimana-header {
+        background: #f8f9fa;
+        padding: 10px;
+        text-align: center;
+        font-weight: 600;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .calendario-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        background: #e0e0e0;
+        min-height: 600px;
+    }
+
+    .giorno-cella {
+        background: white;
+        min-height: 120px;
+        padding: 8px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .giorno-cella:hover {
+        background: #f8f9fa;
+        transform: scale(1.02);
+        z-index: 10;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .giorno-cella.vuoto {
+        background: #f5f5f5;
+        cursor: default;
+    }
+
+    .giorno-cella.vuoto:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .giorno-cella.oggi {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+    }
+
+    .giorno-cella.passato {
+        opacity: 0.6;
+    }
+
+    .giorno-numero {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: #495057;
+        margin-bottom: 5px;
+    }
+
+    .giorno-cella.oggi .giorno-numero {
+        color: #ffc107;
+    }
+
+    .evento-badge {
+        font-size: 0.75rem;
+        padding: 2px 6px;
+        margin-bottom: 3px;
+        display: block;
+        border-radius: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .consegna-badge {
+        background: #e3f2fd;
+        color: #1976d2;
+        border-left: 3px solid #1976d2;
+    }
+
+    .ritiro-badge {
+        background: #e8f5e9;
+        color: #388e3c;
+        border-left: 3px solid #388e3c;
+    }
+
+    .badge-count {
+        font-size: 0.7rem;
+        padding: 1px 5px;
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+    {# Header con navigazione mese #}
+    <div class="calendario-container mb-4">
+        <div class="calendario-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="{% url 'logistica:calendario_mese' anno_prec mese_prec %}"
+                   class="btn btn-light btn-sm">
+                    <i class="bi bi-chevron-left"></i> {{ mese_prec }}/{{ anno_prec }}
+                </a>
+
+                <div class="text-center">
+                    <h2 class="mb-0">{{ nome_mese }} {{ anno }}</h2>
+                    <a href="{% url 'logistica:dashboard' %}" class="btn btn-sm btn-outline-light mt-2">
+                        <i class="bi bi-house"></i> Torna alla Dashboard
+                    </a>
+                </div>
+
+                <a href="{% url 'logistica:calendario_mese' anno_succ mese_succ %}"
+                   class="btn btn-light btn-sm">
+                    {{ mese_succ }}/{{ anno_succ }} <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+
+        {# Legenda #}
+        <div class="p-3 bg-light border-bottom">
+            <div class="d-flex justify-content-center gap-4">
+                <div>
+                    <span class="badge bg-primary">
+                        <i class="bi bi-box-arrow-down"></i> Consegna
+                    </span>
+                </div>
+                <div>
+                    <span class="badge bg-success">
+                        <i class="bi bi-box-arrow-up"></i> Ritiro
+                    </span>
+                </div>
+                <div>
+                    <span class="badge bg-warning text-dark">
+                        <i class="bi bi-calendar-check"></i> Oggi
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {# Header giorni settimana #}
+        <div class="giorni-settimana">
+            <div class="giorno-settimana-header">LUN</div>
+            <div class="giorno-settimana-header">MAR</div>
+            <div class="giorno-settimana-header">MER</div>
+            <div class="giorno-settimana-header">GIO</div>
+            <div class="giorno-settimana-header">VEN</div>
+            <div class="giorno-settimana-header">SAB</div>
+            <div class="giorno-settimana-header">DOM</div>
+        </div>
+
+        {# Griglia calendario #}
+        <div class="calendario-grid">
+            {% for settimana in settimane %}
+                {% for giorno in settimana %}
+                    {% if giorno.numero %}
+                        <div class="giorno-cella {% if giorno.is_oggi %}oggi{% endif %} {% if giorno.is_passato %}passato{% endif %}"
+                             onclick="window.location.href='{% url 'logistica:calendario_giorno' anno mese giorno.numero %}'">
+
+                            <div class="giorno-numero">{{ giorno.numero }}</div>
+
+                            {# Consegne #}
+                            {% if giorno.consegne %}
+                                {% for progetto in giorno.consegne|slice:":2" %}
+                                <div class="evento-badge consegna-badge" title="Consegna: {{ progetto.nome_evento }}">
+                                    <i class="bi bi-box-arrow-down"></i>
+                                    {{ progetto.codice }}
+                                </div>
+                                {% endfor %}
+                                {% if giorno.consegne|length > 2 %}
+                                <span class="badge badge-count bg-primary">
+                                    +{{ giorno.consegne|length|add:"-2" }}
+                                </span>
+                                {% endif %}
+                            {% endif %}
+
+                            {# Ritiri #}
+                            {% if giorno.ritiri %}
+                                {% for progetto in giorno.ritiri|slice:":2" %}
+                                <div class="evento-badge ritiro-badge" title="Ritiro: {{ progetto.nome_evento }}">
+                                    <i class="bi bi-box-arrow-up"></i>
+                                    {{ progetto.codice }}
+                                </div>
+                                {% endfor %}
+                                {% if giorno.ritiri|length > 2 %}
+                                <span class="badge badge-count bg-success">
+                                    +{{ giorno.ritiri|length|add:"-2" }}
+                                </span>
+                                {% endif %}
+                            {% endif %}
+
+                        </div>
+                    {% else %}
+                        <div class="giorno-cella vuoto"></div>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Evidenzia il giorno corrente al caricamento
+    document.addEventListener('DOMContentLoaded', function() {
+        const oggi = document.querySelector('.giorno-cella.oggi');
+        if (oggi) {
+            oggi.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+</script>
+{% endblock %}

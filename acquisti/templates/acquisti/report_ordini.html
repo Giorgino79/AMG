@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Report Ordini in Attesa Fattura{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'acquisti:dashboard' %}">Acquisti</a></li>
+<li class="breadcrumb-item active">Report Ordini</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-file-earmark-bar-graph me-2 text-primary"></i>Report Ordini in Attesa Fattura
+        </h1>
+        <div class="btn-group">
+            <a href="?{{ request.GET.urlencode }}&export=excel" class="btn btn-success">
+                <i class="bi bi-file-earmark-excel me-1"></i>Esporta Excel
+            </a>
+            <a href="?{{ request.GET.urlencode }}&export=pdf" class="btn btn-danger">
+                <i class="bi bi-file-earmark-pdf me-1"></i>Esporta PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtri -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <i class="bi bi-funnel me-2"></i>Filtri Report
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label">Da data</label>
+                    {{ form.data_da }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">A data</label>
+                    {{ form.data_a }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fornitore</label>
+                    {{ form.fornitore }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Stato</label>
+                    {{ form.stato }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Tipo Origine</label>
+                    {{ form.tipo_origine }}
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistiche -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-hash me-2"></i>Totale Ordini
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat">{{ count }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header second-color">
+                    <i class="bi bi-receipt me-2"></i>Imponibile
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat">&euro;{{ totali.totale_imponibile|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header third-color">
+                    <i class="bi bi-percent me-2"></i>IVA
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat">&euro;{{ totali.totale_iva|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header fourth-color">
+                    <i class="bi bi-currency-euro me-2"></i>Totale
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat">&euro;{{ totali.totale_importo|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabella Ordini -->
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <i class="bi bi-table me-2"></i>Elenco Ordini ({{ count }})
+        </div>
+        <div class="card-body p-0">
+            {% if ordini %}
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>N° Ordine</th>
+                            <th>Fornitore</th>
+                            <th>Data Ordine</th>
+                            <th>Data Ricevimento</th>
+                            <th>Tipo</th>
+                            <th class="text-end">Imponibile</th>
+                            <th class="text-end">IVA</th>
+                            <th class="text-end">Totale</th>
+                            <th class="text-center">Stato</th>
+                            <th class="text-center">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ordine in ordini %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'acquisti:dettaglio_ordine' ordine.pk %}" class="fw-bold text-decoration-none">
+                                    {{ ordine.numero_ordine }}
+                                </a>
+                            </td>
+                            <td>{{ ordine.fornitore.ragione_sociale }}</td>
+                            <td>{{ ordine.data_ordine|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if ordine.data_ricevimento %}
+                                {{ ordine.data_ricevimento|date:"d/m/Y" }}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ ordine.get_tipo_origine_display }}</span>
+                            </td>
+                            <td class="text-end">&euro;{{ ordine.imponibile|floatformat:2 }}</td>
+                            <td class="text-end">&euro;{{ ordine.importo_iva|floatformat:2 }}</td>
+                            <td class="text-end fw-bold">&euro;{{ ordine.importo_totale|floatformat:2 }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-{{ ordine.get_stato_css_class }}">
+                                    {{ ordine.get_stato_display }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <a href="{% url 'acquisti:dettaglio_ordine' ordine.pk %}"
+                                   class="btn btn-sm btn-outline-primary" title="Dettaglio">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light fw-bold">
+                        <tr>
+                            <td colspan="5" class="text-end">TOTALI:</td>
+                            <td class="text-end">&euro;{{ totali.totale_imponibile|floatformat:2 }}</td>
+                            <td class="text-end">&euro;{{ totali.totale_iva|floatformat:2 }}</td>
+                            <td class="text-end">&euro;{{ totali.totale_importo|floatformat:2 }}</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Paginazione -->
+            {% if ordini.has_other_pages %}
+            <div class="card-footer">
+                <nav aria-label="Paginazione">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if ordini.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ ordini.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% for num in ordini.paginator.page_range %}
+                            {% if ordini.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > ordini.number|add:'-3' and num < ordini.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if ordini.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ ordini.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3">Nessun ordine trovato con i filtri selezionati</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

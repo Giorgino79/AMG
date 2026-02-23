@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Invia Email - {{ riconoscimento.numero_riconoscimento }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'fatturazionepassiva:dashboard' %}">Fatturazione Passiva</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'fatturazionepassiva:lista_riconoscimenti' %}">Lista Riconoscimenti</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'fatturazionepassiva:dettaglio_riconoscimento' riconoscimento.pk %}">{{ riconoscimento.numero_riconoscimento }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Invia Email</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Invia Email Riconoscimento</h1>
+                <a href="{% url 'fatturazionepassiva:dettaglio_riconoscimento' riconoscimento.pk %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Torna al Dettaglio
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Configurazione Email</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Email destinatario -->
+                        <div class="form-group">
+                            <label for="email_destinatario" class="form-label">Email Destinatario *</label>
+                            <input type="email" class="form-control" id="email_destinatario" name="email_destinatario" 
+                                   value="{{ email_default }}" required>
+                            <small class="form-text text-muted">
+                                Email del fornitore a cui inviare il riconoscimento
+                            </small>
+                        </div>
+
+                        <!-- Allegato -->
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="includi_allegato" 
+                                       name="includi_allegato" checked>
+                                <label class="form-check-label" for="includi_allegato">
+                                    Includi allegato
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Tipo allegato -->
+                        <div class="form-group" id="tipo_allegato_group">
+                            <label for="tipo_allegato" class="form-label">Tipo Allegato</label>
+                            <select class="form-control" id="tipo_allegato" name="tipo_allegato">
+                                <option value="pdf">PDF</option>
+                                <option value="excel">Excel</option>
+                            </select>
+                        </div>
+
+                        <!-- Pulsanti -->
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Invia Email
+                            </button>
+                            <a href="{% url 'fatturazionepassiva:dettaglio_riconoscimento' riconoscimento.pk %}" class="btn btn-secondary ml-2">
+                                Annulla
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Anteprima riconoscimento -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Anteprima Riconoscimento</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <th>Numero:</th>
+                            <td>{{ riconoscimento.numero_riconoscimento }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fornitore:</th>
+                            <td>{{ riconoscimento.fornitore.nome }}</td>
+                        </tr>
+                        <tr>
+                            <th>Periodo:</th>
+                            <td>{{ riconoscimento.periodo_da|date:"d/m/Y" }} - {{ riconoscimento.periodo_a|date:"d/m/Y" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Righe:</th>
+                            <td>{{ riconoscimento.righe.count }}</td>
+                        </tr>
+                        <tr>
+                            <th>Totale:</th>
+                            <td><strong>€ {{ riconoscimento.totale_riconoscimento|floatformat:2 }}</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Stato:</th>
+                            <td>
+                                <span class="badge badge-{% if riconoscimento.stato == 'bozza' %}warning{% elif riconoscimento.stato == 'definitivo' %}info{% elif riconoscimento.stato == 'inviato' %}primary{% elif riconoscimento.stato == 'confermato' %}success{% else %}secondary{% endif %}">
+                                    {{ riconoscimento.get_stato_display }}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Informazioni email -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Informazioni</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Cosa succede</h6>
+                        <ul class="mb-0">
+                            <li>Verrà inviata una email al fornitore</li>
+                            <li>Se incluso, l'allegato sarà generato automaticamente</li>
+                            <li>Lo stato del riconoscimento sarà aggiornato a "Inviato"</li>
+                            <li>Verrà registrata la data di invio</li>
+                        </ul>
+                    </div>
+
+                    {% if riconoscimento.inviato_via_email %}
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Attenzione</h6>
+                        <p class="mb-1">Questo riconoscimento è già stato inviato via email il:</p>
+                        <strong>{{ riconoscimento.data_invio_email|date:"d/m/Y H:i" }}</strong>
+                        <p class="mb-0 mt-1">Destinatario: {{ riconoscimento.email_destinatario }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Anteprime export -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Anteprima Export</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12 mb-2">
+                            <a href="{% url 'fatturazionepassiva:export_pdf' riconoscimento.pk %}" 
+                               class="btn btn-outline-danger btn-block btn-sm" target="_blank">
+                                <i class="fas fa-file-pdf"></i> Anteprima PDF
+                            </a>
+                        </div>
+                        <div class="col-12 mb-2">
+                            <a href="{% url 'fatturazionepassiva:export_excel' riconoscimento.pk %}" 
+                               class="btn btn-outline-success btn-block btn-sm" target="_blank">
+                                <i class="fas fa-file-excel"></i> Anteprima Excel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const includiAllegato = document.getElementById('includi_allegato');
+    const tipoAllegatoGroup = document.getElementById('tipo_allegato_group');
+    
+    function toggleTipoAllegato() {
+        if (includiAllegato.checked) {
+            tipoAllegatoGroup.style.display = 'block';
+        } else {
+            tipoAllegatoGroup.style.display = 'none';
+        }
+    }
+    
+    includiAllegato.addEventListener('change', toggleTipoAllegato);
+    toggleTipoAllegato(); // Initial state
+});
+</script>
+{% endblock %}

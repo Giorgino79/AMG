@@ -1,0 +1,346 @@
+{% extends "commons_templates/base_detail.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ progetto.codice }} - {{ progetto.nome_evento }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'progetti_eventi:progetto_list' %}">Progetti</a></li>
+<li class="breadcrumb-item active">{{ progetto.codice }}</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-calendar-event me-2"></i>{{ progetto.nome_evento }}
+{% endblock %}
+
+{% block page_subtitle %}
+<p class="text-muted mb-2">
+    <strong>{{ progetto.codice }}</strong> - {{ progetto.get_tipo_evento_display }}
+</p>
+<p class="text-muted mb-0">
+    <i class="bi bi-geo-alt"></i> {{ progetto.location }}, {{ progetto.citta_location }} |
+    <i class="bi bi-calendar3"></i> {{ progetto.data_evento|date:"d/m/Y" }}
+    {% if progetto.giorni_mancanti is not None %}
+        {% if progetto.giorni_mancanti > 0 %}
+            <span class="badge bg-{% if progetto.is_urgente %}danger{% else %}info{% endif %} ms-2">
+                tra {{ progetto.giorni_mancanti }} giorni
+            </span>
+        {% elif progetto.giorni_mancanti == 0 %}
+            <span class="badge bg-danger ms-2">OGGI</span>
+        {% else %}
+            <span class="badge bg-secondary ms-2">passato</span>
+        {% endif %}
+    {% endif %}
+</p>
+{% endblock %}
+
+{% block status_badge %}
+<span class="badge bg-{{ progetto.stato_badge_color }} fs-6">
+    {{ progetto.get_stato_display }}
+</span>
+{% if progetto.priorita == 'urgente' %}
+    <span class="badge bg-danger fs-6 ms-2">
+        <i class="bi bi-exclamation-triangle-fill"></i> URGENTE
+    </span>
+{% elif progetto.priorita == 'alta' %}
+    <span class="badge bg-warning fs-6 ms-2">
+        <i class="bi bi-exclamation-circle"></i> Priorità Alta
+    </span>
+{% endif %}
+{% endblock %}
+
+{% block detail_content %}
+
+{# ========== INFORMAZIONI GENERALI ========== #}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Informazioni Evento</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Cliente</dt>
+                    <dd class="col-sm-9">
+                        <a href="{{ progetto.cliente.get_absolute_url }}">{{ progetto.cliente.ragione_sociale }}</a>
+                    </dd>
+
+                    <dt class="col-sm-3">Commerciale</dt>
+                    <dd class="col-sm-9">
+                        <a href="{{ progetto.commerciale.get_absolute_url }}">{{ progetto.commerciale.get_full_name }}</a>
+                    </dd>
+
+                    <dt class="col-sm-3">Tipo Evento</dt>
+                    <dd class="col-sm-9">{{ progetto.get_tipo_evento_display }}</dd>
+
+                    <dt class="col-sm-3">Data Evento</dt>
+                    <dd class="col-sm-9">
+                        {{ progetto.data_evento|date:"l d F Y" }}
+                        {% if progetto.ora_inizio_evento %}
+                            - Ore {{ progetto.ora_inizio_evento|time:"H:i" }}
+                        {% endif %}
+                        {% if progetto.data_fine_evento and progetto.data_fine_evento != progetto.data_evento %}
+                            <br><small class="text-muted">Fine: {{ progetto.data_fine_evento|date:"d/m/Y" }}</small>
+                        {% endif %}
+                    </dd>
+
+                    <dt class="col-sm-3">Location</dt>
+                    <dd class="col-sm-9">
+                        <strong>{{ progetto.location }}</strong><br>
+                        <small class="text-muted">
+                            {{ progetto.indirizzo_location }}<br>
+                            {{ progetto.cap_location }} {{ progetto.citta_location }} ({{ progetto.provincia_location }})
+                        </small>
+                    </dd>
+
+                    {% if progetto.descrizione_evento %}
+                    <dt class="col-sm-3">Descrizione</dt>
+                    <dd class="col-sm-9">{{ progetto.descrizione_evento|linebreaksbr }}</dd>
+                    {% endif %}
+
+                    {% if progetto.budget_preventivato %}
+                    <dt class="col-sm-3">Budget</dt>
+                    <dd class="col-sm-9">
+                        € {{ progetto.budget_preventivato|floatformat:2|intcomma }}
+                        {% if progetto.budget_approvato %}
+                            <br><small class="text-success">Approvato: € {{ progetto.budget_approvato|floatformat:2|intcomma }}</small>
+                        {% endif %}
+                    </dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    {# ========== STATISTICHE RAPIDE ========== #}
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="bi bi-bar-chart"></i> Avanzamento Progetto</h6>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar bg-success"
+                             role="progressbar"
+                             style="width: {{ stats.percentuale_completamento }}%"
+                             aria-valuenow="{{ stats.percentuale_completamento }}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            {{ stats.percentuale_completamento }}%
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row text-start">
+                    <div class="col-6">
+                        <small class="text-muted">Reparti</small><br>
+                        <strong>{{ stats.reparti_totali }}</strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Engineering</small><br>
+                        <strong>{{ stats.reparti_engineering_completato }}/{{ stats.reparti_totali }}</strong>
+                    </div>
+                    <div class="col-6 mt-2">
+                        <small class="text-muted">Liste Prodotti</small><br>
+                        <strong>{{ stats.liste_prodotti_approvate }}/{{ stats.liste_prodotti_totali }}</strong>
+                    </div>
+                    <div class="col-6 mt-2">
+                        <small class="text-muted">Reparti Pronti</small><br>
+                        <strong>{{ stats.reparti_pronti }}/{{ stats.reparti_totali }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# TIMELINE #}
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="bi bi-clock-history"></i> Timeline</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled timeline mb-0">
+                    {% for evento in timeline %}
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="me-2">
+                                <i class="bi bi-{{ evento.icona }} text-{{ evento.colore }}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <small class="text-muted">{{ evento.data|date:"d/m/Y H:i" }}</small><br>
+                                <strong>{{ evento.titolo }}</strong><br>
+                                <small>{{ evento.descrizione }}</small>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ========== LOGISTICA INIZIALE ========== #}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100" style="border-left: 4px solid #28a745;">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-truck text-success"></i> Consegna Richiesta
+                </h6>
+                <p class="mb-1">
+                    <strong>{{ progetto.data_consegna_richiesta|date:"d/m/Y" }}</strong> alle
+                    <strong>{{ progetto.data_consegna_richiesta|time:"H:i" }}</strong>
+                </p>
+                {% if progetto.note_logistica_iniziali %}
+                <p class="mb-0 small text-muted">
+                    {{ progetto.note_logistica_iniziali|truncatewords:20 }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100" style="border-left: 4px solid #ffc107;">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-arrow-return-left text-warning"></i> Ritiro Richiesto
+                </h6>
+                <p class="mb-0">
+                    <strong>{{ progetto.data_ritiro_richiesta|date:"d/m/Y" }}</strong> alle
+                    <strong>{{ progetto.data_ritiro_richiesta|time:"H:i" }}</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ========== TAB REPARTI (CUORE DELLA VISTA MASTER) ========== #}
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-diagram-3"></i> Reparti Coinvolti</h5>
+    </div>
+    <div class="card-body p-0">
+
+        {% if reparti_data %}
+
+        {# TAB NAVIGATION #}
+        <ul class="nav nav-tabs px-3 pt-3" id="repartiTabs" role="tablist">
+            {% for reparto_data in reparti_data %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if forloop.first %}active{% endif %}"
+                        id="tab-{{ reparto_data.object.tipo_reparto }}"
+                        data-bs-toggle="tab"
+                        data-bs-target="#content-{{ reparto_data.object.tipo_reparto }}"
+                        type="button"
+                        role="tab">
+                    <i class="bi bi-{{ reparto_data.icon }}"></i>
+                    {{ reparto_data.object.get_tipo_reparto_display }}
+                    <span class="badge bg-{{ reparto_data.object.stato_globale_color }} ms-2">
+                        {{ reparto_data.object.stato_globale_display }}
+                    </span>
+                </button>
+            </li>
+            {% endfor %}
+        </ul>
+
+        {# TAB CONTENT #}
+        <div class="tab-content p-4" id="repartiTabsContent">
+            {% for reparto_data in reparti_data %}
+            <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
+                 id="content-{{ reparto_data.object.tipo_reparto }}"
+                 role="tabpanel">
+
+                {% include "progetti_eventi/components/reparto_tab_content.html" with reparto=reparto_data.object reparto_data=reparto_data %}
+
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="alert alert-warning m-3">
+            <i class="bi bi-exclamation-triangle"></i> Nessun reparto ancora assegnato a questo progetto.
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{# ========== NOTE COMMERCIALI ========== #}
+{% if progetto.note_commerciali %}
+<div class="card shadow-sm">
+    <div class="card-header bg-warning text-dark">
+        <h6 class="mb-0"><i class="bi bi-sticky"></i> Note Commerciali</h6>
+    </div>
+    <div class="card-body">
+        {{ progetto.note_commerciali|linebreaksbr }}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{# ========== AZIONI PERSONALIZZATE SIDEBAR ========== #}
+{% block custom_actions %}
+
+{% if azioni_disponibili %}
+    {% for azione in azioni_disponibili %}
+    <form method="post" action="{{ azione.url }}"
+          {% if azione.confirm %}onsubmit="return confirm('{{ azione.confirm }}')"{% endif %}>
+        {% csrf_token %}
+        <button type="submit"
+                class="list-group-item list-group-item-action text-{{ azione.colore }}"
+                {% if azione.disabled %}disabled{% endif %}>
+            <i class="bi bi-{{ azione.icona }}"></i> {{ azione.label }}
+        </button>
+    </form>
+    {% endfor %}
+{% endif %}
+
+{# Link Chat Progetto #}
+{% if progetto.chat_progetto %}
+<a href="{% url 'mail:chat_detail' pk=progetto.chat_progetto.pk %}" class="list-group-item list-group-item-action text-primary">
+    <i class="bi bi-chat-dots-fill"></i> Chat Progetto
+    {% if progetto.chat_progetto.partecipanti.count %}
+        <span class="badge bg-primary float-end">{{ progetto.chat_progetto.partecipanti.count }}</span>
+    {% endif %}
+</a>
+{% endif %}
+
+<a href="{% url 'progetti_eventi:progetto_list' %}" class="list-group-item list-group-item-action">
+    <i class="bi bi-arrow-left"></i> Torna alla Lista
+</a>
+
+{% endblock %}
+
+{# ========== SIDEBAR EXTRA ========== #}
+{% block sidebar_extra %}
+
+{# Card Reparti Quick View #}
+<div class="card shadow-sm mt-3">
+    <div class="card-header bg-secondary text-white">
+        <h6 class="mb-0"><i class="bi bi-speedometer2"></i> Riepilogo Reparti</h6>
+    </div>
+    <div class="list-group list-group-flush">
+        {% for reparto_data in reparti_data %}
+        <div class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="bi bi-{{ reparto_data.icon }} text-primary"></i>
+                    <strong>{{ reparto_data.object.get_tipo_reparto_display }}</strong>
+                </div>
+                <span class="badge bg-{{ reparto_data.object.stato_globale_color }}">
+                    {{ reparto_data.object.percentuale_completamento }}%
+                </span>
+            </div>
+            <div class="progress mt-2" style="height: 5px;">
+                <div class="progress-bar bg-{{ reparto_data.object.stato_globale_color }}"
+                     style="width: {{ reparto_data.object.percentuale_completamento }}%"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

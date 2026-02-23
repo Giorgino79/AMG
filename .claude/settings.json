@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(ls:*)",
+      "Bash(python3:*)",
+      "Bash(source venv/bin/activate)",
+      "Bash(./venv/bin/python:*)",
+      "Bash(../venv/bin/python:*)",
+      "Bash(./venv/bin/pip:*)",
+      "Bash(../venv/bin/pip:*)",
+      "Bash(find:*)",
+      "Bash(lsof:*)",
+      "Bash(netstat:*)",
+      "Bash(ss:*)",
+      "Bash(curl:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)",
+      "Bash(tree:*)",
+      "Bash(chmod:*)",
+      "Bash(cat:*)",
+      "Bash(cd:*)",
+      "Bash(tail:*)",
+      "Bash(head:*)",
+      "Bash(ip:*)",
+      "Bash(sudo ufw status:*)",
+      "WebFetch(domain:127.0.0.1)"
+    ]
+  },
+  "model": "claude-sonnet-4-5-20250929",
+  "maxTokens": 8192,
+  "temperature": 0.7
+}

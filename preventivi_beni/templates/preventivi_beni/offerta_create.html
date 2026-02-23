@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Inserisci Offerta - {{ richiesta.numero }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'preventivi_beni:dashboard' %}">Preventivi Beni</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'preventivi_beni:richiesta_detail' richiesta.pk %}">{{ richiesta.numero }}</a></li>
+                    <li class="breadcrumb-item active">Nuova Offerta</li>
+                </ol>
+            </nav>
+            <h1>Inserisci Nuova Offerta</h1>
+            <p class="text-muted">Richiesta: {{ richiesta.numero }} - {{ richiesta.titolo }}</p>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Fornitore -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Fornitore</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                {{ form.fornitore.label_tag }}
+                                {{ form.fornitore }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.numero_offerta.label_tag }}
+                                {{ form.numero_offerta }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Importi -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Importi</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                {{ form.importo_merce.label_tag }}
+                                {{ form.importo_merce }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.importo_trasporto.label_tag }}
+                                {{ form.importo_trasporto }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.importo_imballo.label_tag }}
+                                {{ form.importo_imballo }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                {{ form.importo_installazione.label_tag }}
+                                {{ form.importo_installazione }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.importo_extra.label_tag }}
+                                {{ form.importo_extra }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.importo_totale.label_tag }}
+                                {{ form.importo_totale }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.sconto_percentuale.label_tag }}
+                                {{ form.sconto_percentuale }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.sconto_importo.label_tag }}
+                                {{ form.sconto_importo }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.descrizione_extra.label_tag }}
+                                {{ form.descrizione_extra }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Consegna -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Tempi di Consegna</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                {{ form.tempo_consegna_giorni.label_tag }}
+                                {{ form.tempo_consegna_giorni }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.data_consegna_proposta.label_tag }}
+                                {{ form.data_consegna_proposta }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.validita_offerta_giorni.label_tag }}
+                                {{ form.validita_offerta_giorni }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.note_consegna.label_tag }}
+                                {{ form.note_consegna }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Condizioni -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Condizioni Commerciali</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.termini_pagamento.label_tag }}
+                                {{ form.termini_pagamento }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.garanzia_mesi.label_tag }}
+                                {{ form.garanzia_mesi }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.note_garanzia.label_tag }}
+                                {{ form.note_garanzia }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    {{ form.trasporto_incluso }} {{ form.trasporto_incluso.label_tag }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    {{ form.installazione_inclusa }} {{ form.installazione_inclusa.label_tag }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    {{ form.formazione_inclusa }} {{ form.formazione_inclusa.label_tag }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Allegato -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Allegato</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form.file_offerta.label_tag }}
+                        {{ form.file_offerta }}
+                    </div>
+                </div>
+
+                <!-- Note -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Note</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form.note_tecniche.label_tag }}
+                        {{ form.note_tecniche }}
+                        <hr>
+                        {{ form.note_commerciali.label_tag }}
+                        {{ form.note_commerciali }}
+                    </div>
+                </div>
+
+                <!-- Azioni -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                Salva Offerta
+                            </button>
+                            <a href="{% url 'preventivi_beni:step2_raccolta' richiesta.pk %}" class="btn btn-secondary">
+                                Annulla
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

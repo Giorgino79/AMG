@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Lista Users - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Users</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-people-fill me-2"></i>Gestione Users</h2>
+        {% if perms.users.add_user %}
+        <a href="{% url 'users:user_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Nuovo User
+        </a>
+        {% endif %}
+    </div>
+
+    {# Filtri #}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filtri</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" name="q" class="form-control" placeholder="Cerca..." value="{{ request.GET.q }}">
+                </div>
+                <div class="col-md-2">
+                    <select name="stato" class="form-select">
+                        <option value="">Tutti gli stati</option>
+                        <option value="attivo" {% if request.GET.stato == 'attivo' %}selected{% endif %}>Attivo</option>
+                        <option value="sospeso" {% if request.GET.stato == 'sospeso' %}selected{% endif %}>Sospeso</option>
+                        <option value="cessato" {% if request.GET.stato == 'cessato' %}selected{% endif %}>Cessato</option>
+                        <option value="in_prova" {% if request.GET.stato == 'in_prova' %}selected{% endif %}>In Prova</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="text" name="qualifica" class="form-control" placeholder="Qualifica" value="{{ request.GET.qualifica }}">
+                </div>
+                <div class="col-md-2">
+                    <input type="text" name="reparto" class="form-control" placeholder="Reparto" value="{{ request.GET.reparto }}">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-search me-1"></i>Cerca
+                    </button>
+                    <a href="{% url 'users:user_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i>Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# Lista Users #}
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="bi bi-list-ul me-2"></i>Users ({{ total }})
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            {% if users %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Codice</th>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Qualifica</th>
+                            <th>Reparto</th>
+                            <th>Stato</th>
+                            <th>Assunzione</th>
+                            <th class="text-end">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td><strong>{{ user.codice_dipendente }}</strong></td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if user.foto_profilo %}
+                                    <img src="{{ user.foto_profilo.url }}" class="rounded-circle me-2 user-avatar-img" width="32" height="32">
+                                    {% else %}
+                                    <div class="user-avatar-sm me-2">
+                                        {{ user.get_full_name|default:user.username|slice:":1"|upper }}
+                                    </div>
+                                    {% endif %}
+                                    <span>{{ user.get_full_name|default:user.username }}</span>
+                                </div>
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.qualifica|default:"-" }}</td>
+                            <td>{{ user.reparto|default:"-" }}</td>
+                            <td>
+                                {% if user.stato == 'attivo' %}
+                                <span class="badge bg-success">Attivo</span>
+                                {% elif user.stato == 'sospeso' %}
+                                <span class="badge bg-warning">Sospeso</span>
+                                {% elif user.stato == 'cessato' %}
+                                <span class="badge bg-secondary">Cessato</span>
+                                {% else %}
+                                <span class="badge bg-info">In Prova</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.data_assunzione|date:"d/m/Y"|default:"-" }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'users:user_detail' user.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if perms.users.change_user %}
+                                <a href="{% url 'users:user_update' user.pk %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {# Paginazione #}
+            {% if users.has_other_pages %}
+            <div class="card-footer bg-white">
+                <nav>
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if users.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ users.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Precedente</a>
+                        </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">Pagina {{ users.number }} di {{ users.paginator.num_pages }}</span>
+                        </li>
+
+                        {% if users.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ users.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Successiva</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                <p class="text-muted">Nessun user trovato</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

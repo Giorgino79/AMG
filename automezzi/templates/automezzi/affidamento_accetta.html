@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Accettazione Affidamento Mezzo{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'automezzi:dashboard' %}">Automezzi</a></li>
+    <li class="breadcrumb-item active">Accettazione Affidamento</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-handshake me-2"></i>Affidamento Mezzo - Presa in Carico</h4>
+                </div>
+                <div class="card-body">
+                    {% if already_accepted %}
+                    <div class="alert alert-success border-start border-success border-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle fa-2x text-success me-3"></i>
+                            <div>
+                                <h5 class="alert-heading mb-1">Affidamento già accettato</h5>
+                                <p class="mb-0">Hai accettato questo affidamento il {{ affidamento.data_accettazione|date:"d/m/Y H:i" }}.</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <h5 class="text-primary border-bottom pb-2 mb-3">Riepilogo Affidamento</h5>
+
+                    <table class="table">
+                        <tr><th class="text-muted" style="width:35%">Automezzo</th><td>{{ affidamento.automezzo.targa }} - {{ affidamento.automezzo.marca }} {{ affidamento.automezzo.modello }}</td></tr>
+                        <tr><th class="text-muted">Periodo</th><td>{{ affidamento.data_inizio|date:"d/m/Y" }} → {{ affidamento.data_fine|date:"d/m/Y" }}</td></tr>
+                        <tr><th class="text-muted">Km Iniziali</th><td>{{ affidamento.km_iniziali }}</td></tr>
+                        <tr><th class="text-muted">Carburante</th><td>{{ affidamento.get_carburante_display }}</td></tr>
+                        <tr><th class="text-muted">Scopo del Viaggio</th><td>{{ affidamento.scopo_viaggio }}</td></tr>
+                        {% if affidamento.automezzo.carta_carburante %}
+                        <tr><th class="text-muted">Carta Carburante</th><td>{{ affidamento.automezzo.carta_carburante }}</td></tr>
+                        <tr><th class="text-muted">PIN Carta</th><td>{{ affidamento.automezzo.pin_carta_carburante }}</td></tr>
+                        {% endif %}
+                        {% if affidamento.note %}
+                        <tr><th class="text-muted">Note</th><td>{{ affidamento.note }}</td></tr>
+                        {% endif %}
+                    </table>
+
+                    {% if not already_accepted %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Premendo "Accetto la presa in carico" confermi di aver ricevuto il mezzo nelle condizioni descritte.
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-check-circle me-2"></i>Accetto la presa in carico
+                            </button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

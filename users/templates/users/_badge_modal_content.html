@@ -1,0 +1,69 @@
+{% load static %}
+<div class="modal-header bg-primary text-white">
+    <h5 class="modal-title" id="badgeModalLabel">
+        <i class="bi bi-person-badge me-2"></i>Badge Digitale Dipendente
+    </h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<div class="modal-body">
+    <div class="text-center mb-4">
+        {% if user_obj.foto_profilo %}
+            <img src="{{ user_obj.foto_profilo.url }}" class="user-avatar-lg rounded-circle img-thumbnail shadow user-avatar-img" alt="{{ user_obj.get_full_name }}">
+        {% else %}
+            <div class="user-avatar-lg bg-light shadow mx-auto">
+                <i class="bi bi-person text-secondary fs-1"></i>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="card border-0 bg-light shadow-sm mb-4">
+        <div class="card-body text-center">
+            <h3 class="fw-bold mb-1">{{ user_obj.get_full_name }}</h3>
+            <p class="text-muted mb-2">{{ user_obj.qualifica|default:"Dipendente" }}</p>
+            <div class="badge bg-primary fs-6">Codice: {{ user_obj.codice_dipendente }}</div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-6">
+            <div class="p-2 border rounded bg-white">
+                <small class="text-muted d-block">Reparto</small>
+                <span class="fw-semibold">{{ user_obj.reparto|default:"-" }}</span>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="p-2 border rounded bg-white">
+                <small class="text-muted d-block">Assunzione</small>
+                <span class="fw-semibold">{{ user_obj.data_assunzione|date:"d/m/Y"|default:"-" }}</span>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="p-2 border rounded bg-white">
+                <small class="text-muted d-block">Codice Fiscale</small>
+                <span class="fw-semibold">{{ user_obj.codice_fiscale }}</span>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="text-center">
+        <p class="text-muted small mb-3">Scansiona il QR Code per accedere al profilo</p>
+        {% with qr=user_obj.get_badge_qr %}
+            {% if qr %}
+                <img src="{{ qr.file.url }}" class="img-fluid border p-2 bg-white shadow-sm" alt="QR Code Badge" style="max-width: 200px;">
+            {% else %}
+                <div class="alert alert-warning py-2 small">
+                    <i class="bi bi-exclamation-triangle me-2"></i>QR Code non generato.
+                    <a href="{% url 'users:rigenera_badge_qr' user_obj.pk %}" class="alert-link">Genera ora</a>
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+</div>
+<div class="modal-footer border-0">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+    <button type="button" class="btn btn-primary" onclick="window.print()">
+        <i class="bi bi-printer me-2"></i>Stampa
+    </button>
+</div>

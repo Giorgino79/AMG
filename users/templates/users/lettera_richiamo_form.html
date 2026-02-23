@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Emetti Lettera di Richiamo - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'users:lettera_richiamo_list' %}">Lettere Richiamo</a></li>
+<li class="breadcrumb-item active">Nuova Lettera</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        Emetti Lettera di Richiamo
+    </h2>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Attenzione:</strong> L'emissione di una lettera di richiamo è un'azione formale.
+                        Assicurarsi di compilare tutti i campi con precisione.
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{{ form.user.label }}</label>
+                            {{ form.user }}
+                            {% if form.user.errors %}
+                            <div class="text-danger small">{{ form.user.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{{ form.tipo.label }}</label>
+                            {{ form.tipo }}
+                            {% if form.tipo.errors %}
+                            <div class="text-danger small">{{ form.tipo.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted d-block mt-2">
+                                <strong>Verbale:</strong> Richiamo informale, non registrato formalmente.<br>
+                                <strong>Scritto:</strong> Richiamo formale registrato nel fascicolo del dipendente.<br>
+                                <strong>Sospensione:</strong> Sospensione dal servizio con eventuale trattenuta retributiva.
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{{ form.motivo.label }}</label>
+                            {{ form.motivo }}
+                            {% if form.motivo.errors %}
+                            <div class="text-danger small">{{ form.motivo.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">Descrivere in dettaglio il comportamento o la violazione che ha portato al richiamo</small>
+                        </div>
+
+                        <div id="sospensione-fields" class="d-none-js">
+                            <div class="card bg-light mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">Dettagli Sospensione</h6>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Giorni Sospensione</label>
+                                            <input type="number" name="giorni_sospensione" class="form-control" min="1" max="30">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Data Inizio</label>
+                                            <input type="date" name="data_inizio_sospensione" class="form-control">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Data Fine</label>
+                                            <input type="date" name="data_fine_sospensione" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'users:lettera_richiamo_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i>Annulla
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-send me-1"></i>Emetti Lettera
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Informazioni
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6>Tipi di Richiamo</h6>
+                    <ul class="small">
+                        <li><strong>Verbale:</strong> Avvertimento informale</li>
+                        <li><strong>Scritto:</strong> Richiamo formale documentato</li>
+                        <li><strong>Sospensione:</strong> Allontanamento temporaneo dal servizio</li>
+                    </ul>
+
+                    <hr>
+
+                    <h6>Note Importanti</h6>
+                    <ul class="small mb-0">
+                        <li>La lettera sarà visibile al dipendente</li>
+                        <li>Una notifica email sarà inviata automaticamente</li>
+                        <li>Il documento sarà archiviato nel fascicolo personale</li>
+                        <li>In caso di sospensione, specificare sempre le date</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="bi bi-shield-check me-2"></i>
+                        Normativa
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-0">
+                        L'emissione di lettere di richiamo deve rispettare le norme del
+                        <strong>Statuto dei Lavoratori (L. 300/1970)</strong> e del
+                        <strong>CCNL applicabile</strong>. Assicurarsi di seguire le procedure
+                        previste dal contratto collettivo.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mostra/nascondi campi sospensione
+document.querySelector('select[name="tipo"]').addEventListener('change', function() {
+    const sospensioneFields = document.getElementById('sospensione-fields');
+    if (this.value === 'sospensione') {
+        sospensioneFields.classList.remove('d-none-js');
+        // Rendi obbligatori i campi
+        sospensioneFields.querySelectorAll('input').forEach(input => {
+            input.required = true;
+        });
+    } else {
+        sospensioneFields.classList.add('d-none-js');
+        // Rimuovi obbligatorietà
+        sospensioneFields.querySelectorAll('input').forEach(input => {
+            input.required = false;
+        });
+    }
+});
+
+// Calcola automaticamente data fine sospensione
+document.querySelector('input[name="giorni_sospensione"]').addEventListener('change', function() {
+    const giorni = parseInt(this.value);
+    const dataInizio = document.querySelector('input[name="data_inizio_sospensione"]').value;
+
+    if (giorni && dataInizio) {
+        const inizio = new Date(dataInizio);
+        inizio.setDate(inizio.getDate() + giorni);
+        const dataFine = inizio.toISOString().split('T')[0];
+        document.querySelector('input[name="data_fine_sospensione"]').value = dataFine;
+    }
+});
+
+document.querySelector('input[name="data_inizio_sospensione"]').addEventListener('change', function() {
+    const giorni = parseInt(document.querySelector('input[name="giorni_sospensione"]').value);
+    const dataInizio = this.value;
+
+    if (giorni && dataInizio) {
+        const inizio = new Date(dataInizio);
+        inizio.setDate(inizio.getDate() + giorni);
+        const dataFine = inizio.toISOString().split('T')[0];
+        document.querySelector('input[name="data_fine_sospensione"]').value = dataFine;
+    }
+});
+</script>
+{% endblock %}

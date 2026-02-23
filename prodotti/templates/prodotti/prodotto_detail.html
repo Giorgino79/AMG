@@ -1,0 +1,454 @@
+{% extends "commons_templates/base_detail.html" %}
+{% load static %}
+{% load allegati_tags %}
+
+{% block title %}{{ prodotto.nome_prodotto }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'prodotti:dashboard' %}">Prodotti</a></li>
+<li class="breadcrumb-item"><a href="{% url 'prodotti:prodotto_list' %}">Lista Prodotti</a></li>
+<li class="breadcrumb-item active">{{ prodotto.nome_prodotto|truncatechars:30 }}</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-box-seam me-2 text-primary"></i>{{ prodotto.nome_prodotto }}
+{% endblock %}
+
+{% block page_subtitle %}
+{% if prodotto.descrizione_breve %}
+<p class="text-muted mb-0">{{ prodotto.descrizione_breve }}</p>
+{% endif %}
+{% endblock %}
+
+{% block status_badge %}
+<div class="text-end">
+    {% if prodotto.attivo %}
+        <span class="badge fs-6 bg-success">Attivo</span>
+    {% else %}
+        <span class="badge fs-6 bg-secondary">Disattivo</span>
+    {% endif %}
+    {% if prodotto.novita %}
+        <span class="badge fs-6 bg-info ms-1">Novit&agrave;</span>
+    {% endif %}
+    {% if prodotto.in_evidenza %}
+        <span class="badge fs-6 bg-warning ms-1">In Evidenza</span>
+    {% endif %}
+    {% if prodotto.merce_deperibile %}
+        <span class="badge fs-6 bg-danger ms-1">Merce Deperibile</span>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block detail_content %}
+<!-- Info prodotto con immagine -->
+{% if prodotto.immagine %}
+<div class="mb-4">
+    <div class="d-flex align-items-start">
+        <img src="{{ prodotto.immagine.url }}" alt="{{ prodotto.nome_prodotto }}" class="rounded me-3" width="120" height="120" style="object-fit: cover;">
+        <div>
+            <h4 class="mb-1">{{ prodotto.nome_prodotto }}</h4>
+            {% if prodotto.descrizione_breve %}
+                <p class="text-muted mb-0">{{ prodotto.descrizione_breve }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if prodotto.descrizione_completa %}
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-text-paragraph me-2 text-primary"></i>Descrizione Completa
+    </h5>
+    <p>{{ prodotto.descrizione_completa|linebreaks }}</p>
+</div>
+{% endif %}
+
+<!-- Codici Identificativi -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-upc me-2 text-primary"></i>Codici Identificativi
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <dl class="row mb-0">
+                <dt class="col-sm-5 text-muted">EAN</dt>
+                <dd class="col-sm-7"><code>{{ prodotto.ean|default:"-" }}</code></dd>
+                {% if prodotto.codice_interno %}
+                <dt class="col-sm-5 text-muted">Codice Interno</dt>
+                <dd class="col-sm-7"><code>{{ prodotto.codice_interno }}</code></dd>
+                {% endif %}
+                {% if prodotto.codice_fornitore %}
+                <dt class="col-sm-5 text-muted">Codice Fornitore</dt>
+                <dd class="col-sm-7"><code>{{ prodotto.codice_fornitore }}</code></dd>
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+</div>
+
+<!-- QR Code e Barcode -->
+{% if prodotto.has_qrcode or prodotto.has_barcode or prodotto.qrcode_data or prodotto.barcode_data %}
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-qr-code me-2 text-primary"></i>QR Code e Barcode
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <h6>QR Code</h6>
+            {% if prodotto.qrcode_image %}
+                <img src="{{ prodotto.qrcode_image.url }}" alt="QR Code" class="img-fluid border rounded" style="max-width: 200px;">
+            {% endif %}
+            {% if prodotto.qrcode_data %}
+                <p class="mt-2"><small class="text-muted">Dati:</small> <code>{{ prodotto.qrcode_data }}</code></p>
+            {% else %}
+                <p class="text-muted">Nessun QR Code</p>
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <h6>Barcode</h6>
+            {% if prodotto.barcode_image %}
+                <img src="{{ prodotto.barcode_image.url }}" alt="Barcode" class="img-fluid border rounded" style="max-width: 200px;">
+            {% endif %}
+            {% if prodotto.barcode_data %}
+                <p class="mt-2"><small class="text-muted">Dati:</small> <code>{{ prodotto.barcode_data }}</code></p>
+            {% else %}
+                <p class="text-muted">Nessun Barcode</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Caratteristiche Fisiche -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-rulers me-2 text-primary"></i>Caratteristiche Fisiche
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <dl class="row mb-0">
+                <dt class="col-sm-5 text-muted">Tipo Prodotto</dt>
+                <dd class="col-sm-7">
+                    {{ prodotto.get_tipo_prodotto_display }}
+                    {% if prodotto.merce_deperibile %}
+                        <span class="badge bg-danger ms-1">Deperibile</span>
+                    {% endif %}
+                </dd>
+                <dt class="col-sm-5 text-muted">Unit&agrave; di Misura</dt>
+                <dd class="col-sm-7">{{ prodotto.get_misura_display }}</dd>
+                {% if prodotto.peso_netto %}
+                <dt class="col-sm-5 text-muted">Peso Netto</dt>
+                <dd class="col-sm-7">{{ prodotto.peso_netto }} kg</dd>
+                {% endif %}
+                {% if prodotto.peso_lordo %}
+                <dt class="col-sm-5 text-muted">Peso Lordo</dt>
+                <dd class="col-sm-7">{{ prodotto.peso_lordo }} kg</dd>
+                {% endif %}
+            </dl>
+        </div>
+        <div class="col-md-6">
+            <dl class="row mb-0">
+                {% if prodotto.volume %}
+                <dt class="col-sm-5 text-muted">Volume</dt>
+                <dd class="col-sm-7">{{ prodotto.volume }} L</dd>
+                {% endif %}
+                {% if prodotto.dimensioni %}
+                <dt class="col-sm-5 text-muted">Dimensioni</dt>
+                <dd class="col-sm-7">{{ prodotto.dimensioni }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+</div>
+
+<!-- Relazioni -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-link-45deg me-2 text-primary"></i>Relazioni
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <dl class="row mb-0">
+                <dt class="col-sm-5 text-muted">Categoria</dt>
+                <dd class="col-sm-7">
+                    <a href="{% url 'prodotti:categoria_detail' prodotto.categoria.pk %}" class="text-decoration-none">
+                        {{ prodotto.categoria.nome_categoria }}
+                    </a>
+                </dd>
+                <dt class="col-sm-5 text-muted">Fornitore</dt>
+                <dd class="col-sm-7">
+                    {% if prodotto.fornitore_principale %}
+                        {{ prodotto.fornitore_principale.ragione_sociale }}
+                    {% else %}
+                        <span class="text-muted">-</span>
+                    {% endif %}
+                </dd>
+            </dl>
+        </div>
+        <div class="col-md-6">
+            <dl class="row mb-0">
+                <dt class="col-sm-5 text-muted">Aliquota IVA</dt>
+                <dd class="col-sm-7">{{ prodotto.get_aliquota_iva_display }}</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+
+<!-- Note Interne -->
+{% if prodotto.note_interne %}
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-sticky me-2 text-primary"></i>Note Interne
+    </h5>
+    <div class="alert alert-info mb-0">
+        {{ prodotto.note_interne|linebreaks }}
+    </div>
+</div>
+{% endif %}
+
+<!-- Informazioni Temporali -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-clock me-2 text-primary"></i>Informazioni
+    </h5>
+    <div class="row">
+        <div class="col-md-6">
+            <dl class="row mb-0">
+                <dt class="col-sm-5 text-muted">Creato il</dt>
+                <dd class="col-sm-7">{{ prodotto.created_at|date:"d/m/Y H:i" }}</dd>
+                <dt class="col-sm-5 text-muted">Modificato il</dt>
+                <dd class="col-sm-7">{{ prodotto.updated_at|date:"d/m/Y H:i" }}</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+
+<!-- Lotti Disponibili -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-boxes me-2 text-primary"></i>Lotti Disponibili in Magazzino
+        {% if ha_lotti %}
+            <span class="badge bg-primary">{{ lotti|length }}</span>
+        {% endif %}
+    </h5>
+
+    <!-- Form Filtri -->
+    <div class="card mb-3">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="bi bi-funnel me-2"></i>Filtri Ricerca</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" id="filtriLottiForm">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="id_data_ordine_da" class="form-label">Data Ordine Da</label>
+                        {{ lotti_filter_form.data_ordine_da }}
+                    </div>
+                    <div class="col-md-3">
+                        <label for="id_data_ordine_a" class="form-label">Data Ordine A</label>
+                        {{ lotti_filter_form.data_ordine_a }}
+                    </div>
+                    <div class="col-md-3">
+                        <label for="id_data_ricezione_da" class="form-label">Data Ricezione Da</label>
+                        {{ lotti_filter_form.data_ricezione_da }}
+                    </div>
+                    <div class="col-md-3">
+                        <label for="id_data_ricezione_a" class="form-label">Data Ricezione A</label>
+                        {{ lotti_filter_form.data_ricezione_a }}
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i>Applica Filtri
+                        </button>
+                        <a href="{% url 'prodotti:prodotto_detail' prodotto.pk %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>Reset Filtri
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabella Lotti Disponibili -->
+    {% if ha_lotti %}
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Numero Lotto</th>
+                            <th>Stabilimento</th>
+                            <th class="text-end">Residuo</th>
+                            <th>Scadenza</th>
+                            <th>Posizione</th>
+                            <th>Data Ricezione</th>
+                            <th>Data Ordine</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lotto in lotti %}
+                        <tr>
+                            <td><code>{{ lotto.numero_lotto }}</code></td>
+                            <td>
+                                <i class="bi bi-building me-1"></i>{{ lotto.stabilimento.nome }}
+                                <small class="text-muted">({{ lotto.stabilimento.codice_stabilimento }})</small>
+                            </td>
+                            <td class="text-end">
+                                <strong>{{ lotto.quantita_residua|floatformat:3 }}</strong>
+                                {{ prodotto.get_misura_display }}
+                            </td>
+                            <td>
+                                {% if lotto.data_scadenza %}
+                                    {{ lotto.data_scadenza|date:"d/m/Y" }}
+                                    {% if lotto.is_deperibile %}
+                                        <span class="badge bg-danger badge-sm">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td><code>{{ lotto.posizione }}</code></td>
+                            <td>{{ lotto.ricezione.data_ricezione|date:"d/m/Y" }}</td>
+                            <td>{{ lotto.ricezione.ordine_acquisto.data_ordine|date:"d/m/Y" }}</td>
+                            <td>
+                                <a href="{% url 'scadenze:dettaglio_lotto' lotto.pk %}"
+                                   class="btn btn-sm btn-outline-primary" title="Dettaglio lotto">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Totali per Stabilimento -->
+    {% if totali_per_stabilimento %}
+    <div class="card mt-3">
+        <div class="card-header bg-info text-white">
+            <h6 class="mb-0"><i class="bi bi-calculator me-2"></i>Totali Residui per Stabilimento</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for totale in totali_per_stabilimento %}
+                <div class="col-md-4 mb-2">
+                    <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
+                        <span>
+                            <i class="bi bi-building me-1 text-info"></i>
+                            <strong>{{ totale.stabilimento__nome }}</strong>
+                        </span>
+                        <span class="badge bg-info fs-6">
+                            {{ totale.totale|floatformat:3 }} {{ prodotto.get_misura_display }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Nessun lotto trovato -->
+    <div class="alert alert-info mb-0">
+        <i class="bi bi-info-circle me-2"></i>
+        {% if request.GET %}
+            Nessun lotto disponibile trovato con i filtri applicati.
+        {% else %}
+            Non ci sono lotti disponibili in magazzino per questo prodotto.
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Lotti Trattati con Azione HACCP -->
+{% if ha_lotti_trattati %}
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3 text-secondary">
+        <i class="bi bi-clipboard-check me-2"></i>Lotti Ritirati (Azioni HACCP)
+        <span class="badge bg-secondary">{{ lotti_trattati|length }}</span>
+    </h5>
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Numero Lotto</th>
+                            <th>Stabilimento</th>
+                            <th>Ultima Azione HACCP</th>
+                            <th>Data Ritiro</th>
+                            <th>Scadenza</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lotto in lotti_trattati %}
+                        {% with ultima=lotto.azioni_scadenza.all|dictsortreversed:"data_azione"|first %}
+                        <tr class="text-secondary">
+                            <td><code class="text-secondary">{{ lotto.numero_lotto }}</code></td>
+                            <td><small>{{ lotto.stabilimento.nome }}</small></td>
+                            <td>
+                                {% if ultima %}
+                                    {% if ultima.azione == 'smaltimento' %}
+                                        <span class="badge bg-danger">{{ ultima.get_azione_display }}</span>
+                                    {% elif ultima.azione == 'donazione' %}
+                                        <span class="badge bg-success">{{ ultima.get_azione_display }}</span>
+                                    {% elif ultima.azione == 'rientro_fornitore' %}
+                                        <span class="badge bg-secondary">{{ ultima.get_azione_display }}</span>
+                                    {% elif ultima.azione == 'trasferimento' %}
+                                        <span class="badge bg-info text-dark">{{ ultima.get_azione_display }}</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">{{ ultima.get_azione_display }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <small class="text-secondary">-</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if lotto.data_trattamento_haccp %}
+                                    <small>{{ lotto.data_trattamento_haccp|date:"d/m/Y" }}</small>
+                                {% else %}
+                                    <small class="text-secondary">-</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if lotto.data_scadenza %}
+                                    <small>{{ lotto.data_scadenza|date:"d/m/Y" }}</small>
+                                {% else %}
+                                    <small class="text-secondary">-</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'scadenze:dettaglio_lotto' lotto.pk %}"
+                                   class="btn btn-sm btn-outline-secondary" title="Dettaglio lotto">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block custom_actions %}
+{% endblock %}
+
+{% block sidebar_extra %}
+{% endblock %}

@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}Elimina Prodotto: {{ prodotto.nome_prodotto }} - BEF2{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'prodotti:dashboard' %}">Prodotti</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'prodotti:prodotto_list' %}">Lista Prodotti</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'prodotti:prodotto_detail' prodotto.pk %}">{{ prodotto.nome_prodotto|truncatechars:30 }}</a></li>
+        <li class="breadcrumb-item active">Elimina</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white text-center">
+                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                <h3 class="mb-0">Conferma Eliminazione Prodotto</h3>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-auto">
+                        {% if prodotto.immagine %}
+                            <img src="{{ prodotto.immagine.url }}" alt="{{ prodotto.nome_prodotto }}" 
+                                 class="rounded border border-danger border-3" 
+                                 width="100" height="100" style="object-fit: cover;">
+                        {% else %}
+                            <div class="bg-danger rounded d-flex align-items-center justify-content-center text-white" 
+                                 style="width: 100px; height: 100px;">
+                                <i class="fas fa-box fa-3x"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col">
+                        <h4 class="text-danger mb-2">{{ prodotto.nome_prodotto }}</h4>
+                        <p class="text-muted mb-1">Categoria: {{ prodotto.categoria.nome_categoria }}</p>
+                        {% if prodotto.codice_interno %}
+                            <p class="text-muted mb-1">Codice: {{ prodotto.codice_interno }}</p>
+                        {% endif %}
+                        {% if prodotto.ean %}
+                            <p class="text-muted mb-1">EAN: {{ prodotto.ean }}</p>
+                        {% endif %}
+                        <div>
+                            <span class="badge bg-primary">€{{ prodotto.prezzo_listino|floatformat:2 }}</span>
+                            {% if prodotto.gestione_scorte %}
+                                <span class="badge bg-info">Gestione Scorte</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-exclamation-triangle me-1"></i>Attenzione!</h6>
+                    <p class="mb-0">
+                        Stai per eliminare definitivamente il prodotto <strong>"{{ prodotto.nome_prodotto }}"</strong>.
+                        Questa azione non può essere annullata.
+                    </p>
+                </div>
+                
+                <!-- Statistiche prodotto -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Informazioni Prodotto:</h6>
+                        <ul class="list-unstyled text-muted small">
+                            <li>• Creato il: {{ prodotto.created_at|date:"d/m/Y H:i" }}</li>
+                            <li>• Ultima modifica: {{ prodotto.updated_at|date:"d/m/Y H:i" }}</li>
+                            <li>• Tipo: {{ prodotto.get_tipo_prodotto_display }}</li>
+                            <li>• Unità di misura: {{ prodotto.get_misura_display }}</li>
+                            <li>• IVA: {{ prodotto.aliquota_iva }}%</li>
+                        </ul>
+                    </div>
+                    {% if prodotto.gestione_scorte %}
+                    <div class="col-md-6">
+                        <h6>Gestione Scorte:</h6>
+                        <ul class="list-unstyled text-muted small">
+                            <li>• Scorta totale: {{ prodotto.get_scorta_totale|default:0 }}</li>
+                            <li>• Scorta minima: {{ prodotto.scorta_minima }}</li>
+                            <li>• Scorta massima: {{ prodotto.scorta_massima }}</li>
+                            <li>• Stabilimenti con scorte: {{ prodotto.scorte.count }}</li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if prodotto.gestione_scorte and prodotto.scorte.filter.quantita_disponibile__gt=0.exists %}
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-ban me-1"></i>Eliminazione Non Possibile</h6>
+                    <p>
+                        Questo prodotto ha <strong>scorte attive</strong> in uno o più stabilimenti 
+                        e non può essere eliminato.
+                    </p>
+                    <p class="mb-0">
+                        Per procedere con l'eliminazione, svuota prima tutte le scorte 
+                        o trasferiscile ad altri prodotti.
+                    </p>
+                </div>
+                
+                <!-- Mostra scorte attive -->
+                <div class="table-responsive mb-3">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Stabilimento</th>
+                                <th class="text-end">Disponibile</th>
+                                <th class="text-end">Riservata</th>
+                                <th class="text-end">Totale</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for scorta in prodotto.scorte.filter.quantita_disponibile__gt=0 %}
+                            <tr>
+                                <td>{{ scorta.magazzino.nome }}</td>
+                                <td class="text-end">{{ scorta.quantita_disponibile|floatformat:0 }}</td>
+                                <td class="text-end">{{ scorta.quantita_riservata|floatformat:0 }}</td>
+                                <td class="text-end"><strong>{{ scorta.quantita_totale|floatformat:0 }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="text-center">
+                    <a href="{% url 'prodotti:prodotto_detail' prodotto.pk %}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-1"></i>Torna al Dettaglio
+                    </a>
+                </div>
+                
+                {% else %}
+                
+                <!-- Controllo finale per altre dipendenze -->
+                {% comment %}
+                Qui si potrebbero aggiungere controlli per ordini, fatture, etc.
+                quando saranno implementate le relative app
+                {% endcomment %}
+                
+                <form method="post" class="text-center">
+                    {% csrf_token %}
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-1"></i>Cosa Succederà</h6>
+                        <p class="mb-0">
+                            Il prodotto verrà rimosso dal sistema insieme a tutte le sue 
+                            informazioni associate (scorte vuote, immagini, note).
+                        </p>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="{% url 'prodotti:prodotto_detail' prodotto.pk %}" 
+                           class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times me-1"></i>Annulla
+                        </a>
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="fas fa-trash me-1"></i>Elimina Definitivamente
+                        </button>
+                    </div>
+                </form>
+                
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

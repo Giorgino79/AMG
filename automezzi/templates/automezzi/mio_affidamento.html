@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}Il Mio Mezzo{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'automezzi:dashboard' %}">Automezzi</a></li>
+<li class="breadcrumb-item active">Il Mio Mezzo</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2 py-md-4">
+
+  {% if not affidamento %}
+  <div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i>
+    Non hai nessun mezzo affidato al momento.
+  </div>
+  {% else %}
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="fas fa-key me-2"></i>Il Mio Mezzo</h2>
+    <a href="{% url 'automezzi:dashboard' %}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left me-2"></i>Dashboard
+    </a>
+  </div>
+
+  <!-- Riepilogo affidamento -->
+  <div class="card shadow mb-4 border-start border-4 border-danger">
+    <div class="card-header bg-light">
+      <h5 class="mb-0"><i class="fas fa-car me-2 text-danger"></i>Riepilogo Affidamento</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <table class="table table-sm table-borderless mb-0">
+            <tr><th class="text-muted">Targa</th><td class="fw-bold">{{ affidamento.automezzo.targa }}</td></tr>
+            <tr><th class="text-muted">Veicolo</th><td>{{ affidamento.automezzo.marca }} {{ affidamento.automezzo.modello }}</td></tr>
+            <tr><th class="text-muted">Anno</th><td>{{ affidamento.automezzo.anno_immatricolazione }}</td></tr>
+          </table>
+        </div>
+        <div class="col-md-4">
+          <table class="table table-sm table-borderless mb-0">
+            <tr><th class="text-muted">Periodo</th><td>{{ affidamento.data_inizio|date:"d/m/Y" }} - {{ affidamento.data_fine|date:"d/m/Y" }}</td></tr>
+            <tr><th class="text-muted">Km iniziali</th><td>{{ affidamento.km_iniziali }} km</td></tr>
+            <tr><th class="text-muted">Carburante</th><td>{{ affidamento.get_carburante_display }}</td></tr>
+          </table>
+        </div>
+        <div class="col-md-4">
+          <table class="table table-sm table-borderless mb-0">
+            <tr><th class="text-muted">Scopo</th><td>{{ affidamento.scopo_viaggio }}</td></tr>
+            <tr><th class="text-muted">Stato</th><td><span class="badge bg-success">{{ affidamento.get_stato_display }}</span></td></tr>
+            {% if affidamento.automezzo.carta_carburante %}
+            <tr><th class="text-muted">Carta carburante</th><td>{{ affidamento.automezzo.carta_carburante }}</td></tr>
+            {% endif %}
+            {% if affidamento.automezzo.pin_carta_carburante %}
+            <tr><th class="text-muted">PIN</th><td>{{ affidamento.automezzo.pin_carta_carburante }}</td></tr>
+            {% endif %}
+          </table>
+        </div>
+      </div>
+      {% if affidamento.note %}
+      <div class="mt-2">
+        <small class="text-muted"><strong>Note:</strong> {{ affidamento.note }}</small>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Azioni rapide -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <a href="{% url 'automezzi:affidamento_rifornimento_create' %}" class="btn btn-info btn-lg w-100">
+        <i class="fas fa-gas-pump me-2"></i>Registra Rifornimento
+      </a>
+    </div>
+    <div class="col-md-6">
+      <a href="{% url 'automezzi:affidamento_evento_create' %}" class="btn btn-warning btn-lg w-100">
+        <i class="fas fa-exclamation-triangle me-2"></i>Segnala Evento
+      </a>
+    </div>
+  </div>
+
+  <!-- Rifornimenti durante l'affidamento -->
+  <div class="card shadow mb-4">
+    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="fas fa-gas-pump me-2"></i>Rifornimenti</h5>
+      <span class="badge bg-light text-info">{{ rifornimenti|length }}</span>
+    </div>
+    <div class="card-body p-0">
+      {% if rifornimenti %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Data</th>
+              <th>Litri</th>
+              <th>Costo</th>
+              <th>Km</th>
+              <th>Scontrino</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rif in rifornimenti %}
+            <tr>
+              <td>{{ rif.data|date:"d/m/Y" }}</td>
+              <td>{{ rif.litri }} L</td>
+              <td>&euro;{{ rif.costo_totale }}</td>
+              <td>{{ rif.chilometri }} km</td>
+              <td>
+                {% if rif.scontrino %}
+                <a href="{{ rif.scontrino.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                  <i class="fas fa-file-alt"></i>
+                </a>
+                {% else %}
+                <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="p-3 text-center text-muted">
+        <i class="fas fa-gas-pump fa-2x mb-2 d-block"></i>
+        Nessun rifornimento registrato durante questo affidamento.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Eventi durante l'affidamento -->
+  <div class="card shadow mb-4">
+    <div class="card-header bg-warning d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Eventi</h5>
+      <span class="badge bg-light text-warning">{{ eventi|length }}</span>
+    </div>
+    <div class="card-body p-0">
+      {% if eventi %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Data</th>
+              <th>Tipo</th>
+              <th>Descrizione</th>
+              <th>Costo</th>
+              <th>Stato</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for evento in eventi %}
+            <tr>
+              <td>{{ evento.data_evento|date:"d/m/Y" }}</td>
+              <td><span class="badge bg-secondary">{{ evento.get_tipo_display }}</span></td>
+              <td>{{ evento.descrizione|truncatechars:60 }}</td>
+              <td>{% if evento.costo %}&euro;{{ evento.costo }}{% else %}-{% endif %}</td>
+              <td>
+                {% if evento.risolto %}
+                <span class="badge bg-success">Risolto</span>
+                {% else %}
+                <span class="badge bg-danger">Aperto</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="p-3 text-center text-muted">
+        <i class="fas fa-check-circle fa-2x mb-2 d-block text-success"></i>
+        Nessun evento registrato durante questo affidamento.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+{% endblock %}

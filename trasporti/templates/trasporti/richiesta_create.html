@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Nuova Richiesta Trasporto{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <h1>Nuova Richiesta Trasporto</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'trasporti:dashboard' %}">Trasporti</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'trasporti:richieste_list' %}">Richieste</a></li>
+                    <li class="breadcrumb-item active">Nuova Richiesta</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <form method="post" id="richiestaForm">
+        {% csrf_token %}
+
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Informazioni Generali -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Informazioni Generali</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                {{ form.titolo.label_tag }}
+                                {{ form.titolo }}
+                                <div class="form-text">{{ form.titolo.help_text }}</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.tipo_trasporto.label_tag }}
+                                {{ form.tipo_trasporto }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.descrizione.label_tag }}
+                                {{ form.descrizione }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.priorita.label_tag }}
+                                {{ form.priorita }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.approvatore.label_tag }}
+                                {{ form.approvatore }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Percorso - Ritiro -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">📍 Punto di Ritiro</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.indirizzo_ritiro.label_tag }}
+                                {{ form.indirizzo_ritiro }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                {{ form.cap_ritiro.label_tag }}
+                                {{ form.cap_ritiro }}
+                            </div>
+                            <div class="col-md-5 mb-3">
+                                {{ form.citta_ritiro.label_tag }}
+                                {{ form.citta_ritiro }}
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                {{ form.provincia_ritiro.label_tag }}
+                                {{ form.provincia_ritiro }}
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                {{ form.nazione_ritiro.label_tag }}
+                                {{ form.nazione_ritiro }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                {{ form.data_ritiro_richiesta.label_tag }}
+                                {{ form.data_ritiro_richiesta }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.ora_ritiro_dalle.label_tag }}
+                                {{ form.ora_ritiro_dalle }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.ora_ritiro_alle.label_tag }}
+                                {{ form.ora_ritiro_alle }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.note_ritiro.label_tag }}
+                                {{ form.note_ritiro }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Percorso - Consegna -->
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">📦 Punto di Consegna</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.indirizzo_consegna.label_tag }}
+                                {{ form.indirizzo_consegna }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                {{ form.cap_consegna.label_tag }}
+                                {{ form.cap_consegna }}
+                            </div>
+                            <div class="col-md-5 mb-3">
+                                {{ form.citta_consegna.label_tag }}
+                                {{ form.citta_consegna }}
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                {{ form.provincia_consegna.label_tag }}
+                                {{ form.provincia_consegna }}
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                {{ form.nazione_consegna.label_tag }}
+                                {{ form.nazione_consegna }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                {{ form.data_consegna_richiesta.label_tag }}
+                                {{ form.data_consegna_richiesta }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.ora_consegna_dalle.label_tag }}
+                                {{ form.ora_consegna_dalle }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.ora_consegna_alle.label_tag }}
+                                {{ form.ora_consegna_alle }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.note_consegna.label_tag }}
+                                {{ form.note_consegna }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colli -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">📦 Colli da Trasportare</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ formset.management_form }}
+                        <div id="colli-formset">
+                            {% for form in formset %}
+                            <div class="collo-form border rounded p-3 mb-3">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        {{ form.quantita.label_tag }}
+                                        {{ form.quantita }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ form.tipo.label_tag }}
+                                        {{ form.tipo }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ form.lunghezza_cm.label_tag }}
+                                        {{ form.lunghezza_cm }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ form.larghezza_cm.label_tag }}
+                                        {{ form.larghezza_cm }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ form.altezza_cm.label_tag }}
+                                        {{ form.altezza_cm }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ form.peso_kg.label_tag }}
+                                        {{ form.peso_kg }}
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-md-6">
+                                        {{ form.descrizione.label_tag }}
+                                        {{ form.descrizione }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-check mt-4">
+                                            {{ form.fragile }} {{ form.fragile.label_tag }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-check mt-4">
+                                            {{ form.stackable }} {{ form.stackable.label_tag }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {{ form.id }}
+                                {% if formset.can_delete %}
+                                <div class="mt-2">
+                                    {{ form.DELETE }}
+                                    <label class="text-danger">{{ form.DELETE.label }}</label>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="add-collo">
+                            + Aggiungi Collo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Caratteristiche Merce -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Caratteristiche Merce</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                {{ form.tipo_merce.label_tag }}
+                                {{ form.tipo_merce }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                {{ form.valore_merce.label_tag }}
+                                {{ form.valore_merce }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    {{ form.merce_fragile }} {{ form.merce_fragile.label_tag }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    {{ form.merce_deperibile }} {{ form.merce_deperibile.label_tag }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    {{ form.merce_pericolosa }} {{ form.merce_pericolosa.label_tag }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-md-4">
+                <!-- Budget -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Budget</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form.budget_massimo.label_tag }}
+                        {{ form.budget_massimo }}
+                    </div>
+                </div>
+
+                <!-- Note Interne -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Note Interne</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form.note_interne }}
+                    </div>
+                </div>
+
+                <!-- Azioni -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                Salva Richiesta
+                            </button>
+                            <a href="{% url 'trasporti:richieste_list' %}" class="btn btn-secondary">
+                                Annulla
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// Gestione formset colli dinamici (placeholder - da implementare con libreria formset JS)
+document.getElementById('add-collo')?.addEventListener('click', function() {
+    alert('Funzionalità di aggiunta collo dinamico da implementare');
+});
+</script>
+{% endblock %}

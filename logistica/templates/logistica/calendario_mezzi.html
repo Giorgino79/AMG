@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Calendario Mezzi - {{ nome_mese }} {{ anno }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+    {# Header con navigazione mese #}
+    <div class="calendario-container mb-4">
+        <div class="calendario-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="{% url 'logistica:calendario_mezzi' mese_prec.year mese_prec.month %}"
+                   class="btn btn-light btn-sm">
+                    <i class="bi bi-chevron-left"></i> {{ mese_prec|date:"F" }}
+                </a>
+
+                <div class="text-center">
+                    <h2 class="mb-0">
+                        <i class="bi bi-truck me-2"></i>{{ nome_mese }} {{ anno }}
+                    </h2>
+                    <p class="mb-0 mt-1 opacity-75">Calendario Disponibilità Mezzi</p>
+                    <a href="{% url 'logistica:dashboard' %}" class="btn btn-sm btn-outline-light mt-2">
+                        <i class="bi bi-house"></i> Torna alla Dashboard
+                    </a>
+                </div>
+
+                <a href="{% url 'logistica:calendario_mezzi' mese_succ.year mese_succ.month %}"
+                   class="btn btn-light btn-sm">
+                    {{ mese_succ|date:"F" }} <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+
+        {# Calendario Grid #}
+        <div class="calendario-content">
+            <div class="calendario-mezzi-grid">
+                {# Header giorni settimana #}
+                <div class="calendario-header-row">
+                    {% for giorno in giorni_settimana %}
+                    <div class="giorno-header">{{ giorno }}</div>
+                    {% endfor %}
+                </div>
+
+                {# Righe settimane #}
+                {% for settimana in settimane %}
+                <div class="calendario-week-row">
+                    {% for giorno in settimana %}
+                    <div class="giorno-cella {% if giorno.is_oggi %}oggi{% endif %} {% if not giorno.numero %}vuota{% endif %}">
+                        {% if giorno.numero %}
+                            <div class="giorno-numero">
+                                {{ giorno.numero }}
+                                {% if giorno.count_mezzi > 0 %}
+                                    <span class="badge bg-danger ms-2">{{ giorno.count_mezzi }}</span>
+                                {% endif %}
+                            </div>
+
+                            {# Mezzi del giorno #}
+                            <div class="mezzi-lista">
+                                {% for mezzo_info in giorno.mezzi %}
+                                <div class="mezzo-badge" data-bs-toggle="tooltip"
+                                     title="{% for p in mezzo_info.progetti %}{{ p.codice }} - {{ p.nome_evento }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+                                    <i class="bi bi-truck"></i>
+                                    <strong>N.{{ mezzo_info.numero }}</strong> - {{ mezzo_info.targa }}
+                                    <span class="badge bg-secondary ms-1">{{ mezzo_info.progetti|length }}</span>
+                                </div>
+                                {% endfor %}
+
+                                {% if giorno.count_mezzi == 0 %}
+                                <div class="text-muted small text-center py-2">
+                                    <i class="bi bi-check-circle"></i> Libero
+                                </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# Legenda #}
+        <div class="calendario-footer mt-3 p-3 bg-light border-top">
+            <div class="row">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Legenda</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <span class="badge bg-danger">N</span>
+                            Numero di mezzi impegnati nel giorno
+                        </li>
+                        <li class="mb-2">
+                            <div class="mezzo-badge d-inline-block">
+                                <i class="bi bi-truck"></i> N.X - TARGA <span class="badge bg-secondary ms-1">2</span>
+                            </div>
+                            <br>
+                            <small class="text-muted ms-3">Mezzo con numero progetti assegnati</small>
+                        </li>
+                        <li>
+                            <i class="bi bi-check-circle text-success"></i>
+                            Giorno senza mezzi impegnati
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h6 class="mb-0"><i class="bi bi-truck me-2"></i>Mezzi Disponibili</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for mezzo in tutti_mezzi|slice:":10" %}
+                        <div class="col-6 mb-2">
+                            <a href="{{ mezzo.get_absolute_url }}" class="text-decoration-none">
+                                <i class="bi bi-truck text-primary"></i>
+                                {% if mezzo.numero_mezzo %}
+                                    N.{{ mezzo.numero_mezzo }} -
+                                {% endif %}
+                                {{ mezzo.targa }}
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if tutti_mezzi.count > 10 %}
+                    <p class="text-muted small mb-0 mt-2">
+                        ... e altri {{ tutti_mezzi.count|add:"-10" }} mezzi
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.calendario-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.calendario-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px 10px 0 0;
+}
+
+.calendario-content {
+    padding: 0;
+}
+
+.calendario-footer {
+    border-radius: 0 0 10px 10px;
+}
+
+.calendario-mezzi-grid {
+    display: grid;
+    grid-template-rows: auto;
+    gap: 0;
+    width: 100%;
+}
+
+.calendario-header-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.giorno-header {
+    padding: 0.75rem;
+    text-align: center;
+    font-weight: 600;
+    color: #495057;
+    border-right: 1px solid #dee2e6;
+}
+
+.giorno-header:last-child {
+    border-right: none;
+}
+
+.calendario-week-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-bottom: 1px solid #dee2e6;
+}
+
+.giorno-cella {
+    min-height: 120px;
+    padding: 0.5rem;
+    border-right: 1px solid #dee2e6;
+    background-color: white;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.giorno-cella:hover:not(.vuota) {
+    background: #f8f9fa;
+    transform: scale(1.01);
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.giorno-cella:last-child {
+    border-right: none;
+}
+
+.giorno-cella.vuota {
+    background-color: #f5f5f5;
+}
+
+.giorno-cella.oggi {
+    background-color: #fff3cd;
+    border: 2px solid #ffc107;
+}
+
+.giorno-numero {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.giorno-cella.oggi .giorno-numero {
+    color: #ffc107;
+}
+
+.mezzi-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.mezzo-badge {
+    background-color: #e3f2fd;
+    border-left: 3px solid #1976d2;
+    border-radius: 3px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: help;
+    transition: all 0.2s;
+}
+
+.mezzo-badge:hover {
+    background-color: #bbdefb;
+    transform: translateX(2px);
+}
+
+.mezzo-badge i {
+    margin-right: 0.25rem;
+    color: #1976d2;
+}
+
+/* Responsive */
+@media (max-width: 991.98px) {
+    .giorno-cella {
+        min-height: 100px;
+        padding: 0.25rem;
+    }
+
+    .giorno-numero {
+        font-size: 0.8rem;
+    }
+
+    .mezzo-badge {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.3rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .calendario-header-row,
+    .calendario-week-row {
+        grid-template-columns: repeat(7, 1fr);
+        font-size: 0.75rem;
+    }
+
+    .giorno-cella {
+        min-height: 80px;
+    }
+
+    .giorno-header {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.75rem;
+    }
+
+    .calendario-header {
+        padding: 15px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Inizializza tooltip per info mezzi
+    $('[data-bs-toggle="tooltip"]').tooltip({
+        html: true,
+        placement: 'top'
+    });
+});
+</script>
+{% endblock %}

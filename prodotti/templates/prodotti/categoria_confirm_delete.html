@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Elimina Categoria: {{ object.nome_categoria }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">Home</a></li>
+<li class="breadcrumb-item"><a href="{% url 'prodotti:dashboard' %}">Prodotti</a></li>
+<li class="breadcrumb-item"><a href="{% url 'prodotti:categoria_list' %}">Categorie</a></li>
+<li class="breadcrumb-item"><a href="{% url 'prodotti:categoria_detail' object.pk %}">{{ object.nome_categoria }}</a></li>
+<li class="breadcrumb-item active">Elimina</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white text-center">
+                    <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+                    <h3 class="mb-0 mt-2">Conferma Eliminazione</h3>
+                </div>
+                <div class="card-body text-center">
+                    <p class="mb-3">
+                        Sei sicuro di voler eliminare definitivamente la categoria
+                        <strong>"{{ object.nome_categoria }}"</strong>?
+                    </p>
+                    <p class="text-muted">Questa azione non pu&ograve; essere annullata.</p>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-center gap-3 mt-4">
+                            <a href="{% url 'prodotti:categoria_detail' object.pk %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg me-1"></i>Annulla
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash me-1"></i>Elimina
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

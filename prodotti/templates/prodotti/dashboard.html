@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Prodotti{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">Home</a></li>
+<li class="breadcrumb-item active">Prodotti</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1"><i class="bi bi-box-seam me-2"></i>Dashboard Prodotti</h1>
+            <p class="text-muted mb-0">Anagrafica prodotti e categorie</p>
+        </div>
+        <div>
+            <a href="{% url 'prodotti:prodotto_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>Nuovo Prodotto
+            </a>
+            <a href="{% url 'prodotti:categoria_create' %}" class="btn btn-outline-primary">
+                <i class="bi bi-plus-lg me-1"></i>Nuova Categoria
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistiche -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Categorie Totali</h6>
+                    <span class="widget-stat">{{ stats.totale_categorie }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Categorie Attive</h6>
+                    <span class="widget-stat">{{ stats.categorie_attive }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Prodotti Totali</h6>
+                    <span class="widget-stat">{{ stats.totale_prodotti }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Prodotti Attivi</h6>
+                    <span class="widget-stat">{{ stats.prodotti_attivi }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Novit&agrave;</h6>
+                    <span class="widget-stat">{{ stats.novita }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">In Evidenza</h6>
+                    <span class="widget-stat">{{ stats.in_evidenza }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Azioni rapide -->
+    <div class="mb-4">
+        <a href="{% url 'prodotti:prodotto_list' %}" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-list-ul me-1"></i>Lista Prodotti
+        </a>
+        <a href="{% url 'prodotti:categoria_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-tags me-1"></i>Lista Categorie
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Ultimi Prodotti -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Ultimi Prodotti Inseriti</h5>
+                </div>
+                <div class="card-body">
+                    {% if ultimi_prodotti %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Categoria</th>
+                                    <th>EAN</th>
+                                    <th>Stato</th>
+                                    <th>Data</th>
+                                    <th>Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for prodotto in ultimi_prodotti %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'prodotti:prodotto_detail' prodotto.pk %}" class="text-decoration-none">
+                                            {{ prodotto.nome_prodotto }}
+                                        </a>
+                                    </td>
+                                    <td>{{ prodotto.categoria.nome_categoria }}</td>
+                                    <td><code>{{ prodotto.ean }}</code></td>
+                                    <td>
+                                        {% if prodotto.attivo %}
+                                            <span class="badge bg-success">Attivo</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Disattivo</span>
+                                        {% endif %}
+                                        {% if prodotto.novita %}
+                                            <span class="badge bg-info">Novit&agrave;</span>
+                                        {% endif %}
+                                        {% if prodotto.in_evidenza %}
+                                            <span class="badge bg-warning">In Evidenza</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ prodotto.created_at|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'prodotti:prodotto_detail' prodotto.pk %}" class="btn btn-sm btn-outline-primary" title="Visualizza">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'prodotti:prodotto_update' prodotto.pk %}" class="btn btn-sm btn-outline-secondary" title="Modifica">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">Nessun prodotto inserito.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Categorie -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-tags me-2"></i>Top Categorie</h5>
+                </div>
+                <div class="card-body">
+                    {% if categorie_con_conteggio %}
+                    <ul class="list-group list-group-flush">
+                        {% for cat in categorie_con_conteggio %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="{% url 'prodotti:categoria_detail' cat.pk %}" class="text-decoration-none">
+                                {{ cat.nome_categoria }}
+                            </a>
+                            <span class="badge bg-primary rounded-pill">{{ cat.num_prodotti }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted mb-0">Nessuna categoria disponibile.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Dashboard Progetti Eventi{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+    {# ========== HEADER ========== #}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-calendar-event me-2 text-primary"></i>Dashboard Progetti Eventi
+        </h1>
+        <div class="btn-group">
+            <a href="{% url 'progetti_eventi:progetto_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-list"></i> Tutti i Progetti
+            </a>
+            <a href="{% url 'progetti_eventi:progetto_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Nuovo Progetto
+            </a>
+        </div>
+    </div>
+
+    {# ========== STATISTICHE (4 CARD) ========== #}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-file-earmark me-2"></i>Bozze
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat text-primary">{{ totale_bozze }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header second-color">
+                    <i class="bi bi-diagram-3 me-2"></i>In Engineering
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat text-success">{{ totale_in_engineering }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header third-color">
+                    <i class="bi bi-gear me-2"></i>In Preparazione
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat text-warning">{{ totale_in_preparazione }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header fourth-color">
+                    <i class="bi bi-play-circle me-2"></i>In Corso
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat text-danger">{{ totale_in_corso }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ========== PROGETTI URGENTI ========== #}
+    {% if progetti_urgenti > 0 %}
+    <div class="alert alert-danger d-flex justify-content-between align-items-center">
+        <div>
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>{{ progetti_urgenti }}</strong> progett{{ progetti_urgenti|pluralize:"o,i" }} con evento tra meno di 7 giorni!
+        </div>
+        <a href="{% url 'progetti_eventi:progetto_list' %}?solo_urgenti=1" class="btn btn-sm btn-light">
+            Visualizza
+        </a>
+    </div>
+    {% endif %}
+
+    <div class="row">
+
+        {# ========== WIDGET: PROGETTI PROSSIMI ========== #}
+        <div class="col-md-6 mb-4">
+            <div class="dashboard-widget">
+                <div class="widget-header">
+                    <h5 class="widget-title">
+                        <i class="bi bi-calendar3 text-primary me-2"></i>Prossimi Eventi (30 giorni)
+                    </h5>
+                </div>
+                <div class="table-responsive">
+                    {% if progetti_prossimi %}
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Codice</th>
+                                <th>Evento</th>
+                                <th>Cliente</th>
+                                <th>Data</th>
+                                <th>Stato</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for progetto in progetti_prossimi %}
+                            <tr>
+                                <td>
+                                    <a href="{{ progetto.get_absolute_url }}">{{ progetto.codice }}</a>
+                                </td>
+                                <td>{{ progetto.nome_evento|truncatewords:4 }}</td>
+                                <td>{{ progetto.cliente.ragione_sociale|truncatewords:3 }}</td>
+                                <td>
+                                    {{ progetto.data_evento|date:"d/m" }}
+                                    {% if progetto.giorni_mancanti <= 7 %}
+                                        <span class="badge bg-danger">{{ progetto.giorni_mancanti }}gg</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ progetto.stato_badge_color }}">
+                                        {{ progetto.get_stato_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <i class="bi bi-calendar-x fs-2"></i>
+                        <p>Nessun evento nei prossimi 30 giorni</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# ========== WIDGET: ULTIMI PROGETTI ========== #}
+        <div class="col-md-6 mb-4">
+            <div class="dashboard-widget">
+                <div class="widget-header">
+                    <h5 class="widget-title">
+                        <i class="bi bi-clock-history text-primary me-2"></i>Ultimi Progetti Creati
+                    </h5>
+                </div>
+                <div class="table-responsive">
+                    {% if progetti_recenti %}
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Codice</th>
+                                <th>Nome</th>
+                                <th>Commerciale</th>
+                                <th>Reparti</th>
+                                <th>Creato</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for progetto in progetti_recenti %}
+                            <tr>
+                                <td>
+                                    <a href="{{ progetto.get_absolute_url }}">{{ progetto.codice }}</a>
+                                </td>
+                                <td>{{ progetto.nome_evento|truncatewords:4 }}</td>
+                                <td>{{ progetto.commerciale.get_full_name|truncatewords:2 }}</td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ progetto.reparti.count }}</span>
+                                </td>
+                                <td class="small text-muted">
+                                    {{ progetto.created_at|date:"d/m H:i" }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <p>Nessun progetto ancora creato</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {# ========== WIDGET: ENGINEERING IN CORSO ========== #}
+    <div class="dashboard-widget">
+        <div class="widget-header">
+            <h5 class="widget-title">
+                <i class="bi bi-diagram-3 text-primary me-2"></i>Engineering in Corso
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <h3 class="text-info">{{ reparti_in_engineering }}</h3>
+                        <p class="text-muted mb-0">Reparti in Studio</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <h3 class="text-success">{{ engineering_completati_settimana }}</h3>
+                        <p class="text-muted mb-0">Completati questa settimana</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center">
+                        {% if miei_progetti %}
+                        <h3 class="text-primary">{{ miei_progetti }}</h3>
+                        <p class="text-muted mb-0">Miei Progetti</p>
+                        {% else %}
+                        <p class="text-muted mb-0">Vista Admin: Tutti i progetti</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

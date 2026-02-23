@@ -1,0 +1,48 @@
+{% extends "commons_templates/base_detail.html" %}
+{% load static %}
+
+{% block title %}Reparto {{ reparto.get_tipo_reparto_display }} - {{ reparto.progetto.codice }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'progetti_eventi:progetto_list' %}">Progetti</a></li>
+<li class="breadcrumb-item"><a href="{{ reparto.progetto.get_absolute_url }}">{{ reparto.progetto.codice }}</a></li>
+<li class="breadcrumb-item active">{{ reparto.get_tipo_reparto_display }}</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-{{ reparto.icon }} me-2"></i>Reparto {{ reparto.get_tipo_reparto_display }}
+{% endblock %}
+
+{% block page_subtitle %}
+<p class="text-muted mb-0">
+    Progetto: <a href="{{ reparto.progetto.get_absolute_url }}">{{ reparto.progetto.codice }} - {{ reparto.progetto.nome_evento }}</a>
+</p>
+{% endblock %}
+
+{% block status_badge %}
+<span class="badge bg-{{ reparto.stato_globale_color }} fs-6">
+    {{ reparto.stato_globale_display }}
+</span>
+{% endblock %}
+
+{% block detail_content %}
+
+{# TODO: Implementare dettaglio completo reparto con:
+   - Form assegnazione engineering
+   - Creazione/gestione liste prodotti
+   - Visualizzazione collegamenti altre app
+#}
+
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    Vista dettagliata reparto in fase di sviluppo.
+    <br>Torna alla <a href="{{ reparto.progetto.get_absolute_url }}">vista progetto principale</a>.
+</div>
+
+{% endblock %}
+
+{% block custom_actions %}
+<a href="{{ back_url }}" class="list-group-item list-group-item-action">
+    <i class="bi bi-arrow-left"></i> Torna al Progetto
+</a>
+{% endblock %}

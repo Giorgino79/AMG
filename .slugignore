@@ -1,0 +1,15 @@
+*.md
+.git
+.gitignore
+.claude/
+venv/
+*.pyc
+__pycache__/
+db.sqlite3
+.env
+.env.example
+tests/
+*/tests.py
+pytest.ini
+.coverage
+htmlcov/

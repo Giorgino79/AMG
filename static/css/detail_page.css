@@ -1,0 +1,264 @@
+/**
+ * Stili per pagine detail con sidebar actions
+ * ModularBEF - Sistema comune template detail
+ */
+
+/* ========================================================================
+   SIDEBAR ACTIONS
+   ======================================================================== */
+
+.sidebar-actions {
+    position: sticky;
+    top: 20px;
+}
+
+.sidebar-actions .card {
+    border: none;
+    margin-bottom: 1rem;
+}
+
+.sidebar-actions .card-header {
+    border-bottom: none;
+    font-weight: 600;
+}
+
+.sidebar-actions .list-group-item {
+    border-left: none;
+    border-right: none;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.sidebar-actions .list-group-item:first-child {
+    border-top: none;
+}
+
+.sidebar-actions .list-group-item:hover {
+    background-color: #f8f9fa;
+    padding-left: 1.5rem;
+}
+
+.sidebar-actions .list-group-item i {
+    margin-right: 0.5rem;
+    width: 20px;
+    display: inline-block;
+}
+
+/* Badge allegati */
+.sidebar-actions .badge {
+    float: right;
+}
+
+/* Mini preview allegati */
+.sidebar-actions .bg-light small {
+    font-size: 0.75rem;
+}
+
+/* ========================================================================
+   MODALS
+   ======================================================================== */
+
+/* Modal Headers */
+.modal-header.bg-success,
+.modal-header.bg-info {
+    border-bottom: none;
+}
+
+/* Upload Progress */
+#uploadProgress .progress {
+    height: 25px;
+    margin-bottom: 0.5rem;
+}
+
+#uploadProgress .progress-bar {
+    font-size: 0.875rem;
+}
+
+/* Tabella Allegati */
+#allegatiTableContainer .table {
+    font-size: 0.9rem;
+}
+
+#allegatiTableContainer .table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+#allegatiTableContainer .table td {
+    vertical-align: middle;
+}
+
+/* Riga allegato hover */
+#allegatiTableBody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Icone file nella tabella */
+.allegato-icon .bi {
+    font-size: 1.5rem;
+}
+
+/* Descrizione allegato */
+.allegato-descrizione {
+    color: #6c757d;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+/* Bottoni azioni allegato */
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* ========================================================================
+   PREVIEW MODAL
+   ======================================================================== */
+
+#allegatoPreviewModal .modal-dialog {
+    max-width: 800px;
+}
+
+#allegatoPreviewBody iframe {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+}
+
+#allegatoPreviewBody img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.25rem;
+}
+
+/* ========================================================================
+   ALERTS E MESSAGGI
+   ======================================================================== */
+
+.alert-dismissible {
+    padding-right: 3rem;
+}
+
+/* Alert floating per successo */
+.position-fixed.alert {
+    min-width: 300px;
+    max-width: 400px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ========================================================================
+   BREADCRUMB
+   ======================================================================== */
+
+.breadcrumb {
+    background-color: transparent;
+    padding: 0.5rem 0;
+    margin-bottom: 1rem;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    color: #6c757d;
+}
+
+/* ========================================================================
+   RESPONSIVE
+   ======================================================================== */
+
+@media (max-width: 991.98px) {
+    /* Su mobile, sidebar va in basso */
+    .sidebar-actions {
+        position: static;
+        margin-top: 2rem;
+    }
+
+    /* Modal a tutto schermo su mobile */
+    #allegatiGestioneModal .modal-dialog {
+        margin: 0;
+        max-width: 100%;
+    }
+
+    #allegatiGestioneModal .modal-content {
+        height: 100vh;
+        border-radius: 0;
+    }
+}
+
+@media (max-width: 767.98px) {
+    /* Tabella allegati scrollabile orizzontalmente */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Nascondi colonne meno importanti su mobile */
+    #allegatiTableContainer .table th:nth-child(3),
+    #allegatiTableContainer .table td:nth-child(3),
+    #allegatiTableContainer .table th:nth-child(4),
+    #allegatiTableContainer .table td:nth-child(4) {
+        display: none;
+    }
+}
+
+/* ========================================================================
+   LOADING STATES
+   ======================================================================== */
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+#allegatiLoading {
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#noAllegatiMessage {
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#noAllegatiMessage .bi {
+    font-size: 5rem;
+}
+
+/* ========================================================================
+   CUSTOM SCROLLBAR (per tabella allegati)
+   ======================================================================== */
+
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

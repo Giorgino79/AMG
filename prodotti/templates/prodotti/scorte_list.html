@@ -1,0 +1,478 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Visualizzazione Scorte - BEF2{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'prodotti:dashboard' %}">Prodotti</a></li>
+        <li class="breadcrumb-item active">Scorte</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header con azioni -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">{{ page_title|default:"Visualizzazione Scorte" }}</h1>
+            <p class="text-muted mb-0">Monitoraggio delle scorte per categoria e stabilimento</p>
+        </div>
+        <div class="btn-group-actions">
+            <a href="{% url 'prodotti:prodotto_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Nuovo Prodotto
+            </a>
+            <a href="{% url 'prodotti:prodotto_list' %}" class="btn btn-success">
+                <i class="fas fa-boxes me-2"></i>Gestione Prodotti
+            </a>
+            <a href="{% url 'prodotti:dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistiche rapide -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card text-center">
+                <div class="card-body">
+                    <div class="stats-number text-primary">{{ stats.totale_scorte }}</div>
+                    <div class="text-muted">Scorte Totali</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card text-center">
+                <div class="card-body">
+                    <div class="stats-number text-success">{{ stats.scorte_disponibili }}</div>
+                    <div class="text-muted">Scorte Disponibili</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card text-center">
+                <div class="card-body">
+                    <div class="stats-number text-warning">{{ stats.sotto_scorta_minima }}</div>
+                    <div class="text-muted">Sotto Scorta Minima</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card text-center">
+                <div class="card-body">
+                    <div class="stats-number text-info">€{{ stats.valore_totale|floatformat:0 }}</div>
+                    <div class="text-muted">Valore Totale</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form di ricerca -->
+    <div class="search-form">
+        <form method="get" class="row g-3" id="filtri-form">
+            <div class="col-md-3">
+                <label for="categoria" class="form-label">Categoria</label>
+                <select name="categoria" id="categoria" class="form-select">
+                    <option value="">Tutte le categorie</option>
+                    {% for categoria in categorie %}
+                        <option value="{{ categoria.id }}" {% if categoria.id|slugify == categoria_selezionata %}selected{% endif %}>
+                            {{ categoria.nome_categoria }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="stabilimento" class="form-label">Stabilimento</label>
+                <select name="stabilimento" id="stabilimento" class="form-select">
+                    <option value="">Tutti gli stabilimenti</option>
+                    {% for stabilimento in stabilimenti %}
+                        <option value="{{ stabilimento.id }}" {% if stabilimento.id|slugify == stabilimento_selezionato %}selected{% endif %}>
+                            {{ stabilimento.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="solo_disponibili" id="solo_disponibili" 
+                           {% if solo_disponibili %}checked{% endif %}>
+                    <label class="form-check-label" for="solo_disponibili">
+                        Solo scorte disponibili (> 0)
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="sotto_minima" id="sotto_minima" 
+                           {% if sotto_minima %}checked{% endif %}>
+                    <label class="form-check-label" for="sotto_minima">
+                        Solo sotto scorta minima
+                    </label>
+                </div>
+            </div>
+            <div class="col-12">
+                <button type="button" class="btn btn-primary" id="applica-filtri">
+                    <i class="fas fa-search me-1"></i>Applica Filtri
+                </button>
+                <a href="{% url 'prodotti:scorte_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabella scorte -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-warehouse me-2"></i>Elenco Scorte
+            </h5>
+            <div>
+                {% if categoria_selezionata or stabilimento_selezionato or solo_disponibili or sotto_minima %}
+                    <span class="badge bg-info">Filtrato</span>
+                {% endif %}
+                <div class="btn-group btn-group-sm ms-2" role="group">
+                    <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+                        <i class="fas fa-print"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="export-csv">
+                        <i class="fas fa-download"></i> CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    <div class="card-body">
+        {% if scorte %}
+            <div class="table-responsive">
+                <table class="table table-hover" id="scorte-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Prodotto</th>
+                            <th>Categoria</th>
+                            <th>Stabilimento</th>
+                            <th class="text-center">Ubicazione</th>
+                            <th class="text-end">Disponibile</th>
+                            <th class="text-end">Riservata</th>
+                            <th class="text-end">Totale</th>
+                            <th class="text-end">Valore</th>
+                            <th class="text-center">Stato</th>
+                            <th class="text-center">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for scorta in scorte %}
+                        <tr class="{% if not scorta.prodotto.attivo %}table-secondary{% endif %}{% if scorta.bloccata %} table-warning{% endif %}">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="me-2">
+                                        {% if scorta.prodotto.immagine %}
+                                            <img src="{{ scorta.prodotto.immagine.url }}" alt="{{ scorta.prodotto.nome_prodotto }}" 
+                                                 class="rounded" width="32" height="32" style="object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-light rounded d-flex align-items-center justify-content-center text-muted" 
+                                                 style="width: 32px; height: 32px;">
+                                                <i class="fas fa-box"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">
+                                            <a href="{% url 'prodotti:prodotto_detail' scorta.prodotto.pk %}" 
+                                               class="text-decoration-none">
+                                                {{ scorta.prodotto.nome_prodotto|truncatechars:30 }}
+                                            </a>
+                                        </div>
+                                        {% if scorta.prodotto.codice_interno %}
+                                            <small class="text-muted">{{ scorta.prodotto.codice_interno }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ scorta.prodotto.categoria.nome_categoria }}</span>
+                            </td>
+                            <td>
+                                <a href="{% url 'prodotti:scorte_stabilimento' scorta.magazzino.pk %}" 
+                                   class="text-decoration-none">
+                                    {{ scorta.magazzino.nome|truncatechars:20 }}
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                {% if scorta.ubicazione %}
+                                    <small class="text-muted">
+                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                        {{ scorta.ubicazione }}
+                                    </small>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <span class="badge {% if scorta.quantita_disponibile > 0 %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ scorta.quantita_disponibile|floatformat:0 }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                {% if scorta.quantita_riservata > 0 %}
+                                    <span class="badge bg-warning">{{ scorta.quantita_riservata|floatformat:0 }}</span>
+                                {% else %}
+                                    <span class="text-muted">0</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <strong>{{ scorta.quantita_totale|floatformat:0 }}</strong>
+                            </td>
+                            <td class="text-end">
+                                <strong>€{{ scorta.valore_scorta|floatformat:2 }}</strong>
+                            </td>
+                            <td class="text-center">
+                                {% if scorta.bloccata %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-lock me-1"></i>Bloccata
+                                    </span>
+                                {% elif scorta.quantita_disponibile == 0 %}
+                                    <span class="badge bg-secondary">Vuota</span>
+                                {% elif scorta.quantita_disponibile < scorta.prodotto.scorta_minima %}
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Sotto Min.
+                                    </span>
+                                {% elif scorta.prodotto.scorta_massima > 0 and scorta.quantita_disponibile > scorta.prodotto.scorta_massima %}
+                                    <span class="badge bg-info">Sopra Max.</span>
+                                {% else %}
+                                    <span class="badge bg-success">Normale</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'prodotti:prodotto_detail' scorta.prodotto.pk %}" 
+                                       class="btn btn-outline-primary" title="Dettagli Prodotto">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'prodotti:scorte_stabilimento' scorta.magazzino.pk %}" 
+                                       class="btn btn-outline-info" title="Scorte Stabilimento">
+                                        <i class="fas fa-building"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginazione -->
+            {% if is_paginated %}
+            <nav aria-label="Paginazione scorte" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+                
+                <div class="text-center text-muted small">
+                    Pagina {{ page_obj.number }} di {{ page_obj.paginator.num_pages }} 
+                    ({{ page_obj.paginator.count }} scorte totali)
+                </div>
+            </nav>
+            {% endif %}
+
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">Nessuna scorta trovata</h4>
+                {% if categoria_selezionata or stabilimento_selezionato or solo_disponibili or sotto_minima %}
+                    <p class="text-muted">Prova a modificare i filtri di ricerca.</p>
+                    <a href="{% url 'prodotti:scorte_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-times me-1"></i>Rimuovi Tutti i Filtri
+                    </a>
+                {% else %}
+                    <p class="text-muted">Non ci sono scorte nel sistema. Inizia aggiungendo prodotti con gestione scorte attiva.</p>
+                    <a href="{% url 'prodotti:prodotto_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Crea Primo Prodotto
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Riepilogo per Stabilimento -->
+{% if scorte and not stabilimento_selezionato %}
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-chart-bar me-2"></i>
+            Riepilogo per Stabilimento
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for stabilimento in stabilimenti %}
+            {% if stabilimento.scorte.exists %}
+            <div class="col-md-4 mb-3">
+                <div class="card border-info">
+                    <div class="card-body text-center">
+                        <h6>{{ stabilimento.nome }}</h6>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="text-primary h5">{{ stabilimento.scorte.count }}</div>
+                                <small class="text-muted">Prodotti</small>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-success h5">
+                                    {{ stabilimento.scorte.aggregate.quantita_disponibile__sum|default:0|floatformat:0 }}
+                                </div>
+                                <small class="text-muted">Tot. Scorte</small>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <a href="{% url 'prodotti:scorte_stabilimento' stabilimento.pk %}" 
+                               class="btn btn-sm btn-outline-info">
+                                Dettagli
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block css %}
+<style>
+    .bg-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; }
+    .bg-success { background: linear-gradient(135deg, #48c9b0 0%, #16a085 100%) !important; }
+    .bg-warning { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important; }
+    .bg-info { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important; }
+    
+    .table-hover tbody tr:hover { background-color: rgba(0,0,0,0.03); }
+    .table-secondary { opacity: 0.7; }
+    .table-warning { background-color: rgba(255, 193, 7, 0.1); }
+    
+    @media print {
+        .btn, .pagination, .card-header .btn-group { display: none !important; }
+        .card { border: none !important; box-shadow: none !important; }
+    }
+</style>
+{% endblock %}
+
+{% block js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit on filter change
+    const selects = document.querySelectorAll('#filtri-form select');
+    const checkboxes = document.querySelectorAll('#filtri-form input[type="checkbox"]');
+    
+    selects.forEach(select => {
+        select.addEventListener('change', function() {
+            submitFilters();
+        });
+    });
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            submitFilters();
+        });
+    });
+    
+    // Applica filtri button
+    document.getElementById('applica-filtri').addEventListener('click', submitFilters);
+    
+    function submitFilters() {
+        document.getElementById('filtri-form').submit();
+    }
+    
+    // Export CSV
+    document.getElementById('export-csv').addEventListener('click', function() {
+        const table = document.getElementById('scorte-table');
+        const csv = tableToCSV(table);
+        downloadCSV(csv, 'scorte_' + new Date().toISOString().split('T')[0] + '.csv');
+    });
+    
+    function tableToCSV(table) {
+        const rows = Array.from(table.querySelectorAll('tr'));
+        return rows.map(row => {
+            const cells = Array.from(row.querySelectorAll('th, td'));
+            return cells.map(cell => {
+                let text = cell.textContent.trim();
+                // Remove extra whitespace and newlines
+                text = text.replace(/\s+/g, ' ');
+                // Escape quotes
+                text = text.replace(/"/g, '""');
+                return `"${text}"`;
+            }).join(',');
+        }).join('\n');
+    }
+    
+    function downloadCSV(csv, filename) {
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+    
+    // Tooltip per stati
+    const badges = document.querySelectorAll('.badge');
+    badges.forEach(badge => {
+        if (badge.textContent.includes('Sotto Min.')) {
+            badge.title = 'Scorta sotto il livello minimo - Riordinare';
+        } else if (badge.textContent.includes('Sopra Max.')) {
+            badge.title = 'Scorta sopra il livello massimo';
+        } else if (badge.textContent.includes('Bloccata')) {
+            badge.title = 'Scorta bloccata per inventario o altri motivi';
+        }
+    });
+});
+</script>
+{% endblock %}

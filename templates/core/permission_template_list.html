@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header con azioni -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-folder-symlink me-2"></i>{{ title }}</h2>
+            <p class="text-muted mb-0">Gestisci i template di permessi riutilizzabili</p>
+        </div>
+        <a href="{% url 'core:permission_template_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Nuovo Template
+        </a>
+    </div>
+
+    <!-- Filtri -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="filtro_attivo" class="form-label">Stato</label>
+                    <select name="attivo" id="filtro_attivo" class="form-select" onchange="this.form.submit()">
+                        <option value="">Tutti</option>
+                        <option value="1" {% if filtro_attivo == '1' %}selected{% endif %}>Solo Attivi</option>
+                        <option value="0" {% if filtro_attivo == '0' %}selected{% endif %}>Solo Disattivati</option>
+                    </select>
+                </div>
+                <div class="col-md-8 d-flex align-items-end">
+                    <button type="submit" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-funnel me-1"></i>Filtra
+                    </button>
+                    <a href="{% url 'core:permission_template_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i>Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista Template -->
+    {% if templates %}
+        <div class="row">
+            {% for template in templates %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 {% if not template.attivo %}border-secondary{% endif %}">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-folder-symlink me-2"></i>{{ template.nome }}
+                            </h5>
+                            {% if not template.attivo %}
+                                <span class="badge bg-secondary">Disattivato</span>
+                            {% else %}
+                                <span class="badge bg-success">Attivo</span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            {% if template.descrizione %}
+                                <p class="text-muted small mb-3">{{ template.descrizione|truncatewords:20 }}</p>
+                            {% else %}
+                                <p class="text-muted small fst-italic mb-3">Nessuna descrizione</p>
+                            {% endif %}
+
+                            <!-- Statistiche -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-shield-check text-primary me-2"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Permessi</small>
+                                            <strong>{{ template.get_permessi_count }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-graph-up text-success me-2"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Utilizzi</small>
+                                            <strong>{{ template.n_utilizzi }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dettagli permessi -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block mb-1">
+                                    <i class="bi bi-grid-3x3-gap me-1"></i>
+                                    CRUD: {{ template.permessi_crud.count }}
+                                </small>
+                                <small class="text-muted d-block">
+                                    <i class="bi bi-toggles me-1"></i>
+                                    Base: {{ template.permessi_base|length }}
+                                </small>
+                            </div>
+
+                            <small class="text-muted">
+                                <i class="bi bi-calendar3 me-1"></i>
+                                Creato: {{ template.created_at|date:"d/m/Y" }}
+                            </small>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'core:permission_template_detail' template.pk %}"
+                                   class="btn btn-sm btn-outline-primary flex-fill">
+                                    <i class="bi bi-eye me-1"></i>Dettagli
+                                </a>
+                                <a href="{% url 'core:permission_template_update' template.pk %}"
+                                   class="btn btn-sm btn-outline-secondary flex-fill">
+                                    <i class="bi bi-pencil me-1"></i>Modifica
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted mb-3"></i>
+                <h4>Nessun template trovato</h4>
+                <p class="text-muted mb-4">
+                    {% if filtro_attivo %}
+                        Nessun template corrisponde ai filtri selezionati.
+                    {% else %}
+                        Non hai ancora creato template di permessi.
+                    {% endif %}
+                </p>
+                <a href="{% url 'core:permission_template_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Crea il primo template
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

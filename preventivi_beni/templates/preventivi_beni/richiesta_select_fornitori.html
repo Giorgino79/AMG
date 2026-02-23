@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Seleziona Fornitori - {{ richiesta.numero }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-3">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'preventivi_beni:dashboard' %}">Preventivi Beni</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'preventivi_beni:richieste_list' %}">Richieste</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'preventivi_beni:richiesta_detail' richiesta.pk %}">{{ richiesta.numero }}</a></li>
+                    <li class="breadcrumb-item active">Seleziona Fornitori</li>
+                </ol>
+            </nav>
+            <h1>Seleziona Fornitori</h1>
+            <p class="text-muted">Richiesta: {{ richiesta.numero }} - {{ richiesta.titolo }}</p>
+        </div>
+    </div>
+
+    <!-- Info Richiesta (riepilogo) -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="alert alert-info">
+                <strong>Tipo:</strong> {{ richiesta.get_tipo_richiesta_display }}
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                <strong>Categoria:</strong> {{ richiesta.get_categoria_display|default:"-" }}
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                <strong>Voci:</strong> {{ richiesta.numero_voci }}
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                <strong>Importo Stimato:</strong> €{{ richiesta.importo_totale_stimato|floatformat:2 }}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Form Selezione -->
+        <div class="col-md-8">
+            <form method="post" id="selezioneFornitoriForm">
+                {% csrf_token %}
+
+                <!-- Fornitori Esistenti -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Fornitori Accreditati</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ form.fornitori_esistenti.id_for_label }}" class="form-label">
+                                {{ form.fornitori_esistenti.label }}
+                            </label>
+                            {{ form.fornitori_esistenti }}
+                            <div class="form-text">{{ form.fornitori_esistenti.help_text }}</div>
+                            {% if form.fornitori_esistenti.errors %}
+                            <div class="alert alert-danger mt-2">{{ form.fornitori_esistenti.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nuovi Fornitori -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Aggiungi Nuovi Fornitori Non Accreditati</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">
+                            Puoi inviare la richiesta anche a fornitori non ancora accreditati nel sistema.
+                            Compila nome e email per ciascun nuovo fornitore.
+                        </p>
+
+                        <!-- Nuovo Fornitore 1 -->
+                        <div class="row mb-3 pb-3 border-bottom">
+                            <div class="col-md-6">
+                                <label for="{{ form.fornitore_create_1_nome.id_for_label }}" class="form-label">
+                                    <strong>Nuovo Fornitore 1</strong> - {{ form.fornitore_create_1_nome.label }}
+                                </label>
+                                {{ form.fornitore_create_1_nome }}
+                                {% if form.fornitore_create_1_nome.errors %}
+                                <div class="alert alert-danger mt-2">{{ form.fornitore_create_1_nome.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.fornitore_create_1_email.id_for_label }}" class="form-label">
+                                    {{ form.fornitore_create_1_email.label }}
+                                </label>
+                                {{ form.fornitore_create_1_email }}
+                                {% if form.fornitore_create_1_email.errors %}
+                                <div class="alert alert-danger mt-2">{{ form.fornitore_create_1_email.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Nuovo Fornitore 2 -->
+                        <div class="row mb-3 pb-3 border-bottom">
+                            <div class="col-md-6">
+                                <label for="{{ form.fornitore_create_2_nome.id_for_label }}" class="form-label">
+                                    <strong>Nuovo Fornitore 2</strong> - {{ form.fornitore_create_2_nome.label }}
+                                </label>
+                                {{ form.fornitore_create_2_nome }}
+                                {% if form.fornitore_create_2_nome.errors %}
+                                <div class="alert alert-danger mt-2">{{ form.fornitore_create_2_nome.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.fornitore_create_2_email.id_for_label }}" class="form-label">
+                                    {{ form.fornitore_create_2_email.label }}
+                                </label>
+                                {{ form.fornitore_create_2_email }}
+                                {% if form.fornitore_create_2_email.errors %}
+                                <div class="alert alert-danger mt-2">{{ form.fornitore_create_2_email.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Nuovo Fornitore 3 -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.fornitore_create_3_nome.id_for_label }}" class="form-label">
+                                    <strong>Nuovo Fornitore 3</strong> - {{ form.fornitore_create_3_nome.label }}
+                                </label>
+                                {{ form.fornitore_create_3_nome }}
+                                {% if form.fornitore_create_3_nome.errors %}
+                                <div class="alert alert-danger mt-2">{{ form.fornitore_create_3_nome.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.fornitore_create_3_email.id_for_label }}" class="form-label">
+                                    {{ form.fornitore_create_3_email.label }}
+                                </label>
+                                {{ form.fornitore_create_3_email }}
+                                {% if form.fornitore_create_3_email.errors %}
+                                <div class="alert alert-danger mt-2">{{ form.fornitore_create_3_email.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Errori generali del form -->
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <!-- Azioni -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'preventivi_beni:richiesta_detail' richiesta.pk %}" class="btn btn-secondary">
+                                Annulla
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Conferma Selezione e Prosegui
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sidebar - Fornitori già selezionati -->
+        <div class="col-md-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">Fornitori Già Selezionati</h6>
+                </div>
+                <div class="card-body">
+                    {% if fornitori_selezionati %}
+                    <ul class="list-group list-group-flush">
+                        {% for fornitore in fornitori_selezionati %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <div>
+                                {{ fornitore.ragione_sociale }}
+                                {% if not fornitore.attivo %}
+                                <span class="badge bg-warning text-dark">Non accreditato</span>
+                                {% endif %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted small mb-0">Nessun fornitore selezionato ancora</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Info Utile -->
+            <div class="card mt-3">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">Info</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-2"><strong>Cosa succede dopo?</strong></p>
+                    <ol class="small mb-0">
+                        <li>Confermi la selezione dei fornitori</li>
+                        <li>Rivedi e invii le richieste via email</li>
+                        <li>Raccogli le offerte ricevute</li>
+                        <li>Valuti e approvi l'offerta migliore</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

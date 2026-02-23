@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Affidamenti Mezzi{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'automezzi:dashboard' %}">Automezzi</a></li>
+    <li class="breadcrumb-item active">Affidamenti</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-handshake me-2"></i>Affidamenti Mezzi
+            </h1>
+            <p class="text-muted mb-0">Gestione affidamenti mezzi ai dipendenti</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'automezzi:affidamento_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Nuovo Affidamento
+            </a>
+            <a href="{% url 'automezzi:dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Affidamenti in essere -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+            <i class="fas fa-clock me-2"></i>
+            <h5 class="mb-0">Affidamenti in essere</h5>
+            <span class="badge bg-light text-primary ms-2">{{ affidamenti_attivi|length }}</span>
+        </div>
+        <div class="card-body">
+            {% if affidamenti_attivi %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Dipendente</th>
+                            <th>Automezzo</th>
+                            <th>Periodo</th>
+                            <th>Scopo</th>
+                            <th>Stato</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for aff in affidamenti_attivi %}
+                        <tr>
+                            <td>
+                                <i class="fas fa-user me-1 text-muted"></i>
+                                {{ aff.user.get_full_name|default:aff.user.username }}
+                            </td>
+                            <td>
+                                <i class="fas fa-car me-1 text-muted"></i>
+                                {{ aff.automezzo.targa }} - {{ aff.automezzo.marca }} {{ aff.automezzo.modello }}
+                            </td>
+                            <td>{{ aff.data_inizio|date:"d/m/Y" }} → {{ aff.data_fine|date:"d/m/Y" }}</td>
+                            <td>{{ aff.scopo_viaggio|truncatechars:40 }}</td>
+                            <td>
+                                {% if aff.stato == 'in_attesa' %}
+                                    <span class="badge bg-warning">In attesa</span>
+                                {% elif aff.stato == 'accettato' %}
+                                    <span class="badge bg-info">Accettato</span>
+                                {% elif aff.stato == 'in_corso' %}
+                                    <span class="badge bg-primary">In corso</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'automezzi:affidamento_detail' aff.pk %}" class="btn btn-sm btn-outline-primary" title="Dettaglio">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if aff.stato == 'accettato' or aff.stato == 'in_corso' %}
+                                <a href="{% url 'automezzi:affidamento_rientro' aff.pk %}" class="btn btn-sm btn-outline-success" title="Registra rientro">
+                                    <i class="fas fa-undo"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <p class="mb-0">Nessun affidamento in essere al momento.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Ultimi 5 affidamenti completati -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-success text-white d-flex align-items-center">
+            <i class="fas fa-check-circle me-2"></i>
+            <h5 class="mb-0">Ultimi affidamenti completati</h5>
+        </div>
+        <div class="card-body">
+            {% if affidamenti_completati %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Dipendente</th>
+                            <th>Automezzo</th>
+                            <th>Periodo</th>
+                            <th>Scopo</th>
+                            <th>Km percorsi</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for aff in affidamenti_completati %}
+                        <tr>
+                            <td>
+                                <i class="fas fa-user me-1 text-muted"></i>
+                                {{ aff.user.get_full_name|default:aff.user.username }}
+                            </td>
+                            <td>
+                                <i class="fas fa-car me-1 text-muted"></i>
+                                {{ aff.automezzo.targa }} - {{ aff.automezzo.marca }} {{ aff.automezzo.modello }}
+                            </td>
+                            <td>{{ aff.data_inizio|date:"d/m/Y" }} → {{ aff.data_fine|date:"d/m/Y" }}</td>
+                            <td>{{ aff.scopo_viaggio|truncatechars:40 }}</td>
+                            <td>
+                                {% if aff.km_finali and aff.km_iniziali %}
+                                    {{ aff.km_finali|add:"-"|add:aff.km_iniziali }} km
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'automezzi:affidamento_detail' aff.pk %}" class="btn btn-sm btn-outline-primary" title="Dettaglio">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-inbox fa-2x mb-2"></i>
+                <p class="mb-0">Nessun affidamento completato.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Ricerca affidamenti -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="fas fa-search me-2"></i>Ricerca Affidamenti</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="q" class="form-label">Username / Nome / Cognome</label>
+                    <input type="text" class="form-control" id="q" name="q"
+                           value="{{ q }}" placeholder="Es. giorgio, Cicero...">
+                </div>
+                <div class="col-md-3">
+                    <label for="targa" class="form-label">Targa</label>
+                    <input type="text" class="form-control" id="targa" name="targa"
+                           value="{{ targa_search }}" placeholder="Es. AB123CD">
+                </div>
+                <div class="col-md-2">
+                    <label for="data_da" class="form-label">Da</label>
+                    <input type="date" class="form-control" id="data_da" name="data_da" value="{{ data_da }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="data_a" class="form-label">A</label>
+                    <input type="date" class="form-control" id="data_a" name="data_a" value="{{ data_a }}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-dark w-100">
+                        <i class="fas fa-search me-1"></i>Cerca
+                    </button>
+                </div>
+            </form>
+            {% if has_search %}
+            <div class="mt-2">
+                <a href="{% url 'automezzi:affidamento_list' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>Resetta filtri
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Risultati ricerca -->
+    {% if has_search %}
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white d-flex align-items-center">
+            <i class="fas fa-list me-2"></i>
+            <h5 class="mb-0">Risultati ricerca</h5>
+            <span class="badge bg-light text-dark ms-2">{{ risultati_ricerca|length }}</span>
+        </div>
+        <div class="card-body">
+            {% if risultati_ricerca %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Dipendente</th>
+                            <th>Automezzo</th>
+                            <th>Periodo</th>
+                            <th>Scopo</th>
+                            <th>Stato</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for aff in risultati_ricerca %}
+                        <tr>
+                            <td>
+                                <i class="fas fa-user me-1 text-muted"></i>
+                                {{ aff.user.get_full_name|default:aff.user.username }}
+                            </td>
+                            <td>
+                                <i class="fas fa-car me-1 text-muted"></i>
+                                {{ aff.automezzo.targa }} - {{ aff.automezzo.marca }} {{ aff.automezzo.modello }}
+                            </td>
+                            <td>{{ aff.data_inizio|date:"d/m/Y" }} → {{ aff.data_fine|date:"d/m/Y" }}</td>
+                            <td>{{ aff.scopo_viaggio|truncatechars:40 }}</td>
+                            <td>
+                                {% if aff.stato == 'in_attesa' %}
+                                    <span class="badge bg-warning">In attesa</span>
+                                {% elif aff.stato == 'accettato' %}
+                                    <span class="badge bg-info">Accettato</span>
+                                {% elif aff.stato == 'in_corso' %}
+                                    <span class="badge bg-primary">In corso</span>
+                                {% elif aff.stato == 'completato' %}
+                                    <span class="badge bg-success">Completato</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'automezzi:affidamento_detail' aff.pk %}" class="btn btn-sm btn-outline-primary" title="Dettaglio">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if aff.stato == 'accettato' or aff.stato == 'in_corso' %}
+                                <a href="{% url 'automezzi:affidamento_rientro' aff.pk %}" class="btn btn-sm btn-outline-success" title="Registra rientro">
+                                    <i class="fas fa-undo"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-search fa-2x mb-2"></i>
+                <p class="mb-0">Nessun risultato trovato per i criteri di ricerca specificati.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

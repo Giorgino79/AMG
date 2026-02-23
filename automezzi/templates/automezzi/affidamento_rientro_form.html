@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Rientro Mezzo {{ object.automezzo.targa }}{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'automezzi:dashboard' %}">Automezzi</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'automezzi:affidamento_list' %}">Affidamenti</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'automezzi:affidamento_detail' object.pk %}">{{ object.automezzo.targa }}</a></li>
+    <li class="breadcrumb-item active">Rientro</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-undo me-2"></i>Rientro Mezzo {{ object.automezzo.targa }}
+            </h1>
+            <p class="text-muted mb-0">Registra il rientro del mezzo affidato a {{ object.user.get_full_name|default:object.user.username }}</p>
+        </div>
+        <a href="{% url 'automezzi:affidamento_detail' object.pk %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Torna al Dettaglio
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <!-- Riepilogo affidamento -->
+                    <div class="alert alert-light border mb-4">
+                        <h6><i class="fas fa-info-circle me-2"></i>Riepilogo Affidamento</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small><strong>Dipendente:</strong> {{ object.user.get_full_name|default:object.user.username }}</small><br>
+                                <small><strong>Mezzo:</strong> {{ object.automezzo.targa }} - {{ object.automezzo.marca }} {{ object.automezzo.modello }}</small>
+                            </div>
+                            <div class="col-md-6">
+                                <small><strong>Periodo:</strong> {{ object.data_inizio|date:"d/m/Y" }} → {{ object.data_fine|date:"d/m/Y" }}</small><br>
+                                <small><strong>Km Iniziali:</strong> {{ object.km_iniziali }}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i>Errori:</h5>
+                        {{ form.errors }}
+                    </div>
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.km_finali.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-tachometer-alt me-2 text-info"></i>Km Finali *
+                            </label>
+                            <input type="number" name="{{ form.km_finali.name }}"
+                                   class="form-control{% if form.km_finali.errors %} is-invalid{% endif %}"
+                                   id="{{ form.km_finali.id_for_label }}"
+                                   value="{{ form.km_finali.value|default:'' }}" min="{{ object.km_iniziali }}" required>
+                            {% if form.km_finali.errors %}<div class="invalid-feedback">{{ form.km_finali.errors.0 }}</div>{% endif %}
+                            <div class="form-text">Km iniziali: {{ object.km_iniziali }}</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.video_rientro.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-video me-2 text-success"></i>Video Stato Vettura al Rientro
+                            </label>
+                            <input type="file" name="{{ form.video_rientro.name }}"
+                                   class="form-control{% if form.video_rientro.errors %} is-invalid{% endif %}"
+                                   id="{{ form.video_rientro.id_for_label }}"
+                                   accept="video/*">
+                            {% if form.video_rientro.errors %}<div class="invalid-feedback">{{ form.video_rientro.errors.0 }}</div>{% endif %}
+                            <div class="form-text">Video per documentare lo stato della vettura al rientro</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.note_rientro.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-sticky-note me-2 text-muted"></i>Note Rientro
+                            </label>
+                            <textarea name="{{ form.note_rientro.name }}"
+                                      class="form-control{% if form.note_rientro.errors %} is-invalid{% endif %}"
+                                      id="{{ form.note_rientro.id_for_label }}" rows="3"
+                                      placeholder="Note sul rientro, eventuali danni, problemi riscontrati...">{{ form.note_rientro.value|default:'' }}</textarea>
+                            {% if form.note_rientro.errors %}<div class="invalid-feedback">{{ form.note_rientro.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'automezzi:affidamento_detail' object.pk %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Annulla
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check-circle me-2"></i>Registra Rientro
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

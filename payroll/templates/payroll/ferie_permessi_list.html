@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Ferie e Permessi Payroll - {{ user_obj.get_full_name }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'users:user_list' %}">Dipendenti</a></li>
+<li class="breadcrumb-item"><a href="{% url 'users:user_detail' user_obj.pk %}">{{ user_obj.get_full_name }}</a></li>
+<li class="breadcrumb-item active">Ferie e Permessi Payroll</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-calendar-check me-2"></i>Ferie e Permessi Payroll - Anno {{ anno }}</h2>
+            <p class="text-muted">Dipendente: <strong>{{ user_obj.get_full_name }}</strong></p>
+        </div>
+    </div>
+
+    {% if ferie_permessi %}
+    <!-- Cards Riepilogo -->
+    <div class="row mb-4">
+        {% for fp in ferie_permessi %}
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100 {% if fp.tipo == 'FERIE' %}border-primary{% elif fp.tipo == 'ROL' %}border-success{% else %}border-info{% endif %}">
+                <div class="card-header {% if fp.tipo == 'FERIE' %}bg-primary text-white{% elif fp.tipo == 'ROL' %}bg-success text-white{% else %}bg-info text-white{% endif %}">
+                    <h5 class="mb-0">
+                        <i class="bi {% if fp.tipo == 'FERIE' %}bi-beach{% elif fp.tipo == 'ROL' %}bi-clock-history{% else %}bi-calendar-event{% endif %} me-2"></i>
+                        {{ fp.get_tipo_display }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col">
+                            <small class="text-muted d-block">Maturate</small>
+                            <h4 class="mb-0 text-primary">{{ fp.ore_maturate|floatformat:2 }}h</h4>
+                        </div>
+                        <div class="col">
+                            <small class="text-muted d-block">Godute</small>
+                            <h4 class="mb-0 text-danger">{{ fp.ore_godute|floatformat:2 }}h</h4>
+                        </div>
+                    </div>
+
+                    {% if fp.ore_residuo_anno_precedente > 0 %}
+                    <div class="alert alert-warning py-2 mb-3">
+                        <small><i class="bi bi-info-circle me-1"></i>Residuo anno prec.: {{ fp.ore_residuo_anno_precedente|floatformat:2 }}h</small>
+                    </div>
+                    {% endif %}
+
+                    <div class="border-top pt-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>Residue:</strong>
+                            {% if fp.ore_residue > 0 %}
+                            <h3 class="mb-0 text-success">{{ fp.ore_residue|floatformat:2 }}h</h3>
+                            {% elif fp.ore_residue < 0 %}
+                            <h3 class="mb-0 text-danger">{{ fp.ore_residue|floatformat:2 }}h</h3>
+                            {% else %}
+                            <h3 class="mb-0 text-muted">0.00h</h3>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Tabella Dettagliata -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-table me-2"></i>Dettaglio Contatori</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Tipo</th>
+                            <th class="text-center">Anno</th>
+                            <th class="text-end">Residuo Anno Prec.</th>
+                            <th class="text-end">Maturate</th>
+                            <th class="text-end">Godute</th>
+                            <th class="text-end">Residue</th>
+                            <th class="text-center">Stato</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fp in ferie_permessi %}
+                        <tr>
+                            <td>
+                                <i class="bi {% if fp.tipo == 'FERIE' %}bi-beach text-primary{% elif fp.tipo == 'ROL' %}bi-clock-history text-success{% else %}bi-calendar-event text-info{% endif %} me-2"></i>
+                                <strong>{{ fp.get_tipo_display }}</strong>
+                            </td>
+                            <td class="text-center">{{ fp.anno }}</td>
+                            <td class="text-end">{{ fp.ore_residuo_anno_precedente|floatformat:2 }}h</td>
+                            <td class="text-end">{{ fp.ore_maturate|floatformat:2 }}h</td>
+                            <td class="text-end text-danger">{{ fp.ore_godute|floatformat:2 }}h</td>
+                            <td class="text-end">
+                                <strong class="{% if fp.ore_residue > 0 %}text-success{% elif fp.ore_residue < 0 %}text-danger{% else %}text-muted{% endif %}">
+                                    {{ fp.ore_residue|floatformat:2 }}h
+                                </strong>
+                            </td>
+                            <td class="text-center">
+                                {% if fp.ore_residue > 10 %}
+                                <span class="badge bg-success">Disponibili</span>
+                                {% elif fp.ore_residue > 0 %}
+                                <span class="badge bg-warning text-dark">Poche</span>
+                                {% elif fp.ore_residue == 0 %}
+                                <span class="badge bg-secondary">Esaurite</span>
+                                {% else %}
+                                <span class="badge bg-danger">Negative!</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Nessun Dato -->
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        Nessun dato di ferie/permessi trovato per l'anno {{ anno }}.
+        <br><small>I contatori vengono creati automaticamente all'elaborazione della prima busta paga.</small>
+    </div>
+    {% endif %}
+
+    <!-- Info -->
+    <div class="alert alert-primary mt-4">
+        <i class="bi bi-lightbulb me-2"></i>
+        <strong>Come funziona:</strong>
+        <ul class="mb-0 mt-2">
+            <li><strong>Maturazione</strong>: Le ore maturano automaticamente ogni mese all'elaborazione della busta paga</li>
+            <li><strong>Utilizzo</strong>: Le ore godute vengono scalate quando si inseriscono assenze nella busta paga</li>
+            <li><strong>Residuo</strong>: Ore disponibili = Maturate + Residuo anno prec. - Godute</li>
+        </ul>
+    </div>
+
+    <!-- Pulsante Indietro -->
+    <div class="mt-4">
+        <a href="{% url 'users:user_detail' user_obj.pk %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Torna al Profilo
+        </a>
+    </div>
+</div>
+{% endblock %}

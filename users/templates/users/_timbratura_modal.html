@@ -1,0 +1,177 @@
+{# Modal Timbratura Veloce #}
+<div class="modal fade" id="timbraturaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-clock-history me-2"></i>Timbratura Veloce
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="timbraturaForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Tipo</label>
+                        <select name="tipo" id="tipoTimbratura" class="form-select form-select-lg" required onchange="toggleChiudiGiornataBtn()">
+                            <option value="">Seleziona...</option>
+                            <option value="ingresso">Ingresso</option>
+                            <option value="uscita">Uscita</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Turno</label>
+                        <select name="turno" class="form-select form-select-lg" required>
+                            <option value="">Seleziona...</option>
+                            <option value="mattina">Mattina</option>
+                            <option value="pomeriggio">Pomeriggio</option>
+                            <option value="notte">Notte</option>
+                        </select>
+                    </div>
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Data e ora saranno registrate automaticamente
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-primary" onclick="submitTimbratura()">
+                    <i class="bi bi-check-circle me-1"></i>Timbra
+                </button>
+                <button type="button" id="chiudiGiornataBtn" class="btn btn-danger d-none" onclick="submitTimbraturaEChiudi()">
+                    <i class="bi bi-check-circle-fill me-1"></i>Timbra e Chiudi Giornata
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleChiudiGiornataBtn() {
+    const tipoSelect = document.getElementById('tipoTimbratura');
+    const chiudiBtn = document.getElementById('chiudiGiornataBtn');
+
+    if (tipoSelect.value === 'uscita') {
+        chiudiBtn.classList.remove('d-none');
+    } else {
+        chiudiBtn.classList.add('d-none');
+    }
+}
+
+function submitTimbratura() {
+    const form = document.getElementById('timbraturaForm');
+    const formData = new FormData(form);
+
+    fetch('{% url "users:timbratura_quick" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Chiudi modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('timbraturaModal'));
+            modal.hide();
+
+            // Mostra messaggio successo
+            showToast('success', data.message);
+
+            // Reset form
+            form.reset();
+            toggleChiudiGiornataBtn();
+        } else {
+            showToast('error', 'Errore nella timbratura');
+        }
+    })
+    .catch(error => {
+        showToast('error', 'Errore di connessione');
+    });
+}
+
+function submitTimbraturaEChiudi() {
+    const form = document.getElementById('timbraturaForm');
+    const formData = new FormData(form);
+
+    // Prima timbra
+    fetch('{% url "users:timbratura_quick" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Poi chiudi giornata
+            return fetch('{% url "users:chiudi_giornata" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                }
+            });
+        } else {
+            throw new Error('Errore nella timbratura');
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Chiudi modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('timbraturaModal'));
+            modal.hide();
+
+            // Mostra messaggio successo
+            showToast('success', data.message);
+
+            // Reset form
+            form.reset();
+            toggleChiudiGiornataBtn();
+
+            // Ricarica la pagina dopo 1.5 secondi
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast('error', 'Errore nella chiusura giornata: ' + (data.error || 'Errore sconosciuto'));
+        }
+    })
+    .catch(error => {
+        showToast('error', 'Errore: ' + error.message);
+    });
+}
+
+function showToast(type, message) {
+    // Toast Bootstrap
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    const toastElement = toastContainer.lastElementChild;
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastElement.remove();
+    });
+}
+</script>

@@ -1,0 +1,238 @@
+{% extends "commons_templates/base_detail.html" %}
+{% load static %}
+{% load allegati_tags %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'mail:dashboard' %}">Mail</a></li>
+<li class="breadcrumb-item"><a href="{% url 'mail:promemoria_list' %}">Promemoria</a></li>
+<li class="breadcrumb-item active">{{ promemoria.titolo }}</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-bell-fill"></i> {{ promemoria.titolo }}
+{% endblock %}
+
+{% block page_subtitle %}
+<p class="text-muted mb-0">
+    <small>
+        Creato il {{ promemoria.created_at|date:"d/m/Y H:i" }}
+        {% if promemoria.created_by %}
+        da {{ promemoria.created_by.get_full_name|default:promemoria.created_by.username }}
+        {% endif %}
+    </small>
+</p>
+{% endblock %}
+
+{% block status_badge %}
+<div>
+    <!-- Badge priorità -->
+    {% if promemoria.priorita == 'urgente' %}
+    <span class="badge bg-danger fs-6 me-2">
+        <i class="bi bi-exclamation-triangle-fill"></i> URGENTE
+    </span>
+    {% elif promemoria.priorita == 'alta' %}
+    <span class="badge bg-warning text-dark fs-6 me-2">
+        <i class="bi bi-exclamation-circle-fill"></i> Alta Priorità
+    </span>
+    {% elif promemoria.priorita == 'media' %}
+    <span class="badge bg-info fs-6 me-2">
+        <i class="bi bi-info-circle-fill"></i> Media Priorità
+    </span>
+    {% else %}
+    <span class="badge bg-secondary fs-6 me-2">
+        <i class="bi bi-dash-circle-fill"></i> Bassa Priorità
+    </span>
+    {% endif %}
+
+    <!-- Badge stato -->
+    {% if promemoria.stato == 'completed' %}
+    <span class="badge bg-success fs-6">
+        <i class="bi bi-check-circle-fill"></i> Completato
+    </span>
+    {% elif promemoria.stato == 'in_progress' %}
+    <span class="badge bg-primary fs-6">
+        <i class="bi bi-hourglass-split"></i> In Corso
+    </span>
+    {% elif promemoria.stato == 'cancelled' %}
+    <span class="badge bg-dark fs-6">
+        <i class="bi bi-x-circle-fill"></i> Annullato
+    </span>
+    {% else %}
+    <span class="badge bg-secondary fs-6">
+        <i class="bi bi-clock-fill"></i> In Attesa
+    </span>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block detail_content %}
+<!-- Descrizione -->
+{% if promemoria.descrizione %}
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-file-text"></i> Descrizione
+    </h5>
+    <div class="text-muted">{{ promemoria.descrizione|linebreaks }}</div>
+</div>
+{% endif %}
+
+<!-- Informazioni -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h5 class="border-bottom pb-2 mb-3">
+            <i class="bi bi-info-circle"></i> Informazioni
+        </h5>
+        <table class="table table-sm">
+            <tbody>
+                <tr>
+                    <th style="width: 40%;">Stato:</th>
+                    <td>
+                        {% if promemoria.stato == 'completed' %}
+                        <span class="badge bg-success">Completato</span>
+                        {% elif promemoria.stato == 'in_progress' %}
+                        <span class="badge bg-primary">In Corso</span>
+                        {% elif promemoria.stato == 'cancelled' %}
+                        <span class="badge bg-dark">Annullato</span>
+                        {% else %}
+                        <span class="badge bg-secondary">In Attesa</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Priorità:</th>
+                    <td>
+                        {% if promemoria.priorita == 'urgente' %}
+                        <span class="badge bg-danger">Urgente</span>
+                        {% elif promemoria.priorita == 'alta' %}
+                        <span class="badge bg-warning text-dark">Alta</span>
+                        {% elif promemoria.priorita == 'media' %}
+                        <span class="badge bg-info">Media</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Bassa</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if promemoria.data_scadenza %}
+                <tr>
+                    <th>Scadenza:</th>
+                    <td>
+                        <i class="bi bi-calendar-event text-danger"></i>
+                        {{ promemoria.data_scadenza|date:"d/m/Y H:i" }}
+                    </td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <th>Creato il:</th>
+                    <td>{{ promemoria.created_at|date:"d/m/Y H:i" }}</td>
+                </tr>
+                {% if promemoria.updated_at != promemoria.created_at %}
+                <tr>
+                    <th>Modificato il:</th>
+                    <td>{{ promemoria.updated_at|date:"d/m/Y H:i" }}</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="col-md-6">
+        <h5 class="border-bottom pb-2 mb-3">
+            <i class="bi bi-bell"></i> Notifiche
+        </h5>
+        <table class="table table-sm">
+            <tbody>
+                <tr>
+                    <th style="width: 50%;">Notifica Email:</th>
+                    <td>
+                        {% if promemoria.notifica_email %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle"></i> Attiva
+                        </span>
+                        {% else %}
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-x-circle"></i> Disattiva
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if promemoria.notifica_email and promemoria.notifica_giorni_prima %}
+                <tr>
+                    <th>Notifica prima:</th>
+                    <td>
+                        {{ promemoria.notifica_giorni_prima }} giorni prima della scadenza
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Tags -->
+{% if promemoria.tags %}
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-tags-fill"></i> Tags
+    </h5>
+    <div>
+        {% for tag in promemoria.tags %}
+        <span class="badge bg-light text-dark border me-2 mb-2">
+            <i class="bi bi-tag-fill"></i> {{ tag }}
+        </span>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Allegati inline (opzionale) -->
+{% if promemoria.ha_allegati %}
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-paperclip"></i> Allegati ({{ promemoria.conta_allegati }})
+    </h5>
+    <div class="list-group">
+        {% for allegato in promemoria.allegati|slice:":5" %}
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <i class="{{ allegato|file_icon_class }} fs-4 me-2"></i>
+                <strong>{{ allegato.nome_originale }}</strong>
+                {% if allegato.descrizione %}
+                <br><small class="text-muted ms-5">{{ allegato.descrizione }}</small>
+                {% endif %}
+            </div>
+            <div>
+                <small class="text-muted me-3">{{ allegato.dimensione_human }}</small>
+                <a href="{{ allegato.file.url }}" class="btn btn-sm btn-outline-primary" download>
+                    <i class="bi bi-download"></i> Scarica
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+        {% if promemoria.conta_allegati > 5 %}
+        <div class="list-group-item text-center text-muted">
+            <small>...e altri {{ promemoria.conta_allegati|add:"-5" }} allegati</small>
+            <button type="button"
+                    class="btn btn-sm btn-link"
+                    data-bs-toggle="modal"
+                    data-bs-target="#allegatiGestioneModal"
+                    data-content-type="{{ content_type_id }}"
+                    data-object-id="{{ promemoria.pk }}"
+                    data-object-name="{{ promemoria }}">
+                Vedi tutti
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block custom_actions %}
+<!-- Azione completamento promemoria -->
+{% if promemoria.stato != 'completed' %}
+<a href="{% url 'mail:promemoria_complete' promemoria.id %}"
+   class="list-group-item list-group-item-action text-success">
+    <i class="bi bi-check-circle-fill"></i> Segna come Completato
+</a>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Dashboard Utenze{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'stabilimenti:list' %}">Stabilimenti</a></li>
+<li class="breadcrumb-item active">Dashboard Utenze</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard Utenze
+        </h1>
+        <div class="btn-group">
+            <a href="{% url 'stabilimenti:ricerca_utenze' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-search me-1"></i>Ricerca Avanzata
+            </a>
+            <a href="{% url 'stabilimenti:scadenze' %}" class="btn btn-outline-warning">
+                <i class="bi bi-clock me-1"></i>Scadenze
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistiche rapide -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-cash-stack me-2"></i>Totale {{ anno_corrente }}
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat text-success">
+                        &euro;{% if stats_generali.totale_anno %}{{ stats_generali.totale_anno|floatformat:0|intcomma }}{% else %}0{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header second-color">
+                    <i class="bi bi-graph-up me-2"></i>Media Mensile
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat text-primary">
+                        &euro;{% if stats_generali.media_mensile %}{{ stats_generali.media_mensile|floatformat:0|intcomma }}{% else %}0{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header third-color">
+                    <i class="bi bi-receipt me-2"></i>Fatture Registrate
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat">{{ stats_generali.count_fatture|default:0 }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header fourth-color">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Scadenze Urgenti
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat text-danger">{{ scadenze_urgenti|default:0 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonna sinistra: Costi per Stabilimento -->
+        <div class="col-lg-8">
+            <div class="dashboard-widget mb-4">
+                <div class="widget-header">
+                    <h5 class="widget-title">
+                        <i class="bi bi-building text-primary me-2"></i>
+                        Costi per Stabilimento ({{ anno_corrente }})
+                    </h5>
+                </div>
+
+                {% if costi_per_stabilimento %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Stabilimento</th>
+                                <th>Codice</th>
+                                <th class="text-end">Importo</th>
+                                <th>% Totale</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stabilimento, costo in costi_per_stabilimento.items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ stabilimento.nome }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ stabilimento.citta }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ stabilimento.codice_stabilimento }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <strong>&euro;{{ costo|floatformat:0|intcomma }}</strong>
+                                </td>
+                                <td>
+                                    {% widthratio costo stats_generali.totale_anno 100 as percentuale %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ percentuale }}%"></div>
+                                        </div>
+                                        <small>{{ percentuale }}%</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="{% url 'stabilimenti:utenze_stabilimento' stabilimento_pk=stabilimento.pk %}"
+                                       class="btn btn-sm btn-outline-primary" title="Dettagli utenze">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-bar-chart fs-1 d-block mb-3"></i>
+                    <p>Nessun dato disponibile per l'anno corrente</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Ripartizione per Tipo Utenza -->
+            {% if stats_per_tipo %}
+            <div class="dashboard-widget">
+                <div class="widget-header">
+                    <h5 class="widget-title">
+                        <i class="bi bi-pie-chart text-info me-2"></i>
+                        Ripartizione per Tipo Utenza
+                    </h5>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Tipo Utenza</th>
+                                <th class="text-end">Importo</th>
+                                <th>% Totale</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tipo, importo in stats_per_tipo.items %}
+                            <tr>
+                                <td>
+                                    {% if 'Elettrica' in tipo %}
+                                        <i class="bi bi-lightning-charge text-warning me-2"></i>
+                                    {% elif 'Gas' in tipo %}
+                                        <i class="bi bi-fire text-danger me-2"></i>
+                                    {% elif 'Acqua' in tipo %}
+                                        <i class="bi bi-droplet text-info me-2"></i>
+                                    {% elif 'Telefon' in tipo %}
+                                        <i class="bi bi-phone text-success me-2"></i>
+                                    {% elif 'Rifiuti' in tipo %}
+                                        <i class="bi bi-trash3 text-secondary me-2"></i>
+                                    {% else %}
+                                        <i class="bi bi-gear text-dark me-2"></i>
+                                    {% endif %}
+                                    <strong>{{ tipo }}</strong>
+                                </td>
+                                <td class="text-end">
+                                    <strong>&euro;{{ importo|floatformat:0|intcomma }}</strong>
+                                </td>
+                                <td>
+                                    {% widthratio importo stats_generali.totale_anno 100 as percentuale %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                            <div class="progress-bar {% if 'Elettrica' in tipo %}bg-warning{% elif 'Gas' in tipo %}bg-danger{% elif 'Acqua' in tipo %}bg-info{% elif 'Telefon' in tipo %}bg-success{% elif 'Rifiuti' in tipo %}bg-secondary{% else %}bg-dark{% endif %}"
+                                                 role="progressbar" style="width: {{ percentuale }}%"></div>
+                                        </div>
+                                        <small>{{ percentuale }}%</small>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Colonna destra: Scadenze e Azioni -->
+        <div class="col-lg-4">
+            <!-- Prossime Scadenze -->
+            <div class="dashboard-widget mb-4">
+                <div class="widget-header">
+                    <h5 class="widget-title">
+                        <i class="bi bi-clock text-warning me-2"></i>
+                        Prossime Scadenze
+                    </h5>
+                </div>
+
+                {% if prossime_scadenze %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <tbody>
+                            {% for scadenza in prossime_scadenze %}
+                            <tr>
+                                <td>
+                                    {% if scadenza.causale == 'energia_elettrica' %}
+                                        <i class="bi bi-lightning-charge text-warning"></i>
+                                    {% elif scadenza.causale == 'gas_naturale' %}
+                                        <i class="bi bi-fire text-danger"></i>
+                                    {% elif scadenza.causale == 'acqua' %}
+                                        <i class="bi bi-droplet text-info"></i>
+                                    {% elif scadenza.causale == 'telefonia' %}
+                                        <i class="bi bi-phone text-success"></i>
+                                    {% elif scadenza.causale == 'rifiuti' %}
+                                        <i class="bi bi-trash3 text-secondary"></i>
+                                    {% else %}
+                                        <i class="bi bi-gear text-dark"></i>
+                                    {% endif %}
+                                    <strong class="ms-1">{{ scadenza.get_causale_display }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ scadenza.stabilimento.nome }}</small>
+                                    <br>
+                                    <small class="text-muted">{{ scadenza.fornitore.ragione_sociale|truncatechars:25 }}</small>
+                                </td>
+                                <td class="text-end">
+                                    <strong>{{ scadenza.data_scadenza_servizio|date:"d/m" }}</strong>
+                                    <br>
+                                    {% if scadenza.giorni_alla_scadenza <= 7 %}
+                                        <span class="badge bg-danger">{{ scadenza.giorni_alla_scadenza }} gg</span>
+                                    {% elif scadenza.giorni_alla_scadenza <= 15 %}
+                                        <span class="badge bg-warning text-dark">{{ scadenza.giorni_alla_scadenza }} gg</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ scadenza.giorni_alla_scadenza }} gg</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-center pb-3">
+                    <a href="{% url 'stabilimenti:scadenze' %}" class="btn btn-sm btn-outline-warning">
+                        <i class="bi bi-calendar3 me-1"></i>Tutte le Scadenze
+                    </a>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-calendar-check fs-1 d-block mb-3"></i>
+                    <p>Nessuna scadenza nei prossimi giorni</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Azioni Rapide -->
+            <div class="dashboard-widget mb-4">
+                <div class="widget-header">
+                    <h5 class="widget-title">
+                        <i class="bi bi-lightning me-2"></i>
+                        Azioni Rapide
+                    </h5>
+                </div>
+                <div class="p-3">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'stabilimenti:ricerca_utenze' %}" class="btn btn-primary">
+                            <i class="bi bi-search me-2"></i>Ricerca Avanzata Utenze
+                        </a>
+                        <a href="{% url 'stabilimenti:scadenze' %}" class="btn btn-warning">
+                            <i class="bi bi-calendar-event me-2"></i>Gestisci Scadenze
+                        </a>
+                        <a href="{% url 'stabilimenti:costi_list' %}" class="btn btn-info">
+                            <i class="bi bi-currency-euro me-2"></i>Tutti i Costi
+                        </a>
+                        <a href="{% url 'stabilimenti:list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-building me-2"></i>Gestisci Stabilimenti
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="dashboard-widget">
+                <div class="widget-header">
+                    <h5 class="widget-title">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Riepilogo
+                    </h5>
+                </div>
+                <div class="p-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Stabilimenti attivi</span>
+                        <strong>{{ costi_per_stabilimento|length }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Tipi di utenza</span>
+                        <strong>{{ stats_per_tipo|length }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Anno di riferimento</span>
+                        <strong>{{ anno_corrente }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

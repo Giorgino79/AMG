@@ -1,0 +1,125 @@
+<!-- Modal Gestione Allegati -->
+<div class="modal fade" id="allegatiGestioneModal" tabindex="-1" aria-labelledby="allegatiGestioneModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="allegatiGestioneModalLabel">
+                    <i class="bi bi-folder-open"></i> Gestione Allegati
+                    <small class="d-block mt-1" id="gestioneModalObjectInfo" style="font-size: 0.85rem; opacity: 0.9;"></small>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {# Loading spinner #}
+                <div id="allegatiLoading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Caricamento...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Caricamento allegati in corso...</p>
+                </div>
+
+                {# Contenitore tabella allegati (popolato via AJAX) #}
+                <div id="allegatiTableContainer" class="d-none">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 50px;">Tipo</th>
+                                    <th>Nome File</th>
+                                    <th style="width: 120px;">Dimensione</th>
+                                    <th style="width: 150px;">Caricato da</th>
+                                    <th style="width: 120px;">Data</th>
+                                    <th style="width: 200px;" class="text-end">Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allegatiTableBody">
+                                {# Popolato via JavaScript #}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {# Messaggio nessun allegato #}
+                <div id="noAllegatiMessage" class="d-none text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <p class="mt-3 text-muted">Nessun allegato presente</p>
+                    <button type="button"
+                            class="btn btn-success"
+                            data-bs-dismiss="modal"
+                            data-bs-toggle="modal"
+                            data-bs-target="#allegatoUploadModal">
+                        <i class="bi bi-plus-circle"></i> Carica il primo allegato
+                    </button>
+                </div>
+
+                {# Alert errori #}
+                <div id="gestioneAllegatiErrors" class="alert alert-danger d-none" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Chiudi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal Preview Allegato (nested modal per visualizzazione) #}
+<div class="modal fade" id="allegatoPreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="allegatoPreviewTitle">
+                    <i class="bi bi-eye"></i> Anteprima Allegato
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="allegatoPreviewBody">
+                {# Contenuto popolato dinamicamente #}
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="allegatoPreviewDownload" class="btn btn-primary" download>
+                    <i class="bi bi-download"></i> Scarica
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Template riga tabella (usato da JavaScript) #}
+<template id="allegatoRowTemplate">
+    <tr data-allegato-id="">
+        <td class="text-center allegato-icon"></td>
+        <td class="allegato-nome">
+            <div class="d-flex flex-column">
+                <span class="fw-bold"></span>
+                <small class="text-muted allegato-descrizione"></small>
+            </div>
+        </td>
+        <td class="allegato-dimensione"></td>
+        <td class="allegato-uploaded-by"></td>
+        <td class="allegato-data"></td>
+        <td class="text-end">
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button"
+                        class="btn btn-outline-primary btn-visualizza"
+                        title="Visualizza">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <a href="#"
+                   class="btn btn-outline-success btn-download"
+                   download
+                   title="Scarica">
+                    <i class="bi bi-download"></i>
+                </a>
+                <button type="button"
+                        class="btn btn-outline-danger btn-elimina"
+                        title="Elimina"
+                        style="display: none;">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </td>
+    </tr>
+</template>

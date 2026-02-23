@@ -1,0 +1,365 @@
+{% load humanize %}
+
+{#
+  Contenuto del TAB per un singolo reparto (Audio/Video/Luci).
+
+  Mostra 5 sezioni:
+  - Engineering
+  - Magazzino (collegamento app magazzino)
+  - Logistica (collegamento app logistica)
+  - Travel (collegamento app travel)
+  - Scouting (collegamento app scouting)
+#}
+
+{# ========== HEADER REPARTO ========== #}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-{{ reparto.stato_globale_color }} d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-0">
+                    <i class="bi bi-{{ reparto.icon }}"></i>
+                    Reparto {{ reparto.get_tipo_reparto_display }}
+                </h5>
+                <p class="mb-0 small">Stato: <strong>{{ reparto.stato_globale_display }}</strong></p>
+            </div>
+            <div>
+                <a href="{% url 'progetti_eventi:reparto_detail' reparto.pk %}" class="btn btn-sm btn-outline-dark">
+                    <i class="bi bi-arrow-right"></i> Vista Dettagliata
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ========== SEZIONI (5 CARD) ========== #}
+<div class="row">
+
+    {# ========== 1. ENGINEERING ========== #}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 {% if reparto.engineering_completato %}border-success{% endif %}">
+            <div class="card-header {% if reparto.engineering_completato %}bg-success text-white{% else %}bg-info text-white{% endif %}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-diagram-3"></i> Engineering
+                    </h6>
+                    <span class="badge bg-light text-dark">
+                        {{ reparto.get_engineering_stato_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+
+                {# Ingegnere Assegnato #}
+                <p class="mb-2">
+                    <strong>Ingegnere:</strong>
+                    {% if reparto.engineering_assegnato_a %}
+                        <a href="{{ reparto.engineering_assegnato_a.get_absolute_url }}">
+                            {{ reparto.engineering_assegnato_a.get_full_name }}
+                        </a>
+                    {% else %}
+                        <span class="text-muted">Non assegnato</span>
+                    {% endif %}
+                </p>
+
+                {# Date #}
+                {% if reparto.data_assegnazione_engineering %}
+                <p class="mb-2 small text-muted">
+                    Assegnato: {{ reparto.data_assegnazione_engineering|date:"d/m/Y H:i" }}
+                </p>
+                {% endif %}
+
+                {% if reparto.engineering_completato %}
+                <div class="alert alert-success py-2 px-3 mb-2">
+                    <i class="bi bi-check-circle-fill"></i> Completato il {{ reparto.data_completamento_engineering|date:"d/m/Y" }}
+                </div>
+                {% endif %}
+
+                <hr>
+
+                {# Liste Prodotti #}
+                <h6 class="mb-2">Liste Prodotti</h6>
+                {% if reparto_data.liste_prodotti_count > 0 %}
+                <ul class="list-group list-group-sm">
+                    {% for lista in reparto.liste_prodotti.all|slice:":3" %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                        <div>
+                            {{ lista.nome_lista }}
+                            <br><small class="text-muted">{{ lista.numero_prodotti }} prodotti</small>
+                        </div>
+                        <span class="badge bg-{% if lista.approvata %}success{% else %}warning{% endif %}">
+                            {{ lista.get_stato_display }}
+                        </span>
+                    </li>
+                    {% endfor %}
+
+                    {% if reparto_data.liste_prodotti_count > 3 %}
+                    <li class="list-group-item text-center py-2 small text-muted">
+                        + altre {{ reparto_data.liste_prodotti_count|add:"-3" }} liste
+                    </li>
+                    {% endif %}
+                </ul>
+                <p class="mt-2 mb-0 small">
+                    <strong>{{ reparto_data.liste_prodotti_approvate }}</strong> approvate su
+                    <strong>{{ reparto_data.liste_prodotti_count }}</strong> totali
+                </p>
+                {% else %}
+                <p class="text-muted mb-0">Nessuna lista prodotti ancora creata</p>
+                {% endif %}
+
+                {# Azione #}
+                {% if not reparto.engineering_completato %}
+                <a href="{% url 'progetti_eventi:reparto_detail' reparto.pk %}" class="btn btn-sm btn-outline-info mt-3 w-100">
+                    <i class="bi bi-arrow-right"></i> Gestisci Engineering
+                </a>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    {# ========== 2. MAGAZZINO ========== #}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 {% if reparto.magazzino_ready %}border-success{% endif %}">
+            <div class="card-header {% if reparto.magazzino_ready %}bg-success text-white{% else %}bg-secondary text-white{% endif %}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-box-seam"></i> Magazzino
+                    </h6>
+                    {% if reparto.magazzino_ready %}
+                    <span class="badge bg-light text-dark">
+                        <i class="bi bi-check-circle-fill"></i> Pronto
+                    </span>
+                    {% else %}
+                    <span class="badge bg-light text-dark">
+                        In Attesa
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+
+                {% if reparto.engineering_completato %}
+
+                {# INTEGRAZIONE APP MAGAZZINO #}
+                <div class="alert alert-info py-2 px-3 mb-3">
+                    <i class="bi bi-link-45deg"></i> Collegamento app <strong>Magazzino</strong>
+                </div>
+
+                <p class="mb-2">
+                    <strong>Liste Approvate:</strong> {{ reparto_data.liste_prodotti_approvate|default:"0" }} / {{ reparto_data.liste_prodotti_count|default:"0" }}
+                </p>
+
+                <p class="mb-2">
+                    <strong>Volume Stimato:</strong>
+                    <span class="text-muted">Da calcolare</span>
+                </p>
+
+                <p class="mb-2">
+                    <strong>Peso Totale:</strong>
+                    <span class="text-muted">Da calcolare</span>
+                </p>
+
+                <hr>
+
+                {# PLACEHOLDER: Quando app magazzino sarà pronta #}
+                <p class="small text-muted mb-3">
+                    <!--
+                    {% comment %}
+                    TODO: Integrare con app magazzino
+
+                    {% for richiesta in reparto.richieste_approntamento.all %}
+                    - Richiesta {{ richiesta.codice }}: {{ richiesta.get_stato_display }}
+                    {% endfor %}
+                    {% endcomment %}
+                    -->
+                    <i class="bi bi-info-circle"></i> Dati magazzino verranno caricati dall'app dedicata
+                </p>
+
+                {# Link app magazzino (quando sarà pronta) #}
+                <a href="#" class="btn btn-sm btn-outline-secondary mt-2 w-100" disabled>
+                    <i class="bi bi-arrow-right"></i> Vai a Magazzino
+                    <small class="d-block">(app in sviluppo)</small>
+                </a>
+
+                {% else %}
+                <div class="alert alert-warning py-2 px-3">
+                    <i class="bi bi-exclamation-triangle"></i> In attesa completamento engineering
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    {# ========== 3. LOGISTICA ========== #}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 {% if reparto.logistica_ready %}border-success{% endif %}">
+            <div class="card-header {% if reparto.logistica_ready %}bg-success text-white{% else %}bg-warning text-dark{% endif %}">
+                <h6 class="mb-0">
+                    <i class="bi bi-truck"></i> Logistica
+                </h6>
+            </div>
+            <div class="card-body">
+
+                {# INTEGRAZIONE APP LOGISTICA #}
+                <div class="alert alert-info py-2 px-3 mb-3 small">
+                    <i class="bi bi-link-45deg"></i> App <strong>Logistica</strong>
+                </div>
+
+                <p class="mb-2 small">
+                    <strong>Consegna:</strong><br>
+                    {{ reparto.progetto.data_consegna_richiesta|date:"d/m/Y H:i" }}
+                </p>
+
+                <p class="mb-2 small">
+                    <strong>Ritiro:</strong><br>
+                    {{ reparto.progetto.data_ritiro_richiesta|date:"d/m/Y H:i" }}
+                </p>
+
+                <hr>
+
+                {# PLACEHOLDER #}
+                <p class="small text-muted">
+                    <!--
+                    {% comment %}
+                    {% for consegna in reparto.consegne.all %}
+                    - Consegna {{ consegna.id }}: {{ consegna.stato }}
+                    {% endfor %}
+                    {% endcomment %}
+                    -->
+                    Pianificazione in corso...
+                </p>
+
+                <a href="#" class="btn btn-sm btn-outline-warning mt-2 w-100" disabled>
+                    <i class="bi bi-arrow-right"></i> Dettagli
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+    {# ========== 4. TRAVEL ========== #}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 {% if reparto.travel_ready %}border-success{% endif %}">
+            <div class="card-header {% if reparto.travel_ready %}bg-success text-white{% else %}bg-primary text-white{% endif %}">
+                <h6 class="mb-0">
+                    <i class="bi bi-airplane"></i> Travel
+                </h6>
+            </div>
+            <div class="card-body">
+
+                {# INTEGRAZIONE APP TRAVEL #}
+                <div class="alert alert-info py-2 px-3 mb-3 small">
+                    <i class="bi bi-link-45deg"></i> App <strong>Travel</strong>
+                </div>
+
+                <p class="mb-2">
+                    <strong>Tecnici Previsti:</strong>
+                    <span class="badge bg-primary">{{ reparto.numero_tecnici_necessari }}</span>
+                </p>
+
+                {% if reparto.numero_tecnici_necessari > 0 %}
+                <p class="small text-muted mb-2">
+                    Da organizzare:
+                    - Viaggi A/R
+                    - Hotel/Alloggi
+                </p>
+                {% else %}
+                <p class="text-muted small">
+                    In attesa dati da engineering
+                </p>
+                {% endif %}
+
+                <hr>
+
+                {# PLACEHOLDER #}
+                <p class="small text-muted">
+                    <!--
+                    {% comment %}
+                    {% for missione in reparto.missioni_travel.all %}
+                    - {{ missione.tecnico }}: {{ missione.stato }}
+                    {% endfor %}
+                    {% endcomment %}
+                    -->
+                    Organizzazione viaggi in corso...
+                </p>
+
+                <a href="#" class="btn btn-sm btn-outline-primary mt-2 w-100" disabled>
+                    <i class="bi bi-arrow-right"></i> Dettagli
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+    {# ========== 5. SCOUTING ========== #}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 {% if reparto.scouting_ready %}border-success{% endif %}">
+            <div class="card-header {% if reparto.scouting_ready %}bg-success text-white{% else %}bg-secondary text-white{% endif %}">
+                <h6 class="mb-0">
+                    <i class="bi bi-people"></i> Scouting
+                </h6>
+            </div>
+            <div class="card-body">
+
+                {# INTEGRAZIONE APP SCOUTING #}
+                <div class="alert alert-info py-2 px-3 mb-3 small">
+                    <i class="bi bi-link-45deg"></i> App <strong>Scouting</strong>
+                </div>
+
+                <p class="mb-2 small">
+                    <strong>Tecnici:</strong>
+                    <span class="badge bg-primary">{{ reparto.numero_tecnici_necessari }}</span>
+                </p>
+
+                <p class="mb-2 small">
+                    <strong>Facchini:</strong>
+                    <span class="badge bg-secondary">{{ reparto.numero_facchini_necessari }}</span>
+                </p>
+
+                {% if reparto.numero_tecnici_necessari > 0 or reparto.numero_facchini_necessari > 0 %}
+                <hr>
+                <p class="small text-muted mb-0">
+                    Ricerca personale in corso...
+                </p>
+                {% else %}
+                <p class="text-muted small">
+                    In attesa dati da engineering
+                </p>
+                {% endif %}
+
+                <hr>
+
+                {# PLACEHOLDER #}
+                <p class="small text-muted">
+                    <!--
+                    {% comment %}
+                    {% for richiesta in reparto.richieste_scouting.all %}
+                    - {{ richiesta.tipo_personale }}: {{ richiesta.stato }}
+                    {% endfor %}
+                    {% endcomment %}
+                    -->
+                    Assegnazioni in definizione...
+                </p>
+
+                <a href="#" class="btn btn-sm btn-outline-secondary mt-2 w-100" disabled>
+                    <i class="bi bi-arrow-right"></i> Dettagli
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# ========== NOTE REPARTO ========== #}
+{% if reparto.note_engineering %}
+<div class="card">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="bi bi-sticky"></i> Note Engineering</h6>
+    </div>
+    <div class="card-body">
+        {{ reparto.note_engineering|linebreaksbr }}
+    </div>
+</div>
+{% endif %}

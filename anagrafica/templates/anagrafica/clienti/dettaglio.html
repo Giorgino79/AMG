@@ -1,0 +1,172 @@
+{% extends "commons_templates/base_detail.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ cliente.ragione_sociale }} - Cliente{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'anagrafica:dashboard' %}">Anagrafica</a></li>
+<li class="breadcrumb-item"><a href="{% url 'anagrafica:cliente_list' %}">Clienti</a></li>
+<li class="breadcrumb-item active">{{ cliente.ragione_sociale }}</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-building me-2"></i>{{ cliente.ragione_sociale }}
+{% endblock %}
+
+{% block page_subtitle %}
+<p class="text-muted mb-0">
+    <i class="bi bi-geo-alt"></i> {{ cliente.citta|default:"N/A" }} |
+    <i class="bi bi-envelope"></i> {{ cliente.email }}
+</p>
+{% endblock %}
+
+{% block status_badge %}
+{% if cliente.attivo %}
+    <span class="badge bg-success fs-6">Attivo</span>
+{% else %}
+    <span class="badge bg-secondary fs-6">Inattivo</span>
+{% endif %}
+{% endblock %}
+
+{% block detail_content %}
+
+{# Informazioni Anagrafiche #}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person-vcard"></i> Dati Anagrafici</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Ragione Sociale</dt>
+                    <dd class="col-sm-8">{{ cliente.ragione_sociale }}</dd>
+
+                    <dt class="col-sm-4">Indirizzo</dt>
+                    <dd class="col-sm-8">
+                        {{ cliente.indirizzo|default:"-" }}<br>
+                        <small class="text-muted">
+                            {{ cliente.cap|default:"" }} {{ cliente.citta|default:"" }}
+                        </small>
+                    </dd>
+
+                    <dt class="col-sm-4">Telefono</dt>
+                    <dd class="col-sm-8">
+                        {% if cliente.telefono %}
+                            <a href="tel:{{ cliente.telefono }}">{{ cliente.telefono }}</a>
+                        {% else %}-{% endif %}
+                    </dd>
+
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8">
+                        {% if cliente.email %}
+                            <a href="mailto:{{ cliente.email }}">{{ cliente.email }}</a>
+                        {% else %}-{% endif %}
+                    </dd>
+
+                    {% if cliente.pec %}
+                    <dt class="col-sm-4">PEC</dt>
+                    <dd class="col-sm-8">
+                        <a href="mailto:{{ cliente.pec }}">{{ cliente.pec }}</a>
+                    </dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-file-text"></i> Dati Fiscali</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Partita IVA</dt>
+                    <dd class="col-sm-7">{{ cliente.partita_iva|default:"-" }}</dd>
+
+                    <dt class="col-sm-5">Codice Fiscale</dt>
+                    <dd class="col-sm-7">{{ cliente.codice_fiscale|default:"-" }}</dd>
+
+                    {% if cliente.codice_univoco %}
+                    <dt class="col-sm-5">Codice Univoco</dt>
+                    <dd class="col-sm-7">{{ cliente.codice_univoco }}</dd>
+                    {% endif %}
+
+                    <dt class="col-sm-5">Tipo Pagamento</dt>
+                    <dd class="col-sm-7">{{ cliente.get_tipo_pagamento_display|default:"-" }}</dd>
+
+                    <dt class="col-sm-5">Stato</dt>
+                    <dd class="col-sm-7">
+                        {% if cliente.attivo %}
+                            <span class="badge bg-success">Attivo</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inattivo</span>
+                        {% endif %}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Note #}
+{% if cliente.note %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="bi bi-sticky"></i> Note</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">{{ cliente.note|linebreaksbr }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# Metadati #}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 text-muted"><i class="bi bi-info-circle"></i> Informazioni Sistema</h6>
+            </div>
+            <div class="card-body">
+                <div class="row small text-muted">
+                    <div class="col-md-6">
+                        <strong>Creato:</strong> {{ cliente.created_at|date:"d/m/Y H:i" }}
+                        {% if cliente.created_by %}
+                            da {{ cliente.created_by.get_full_name }}
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Ultima modifica:</strong> {{ cliente.updated_at|date:"d/m/Y H:i" }}
+                        {% if cliente.updated_by %}
+                            da {{ cliente.updated_by.get_full_name }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block custom_actions %}
+{# Azioni specifiche cliente #}
+<a href="{% url 'anagrafica:cliente_update' pk=cliente.pk %}" class="list-group-item list-group-item-action">
+    <i class="bi bi-pencil-fill text-warning"></i> Modifica Cliente
+</a>
+<a href="{% url 'anagrafica:cliente_list' %}" class="list-group-item list-group-item-action">
+    <i class="bi bi-arrow-left"></i> Torna alla Lista
+</a>
+<a href="{% url 'anagrafica:cliente_delete' pk=cliente.pk %}"
+   class="list-group-item list-group-item-action text-danger"
+   onclick="return confirm('Sei sicuro di voler eliminare questo cliente?')">
+    <i class="bi bi-trash-fill"></i> Elimina Cliente
+</a>
+{% endblock %}

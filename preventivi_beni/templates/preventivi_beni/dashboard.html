@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard Preventivi Beni/Servizi{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Preventivi Beni/Servizi</h1>
+        </div>
+        <div class="col text-end">
+            <a href="{% url 'preventivi_beni:richiesta_create' %}" class="btn btn-primary">
+                + Nuova Richiesta Preventivo
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistiche -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Richieste Attive</h5>
+                    <h2 class="text-primary">{{ richieste_attive }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">In Attesa</h5>
+                    <h2 class="text-info">{{ richieste_in_attesa }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Bozze</h5>
+                    <h2 class="text-warning">{{ richieste_bozza }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Azioni Rapide</h5>
+                    <a href="{% url 'preventivi_beni:richieste_list' %}" class="btn btn-sm btn-outline-primary">
+                        Vedi Tutte
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Richieste Recenti -->
+    <div class="card">
+        <div class="card-header">
+            <h5>Richieste Recenti</h5>
+        </div>
+        <div class="card-body">
+            {% if richieste_recenti %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Numero</th>
+                        <th>Titolo</th>
+                        <th>Tipo</th>
+                        <th>Stato</th>
+                        <th>Data</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for richiesta in richieste_recenti %}
+                    <tr>
+                        <td>{{ richiesta.numero }}</td>
+                        <td>{{ richiesta.titolo }}</td>
+                        <td>{{ richiesta.get_tipo_richiesta_display }}</td>
+                        <td><span class="badge bg-info">{{ richiesta.get_stato_display }}</span></td>
+                        <td>{{ richiesta.data_creazione|date:"d/m/Y" }}</td>
+                        <td>
+                            <a href="{% url 'preventivi_beni:richiesta_detail' richiesta.pk %}" class="btn btn-sm btn-primary">
+                                Dettagli
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted">Nessuna richiesta recente</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

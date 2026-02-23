@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Gestione Richieste Permessi - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Gestione Richieste Permessi</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-clock-history me-2"></i>Gestione Richieste Permessi</h2>
+        <div>
+            <span class="badge bg-warning me-2">{{ richieste_pending.count }} In Attesa</span>
+        </div>
+    </div>
+
+    <!-- Tabs per filtrare -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link {% if not filter or filter == 'in_attesa' %}active{% endif %}"
+               href="?filter=in_attesa">
+                In Attesa <span class="badge bg-warning ms-1">{{ richieste_pending.count }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if filter == 'approvate' %}active{% endif %}"
+               href="?filter=approvate">
+                Approvate
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if filter == 'rifiutate' %}active{% endif %}"
+               href="?filter=rifiutate">
+                Rifiutate
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if filter == 'tutte' %}active{% endif %}"
+               href="?filter=tutte">
+                Tutte
+            </a>
+        </li>
+    </ul>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            {% if richieste %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Dipendente</th>
+                            <th>Codice</th>
+                            <th>Data</th>
+                            <th>Orario</th>
+                            <th>Ore</th>
+                            <th>Motivo</th>
+                            <th>Stato</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in richieste %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if r.user.foto_profilo %}
+                                    <img src="{{ r.user.foto_profilo.url }}" class="rounded-circle me-2 user-avatar-img" width="32" height="32">
+                                    {% else %}
+                                    <div class="user-avatar-sm me-2">
+                                        {{ r.user.get_full_name|default:r.user.username|slice:":1"|upper }}
+                                    </div>
+                                    {% endif %}
+                                    <span>{{ r.user.get_full_name|default:r.user.username }}</span>
+                                </div>
+                            </td>
+                            <td><strong>{{ r.user.codice_dipendente }}</strong></td>
+                            <td>{{ r.data|date:"d/m/Y" }}</td>
+                            <td>
+                                <strong>{{ r.ora_inizio|date:"H:i" }}</strong> -
+                                <strong>{{ r.ora_fine|date:"H:i" }}</strong>
+                            </td>
+                            <td><span class="badge bg-info">{{ r.ore_richieste }}h</span></td>
+                            <td>{{ r.motivo|truncatewords:8|default:"-" }}</td>
+                            <td>
+                                {% if r.stato == 'in_attesa' %}
+                                <span class="badge bg-warning">In Attesa</span>
+                                {% elif r.stato == 'approvata' %}
+                                <span class="badge bg-success">Approvata</span>
+                                {% else %}
+                                <span class="badge bg-danger">Rifiutata</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if r.stato == 'in_attesa' %}
+                                <a href="{% url 'users:richiesta_permesso_gestisci' r.pk %}"
+                                   class="btn btn-sm btn-primary">
+                                    <i class="bi bi-pencil-square"></i> Gestisci
+                                </a>
+                                {% else %}
+                                <a href="{% url 'users:richiesta_permesso_gestisci' r.pk %}"
+                                   class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-eye"></i> Dettagli
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if r.stato == 'rifiutata' and r.motivazione_rifiuto %}
+                        <tr>
+                            <td colspan="8" class="bg-light">
+                                <small class="text-danger">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    <strong>Motivazione rifiuto:</strong> {{ r.motivazione_rifiuto }}
+                                    <span class="text-muted ms-2">
+                                        (Gestita da {{ r.gestita_da }} il {{ r.gestita_il|date:"d/m/Y H:i" }})
+                                    </span>
+                                </small>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                <p class="text-muted">
+                    {% if filter == 'in_attesa' %}
+                    Nessuna richiesta permesso in attesa
+                    {% else %}
+                    Nessuna richiesta permesso trovata
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{
+  "name": "AMG - Sistema Gestionale",
+  "description": "Sistema gestionale completo per la gestione aziendale",
+  "repository": "https://github.com/Giorgino79/AMG",
+  "keywords": ["django", "gestionale", "erp"],
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:essential-0"
+    }
+  ],
+  "env": {
+    "SECRET_KEY": {
+      "description": "Django secret key for cryptographic signing",
+      "generator": "secret"
+    },
+    "DEBUG": {
+      "description": "Debug mode (use False in production)",
+      "value": "False"
+    },
+    "ALLOWED_HOSTS": {
+      "description": "Comma-separated list of allowed hosts",
+      "value": ".herokuapp.com"
+    }
+  }
+}

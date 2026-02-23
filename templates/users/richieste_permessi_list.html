@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Le Mie Richieste Permessi - ModularBEF{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">I Miei Permessi</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2"><i class="bi bi-clock me-2"></i>Le Mie Richieste Permessi</h1>
+        <a href="{% url 'users:richiesta_permesso_create' %}" class="btn btn-warning">
+            <i class="bi bi-plus-circle me-2"></i>Nuova Richiesta
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Dalle</th>
+                            <th>Alle</th>
+                            <th>Ore</th>
+                            <th>Stato</th>
+                            <th>Richiesta il</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for richiesta in richieste %}
+                        <tr>
+                            <td>{{ richiesta.data|date:"d/m/Y" }}</td>
+                            <td>{{ richiesta.ora_inizio|time:"H:i" }}</td>
+                            <td>{{ richiesta.ora_fine|time:"H:i" }}</td>
+                            <td><strong>{{ richiesta.ore_richieste }}h</strong></td>
+                            <td>
+                                {% if richiesta.stato == 'in_attesa' %}
+                                    <span class="badge bg-warning">In Attesa</span>
+                                {% elif richiesta.stato == 'approvata' %}
+                                    <span class="badge bg-success">Approvata</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Rifiutata</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ richiesta.created_at|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">Nessuna richiesta</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

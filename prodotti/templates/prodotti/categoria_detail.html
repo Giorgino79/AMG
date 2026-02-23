@@ -1,0 +1,182 @@
+{% extends "commons_templates/base_detail.html" %}
+{% load static %}
+{% load allegati_tags %}
+
+{% block title %}{{ categoria.nome_categoria }} - Categoria{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'prodotti:dashboard' %}">Prodotti</a></li>
+<li class="breadcrumb-item"><a href="{% url 'prodotti:categoria_list' %}">Categorie</a></li>
+<li class="breadcrumb-item active">{{ categoria.nome_categoria }}</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-tag me-2 text-primary"></i>{{ categoria.nome_categoria }}
+{% endblock %}
+
+{% block page_subtitle %}
+{% if categoria.descrizione %}
+<p class="text-muted mb-0">{{ categoria.descrizione|truncatechars:100 }}</p>
+{% endif %}
+{% endblock %}
+
+{% block status_badge %}
+<div class="text-end">
+    {% if categoria.attiva %}
+        <span class="badge fs-6 bg-success">Attiva</span>
+    {% else %}
+        <span class="badge fs-6 bg-secondary">Disattiva</span>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block detail_content %}
+<!-- Info Categoria -->
+<div class="mb-4">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            {% if categoria.icona %}
+                <img src="{{ categoria.icona.url }}" alt="{{ categoria.nome_categoria }}" class="rounded-circle" width="80" height="80" style="object-fit: cover;">
+            {% else %}
+                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center text-muted" style="width: 80px; height: 80px;">
+                    <i class="bi bi-tag" style="font-size: 2rem;"></i>
+                </div>
+            {% endif %}
+        </div>
+        <div class="col">
+            <h2 class="h4 mb-2">{{ categoria.nome_categoria }}</h2>
+            {% if categoria.descrizione %}
+                <p class="mb-2">{{ categoria.descrizione }}</p>
+            {% endif %}
+            <small class="text-muted">
+                <i class="bi bi-calendar me-1"></i>Creata il {{ categoria.created_at|date:"d/m/Y" }}
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiche -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-bar-chart me-2 text-primary"></i>Statistiche
+    </h5>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="text-center p-2 bg-light rounded">
+                <small class="text-muted">Prodotti Totali</small>
+                <h4 class="mb-0 text-primary">{{ stats.totale_prodotti }}</h4>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-center p-2 bg-light rounded">
+                <small class="text-muted">Prodotti Attivi</small>
+                <h4 class="mb-0 text-primary">{{ stats.prodotti_attivi }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Prodotti della categoria -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-box-seam me-2 text-primary"></i>Prodotti in questa Categoria
+    </h5>
+    {% if prodotti_page %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Nome</th>
+                    <th>EAN</th>
+                    <th>Codice Interno</th>
+                    <th>Fornitore</th>
+                    <th class="text-center">Stato</th>
+                    <th class="text-end">Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prodotto in prodotti_page %}
+                <tr>
+                    <td>
+                        <a href="{% url 'prodotti:prodotto_detail' prodotto.pk %}" class="text-decoration-none">
+                            {{ prodotto.nome_prodotto }}
+                        </a>
+                    </td>
+                    <td><code>{{ prodotto.ean }}</code></td>
+                    <td>{{ prodotto.codice_interno|default:"-" }}</td>
+                    <td>{{ prodotto.fornitore_principale.ragione_sociale|default:"-" }}</td>
+                    <td class="text-center">
+                        {% if prodotto.attivo %}
+                            <span class="badge bg-success">Attivo</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Disattivo</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'prodotti:prodotto_detail' prodotto.pk %}" class="btn btn-outline-primary" title="Visualizza">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'prodotti:prodotto_update' prodotto.pk %}" class="btn btn-outline-secondary" title="Modifica">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginazione -->
+    {% if prodotti_page.has_other_pages %}
+    <nav aria-label="Paginazione prodotti" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if prodotti_page.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ prodotti_page.previous_page_number }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+            {% endif %}
+            {% for num in prodotti_page.paginator.page_range %}
+                {% if prodotti_page.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > prodotti_page.number|add:'-3' and num < prodotti_page.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            {% if prodotti_page.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ prodotti_page.next_page_number }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+        <div class="text-center text-muted small">
+            Pagina {{ prodotti_page.number }} di {{ prodotti_page.paginator.num_pages }}
+            ({{ prodotti_page.paginator.count }} prodotti)
+        </div>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-box-seam" style="font-size: 3rem;"></i>
+        <h5 class="text-muted mt-3">Nessun prodotto in questa categoria</h5>
+        <a href="{% url 'prodotti:prodotto_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Aggiungi Prodotto
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block custom_actions %}
+{% endblock %}
+
+{% block sidebar_extra %}
+{% endblock %}

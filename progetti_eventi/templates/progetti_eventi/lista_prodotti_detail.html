@@ -1,0 +1,182 @@
+{% extends "commons_templates/base_detail.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ lista.nome_lista }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'progetti_eventi:progetto_list' %}">Progetti</a></li>
+<li class="breadcrumb-item"><a href="{{ lista.progetto_reparto.progetto.get_absolute_url }}">{{ lista.progetto_reparto.progetto.codice }}</a></li>
+<li class="breadcrumb-item active">{{ lista.nome_lista }}</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-list-check me-2"></i>{{ lista.nome_lista }}
+{% endblock %}
+
+{% block page_subtitle %}
+<p class="text-muted mb-0">
+    Reparto: <strong>{{ lista.progetto_reparto.get_tipo_reparto_display }}</strong> -
+    Progetto: <a href="{{ lista.progetto_reparto.progetto.get_absolute_url }}">{{ lista.progetto_reparto.progetto.codice }}</a>
+</p>
+{% endblock %}
+
+{% block status_badge %}
+<span class="badge bg-{% if lista.approvata %}success{% elif lista.stato == 'in_revisione' %}warning{% else %}secondary{% endif %} fs-6">
+    {{ lista.get_stato_display }}
+</span>
+{% endblock %}
+
+{% block detail_content %}
+
+{# Informazioni Lista #}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">Informazioni Lista</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Nome</dt>
+                    <dd class="col-sm-9">{{ lista.nome_lista }}</dd>
+
+                    {% if lista.descrizione %}
+                    <dt class="col-sm-3">Descrizione</dt>
+                    <dd class="col-sm-9">{{ lista.descrizione }}</dd>
+                    {% endif %}
+
+                    <dt class="col-sm-3">Numero Prodotti</dt>
+                    <dd class="col-sm-9">{{ lista.numero_prodotti }}</dd>
+
+                    <dt class="col-sm-3">Quantità Totale</dt>
+                    <dd class="col-sm-9">{{ lista.quantita_totale }}</dd>
+
+                    <dt class="col-sm-3">Creata da</dt>
+                    <dd class="col-sm-9">
+                        {{ lista.created_by.get_full_name|default:lista.created_by.username }}
+                        il {{ lista.created_at|date:"d/m/Y H:i" }}
+                    </dd>
+
+                    {% if lista.approvata %}
+                    <dt class="col-sm-3">Approvata da</dt>
+                    <dd class="col-sm-9">
+                        {{ lista.approvata_da.get_full_name }}
+                        il {{ lista.data_approvazione|date:"d/m/Y H:i" }}
+                    </dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        {% if not lista.approvata %}
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">Azioni</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'progetti_eventi:lista_prodotti_approva' lista.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="note_approvazione" class="form-label">Note (opzionali)</label>
+                        <textarea name="note_approvazione" id="note_approvazione"
+                                  class="form-control" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-check-circle"></i> Approva Lista
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0">Lista Approvata</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    Questa lista è stata approvata e può essere utilizzata dal magazzino.
+                </p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# Tabella Prodotti #}
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0">Prodotti</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Codice</th>
+                    <th>Nome</th>
+                    <th>Categoria</th>
+                    <th>Quantità</th>
+                    <th>Dimensioni (cm)</th>
+                    <th>Peso (kg)</th>
+                    <th>Volume (m³)</th>
+                    <th>Priorità</th>
+                    <th>Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prodotto in lista.prodotti.all %}
+                <tr>
+                    <td><strong>{{ prodotto.codice_prodotto }}</strong></td>
+                    <td>{{ prodotto.nome_prodotto }}</td>
+                    <td>{{ prodotto.categoria_prodotto|default:"-" }}</td>
+                    <td class="text-center">
+                        <span class="badge bg-primary">{{ prodotto.quantita }}</span>
+                    </td>
+                    <td class="text-center small">
+                        {% if prodotto.lunghezza_cm %}
+                            {{ prodotto.lunghezza_cm|floatformat:0 }} ×
+                            {{ prodotto.larghezza_cm|floatformat:0 }} ×
+                            {{ prodotto.altezza_cm|floatformat:0 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {{ prodotto.peso_kg|default:"-" }}
+                    </td>
+                    <td class="text-center">
+                        {% if prodotto.volume_m3 %}
+                            {{ prodotto.volume_m3|floatformat:2 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge bg-{% if prodotto.priorita == 'critica' %}danger{% elif prodotto.priorita == 'alta' %}warning{% else %}secondary{% endif %}">
+                            {{ prodotto.get_priorita_display }}
+                        </span>
+                    </td>
+                    <td class="small">{{ prodotto.note|truncatewords:5 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">
+                        Nessun prodotto in questa lista
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block custom_actions %}
+<a href="{{ lista.progetto_reparto.get_absolute_url }}" class="list-group-item list-group-item-action">
+    <i class="bi bi-arrow-left"></i> Torna al Reparto
+</a>
+{% endblock %}

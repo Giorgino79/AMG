@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'core:permission_template_list' %}">Template Permessi</a></li>
+                <li class="breadcrumb-item active">{{ template.nome }}</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2>
+                    <i class="bi bi-folder-symlink me-2"></i>{{ template.nome }}
+                    {% if not template.attivo %}
+                        <span class="badge bg-secondary ms-2">Disattivato</span>
+                    {% else %}
+                        <span class="badge bg-success ms-2">Attivo</span>
+                    {% endif %}
+                </h2>
+                {% if template.descrizione %}
+                    <p class="text-muted mb-0">{{ template.descrizione }}</p>
+                {% endif %}
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'core:permission_template_update' template.pk %}" class="btn btn-primary">
+                    <i class="bi bi-pencil me-2"></i>Modifica
+                </a>
+                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                    <i class="bi bi-trash me-2"></i>Elimina
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiche -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-shield-check display-4 text-primary mb-2"></i>
+                    <h3 class="mb-0">{{ template.get_permessi_count }}</h3>
+                    <small class="text-muted">Permessi Totali</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-grid-3x3-gap display-4 text-info mb-2"></i>
+                    <h3 class="mb-0">{{ template.permessi_crud.count }}</h3>
+                    <small class="text-muted">Permessi CRUD</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-toggles display-4 text-warning mb-2"></i>
+                    <h3 class="mb-0">{{ template.permessi_base|length }}</h3>
+                    <small class="text-muted">Permessi Base</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-graph-up display-4 text-success mb-2"></i>
+                    <h3 class="mb-0">{{ template.n_utilizzi }}</h3>
+                    <small class="text-muted">Volte Applicato</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permessi Base -->
+    {% if permessi_base_display %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-toggles me-2"></i>Permessi Base Operativi</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for perm in permessi_base_display %}
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <div>
+                                    <strong>{{ perm.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ perm.app }}.{{ perm.codename }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Permessi CRUD -->
+    {% if permessi_crud_grouped %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-grid-3x3-gap me-2"></i>Permessi CRUD sui Modelli</h5>
+            </div>
+            <div class="card-body">
+                {% for category, data in permessi_crud_grouped.items %}
+                    <div class="mb-4">
+                        <h6 class="text-primary border-bottom pb-2">
+                            <i class="bi bi-folder me-2"></i>{{ category }}
+                        </h6>
+
+                        {% for model_name, model_data in data.models.items %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <strong>{{ model_name }}</strong>
+                                    <small class="text-muted ms-2">({{ model_data.info.app_label }}.{{ model_data.info.model_name }})</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% for perm in model_data.permissions %}
+                                            <span class="badge bg-primary">
+                                                {{ perm.name }}
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% empty %}
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Nessun permesso CRUD configurato per questo template.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        {% if not permessi_base_display %}
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Questo template non ha permessi configurati.
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <!-- Info Metadata -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Informazioni</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <small class="text-muted d-block mb-1">Creato il</small>
+                    <strong>{{ template.created_at|date:"d/m/Y H:i" }}</strong>
+                </div>
+                <div class="col-md-6">
+                    <small class="text-muted d-block mb-1">Ultima modifica</small>
+                    <strong>{{ template.updated_at|date:"d/m/Y H:i" }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Conferma Eliminazione -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Conferma Eliminazione</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sei sicuro di voler eliminare il template <strong>{{ template.nome }}</strong>?</p>
+                <p class="text-muted small mb-0">
+                    Questa operazione non può essere annullata. Gli utenti che hanno già ricevuto i permessi
+                    da questo template manterranno i loro permessi attuali.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <form method="post" action="{% url 'core:permission_template_delete' template.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-2"></i>Elimina
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

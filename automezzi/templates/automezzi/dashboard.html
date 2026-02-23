@@ -1,0 +1,392 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Automezzi{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Automezzi</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-truck me-2 text-primary"></i>Dashboard Automezzi
+        </h1>
+        <div class="btn-group">
+            <a href="{% url 'automezzi:automezzo_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-list-ul me-1"></i>Lista Mezzi
+            </a>
+            <a href="{% url 'automezzi:automezzo_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Nuovo Automezzo
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistiche rapide -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-truck me-2"></i>Automezzi Totali
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat text-primary">{{ automezzi_count }}</span>
+                    <div class="small text-muted mt-1">{{ attivi_count }} attivi</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header second-color">
+                    <i class="bi bi-check-circle me-2"></i>Disponibili
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat text-success">{{ disponibili_count }}</span>
+                    <div class="small text-muted mt-1">pronti all'uso</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header third-color">
+                    <i class="bi bi-wrench me-2"></i>In Manutenzione
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat text-warning">{{ manutenzioni_in_corso|length }}</span>
+                    <div class="small text-muted mt-1">in corso</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header fourth-color">
+                    <i class="bi bi-people me-2"></i>Affidamenti
+                </div>
+                <div class="card-body text-center">
+                    <span class="widget-stat">{{ affidamenti_attivi }}</span>
+                    <div class="small text-muted mt-1">attivi</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ricerca cronologia -->
+    <div class="dashboard-widget mb-4">
+        <div class="widget-header">
+            <h5 class="widget-title">
+                <i class="bi bi-search text-primary me-2"></i>Cronologia Automezzo
+            </h5>
+        </div>
+        <div class="p-3">
+            <form method="get" action="{% url 'automezzi:cronologia' %}" class="row g-3">
+                <div class="col-md-4">
+                    <label for="targa" class="form-label">Targa Automezzo</label>
+                    <input type="text" class="form-control" id="targa" name="targa"
+                           placeholder="Es. AB123CD" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="data_da" class="form-label">Data da</label>
+                    <input type="date" class="form-control" id="data_da" name="data_da">
+                </div>
+                <div class="col-md-3">
+                    <label for="data_a" class="form-label">Data a</label>
+                    <input type="date" class="form-control" id="data_a" name="data_a">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-1"></i>Cerca
+                    </button>
+                </div>
+            </form>
+            <small class="text-muted mt-2 d-block">
+                <i class="bi bi-info-circle me-1"></i>
+                Visualizza rifornimenti, eventi e manutenzioni per un automezzo specifico
+            </small>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonna sinistra: Sezioni principali -->
+        <div class="col-lg-8">
+            <!-- Sezioni Card -->
+            <div class="row g-3 mb-4">
+                <!-- Card Automezzi -->
+                <div class="col-md-6">
+                    <div class="dashboard-widget h-100">
+                        <div class="widget-header">
+                            <h5 class="widget-title">
+                                <i class="bi bi-truck text-primary me-2"></i>Automezzi
+                            </h5>
+                        </div>
+                        <div class="p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <span class="fs-4 fw-bold text-primary">{{ automezzi_count }}</span>
+                                    <span class="text-muted ms-2">totali</span>
+                                </div>
+                                <span class="badge bg-success">{{ disponibili_count }} disponibili</span>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'automezzi:automezzo_create' %}" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-plus-lg me-1"></i>Nuovo Automezzo
+                                </a>
+                                <a href="{% url 'automezzi:automezzo_list' %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-list-ul me-1"></i>Elenco Automezzi
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Manutenzioni -->
+                <div class="col-md-6">
+                    <div class="dashboard-widget h-100">
+                        <div class="widget-header">
+                            <h5 class="widget-title">
+                                <i class="bi bi-wrench text-success me-2"></i>Manutenzioni
+                            </h5>
+                        </div>
+                        <div class="p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <span class="fs-4 fw-bold text-success">{{ manutenzioni_in_corso|length }}</span>
+                                    <span class="text-muted ms-2">in corso</span>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'automezzi:manutenzione_create' %}" class="btn btn-success btn-sm">
+                                    <i class="bi bi-plus-lg me-1"></i>Nuova Manutenzione
+                                </a>
+                                <a href="{% url 'automezzi:manutenzione_list' %}" class="btn btn-outline-success btn-sm">
+                                    <i class="bi bi-list-ul me-1"></i>Elenco Manutenzioni
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Rifornimenti -->
+                <div class="col-md-6">
+                    <div class="dashboard-widget h-100">
+                        <div class="widget-header">
+                            <h5 class="widget-title">
+                                <i class="bi bi-fuel-pump text-info me-2"></i>Rifornimenti
+                            </h5>
+                        </div>
+                        <div class="p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <span class="fs-4 fw-bold text-info">{{ rifornimenti_recenti|length }}</span>
+                                    <span class="text-muted ms-2">recenti</span>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'automezzi:rifornimento_create' %}" class="btn btn-info btn-sm">
+                                    <i class="bi bi-plus-lg me-1"></i>Nuovo Rifornimento
+                                </a>
+                                <a href="{% url 'automezzi:rifornimento_list' %}" class="btn btn-outline-info btn-sm">
+                                    <i class="bi bi-list-ul me-1"></i>Elenco Rifornimenti
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Eventi -->
+                <div class="col-md-6">
+                    <div class="dashboard-widget h-100">
+                        <div class="widget-header">
+                            <h5 class="widget-title">
+                                <i class="bi bi-exclamation-triangle text-warning me-2"></i>Eventi
+                            </h5>
+                        </div>
+                        <div class="p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <span class="fs-4 fw-bold text-warning">{{ eventi_recenti|length }}</span>
+                                    <span class="text-muted ms-2">recenti</span>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'automezzi:evento_create' %}" class="btn btn-warning btn-sm">
+                                    <i class="bi bi-plus-lg me-1"></i>Nuovo Evento
+                                </a>
+                                <a href="{% url 'automezzi:evento_list' %}" class="btn btn-outline-warning btn-sm">
+                                    <i class="bi bi-list-ul me-1"></i>Elenco Eventi
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Automezzi bloccati -->
+            {% if automezzi_bloccati %}
+            <div class="dashboard-widget mb-4">
+                <div class="widget-header bg-danger text-white">
+                    <h5 class="widget-title text-white">
+                        <i class="bi bi-x-circle me-2"></i>Automezzi Bloccati ({{ automezzi_bloccati|length }})
+                    </h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Targa</th>
+                                <th>Veicolo</th>
+                                <th>Motivo Blocco</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for automezzo in automezzi_bloccati %}
+                            <tr>
+                                <td><strong>{{ automezzo.targa }}</strong></td>
+                                <td>{{ automezzo.marca }} {{ automezzo.modello }}</td>
+                                <td><small class="text-danger">{{ automezzo.motivo_blocco|truncatechars:40 }}</small></td>
+                                <td>
+                                    <a href="{% url 'automezzi:automezzo_detail' automezzo.pk %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Prossime revisioni -->
+            {% if prossime_revisioni %}
+            <div class="dashboard-widget">
+                <div class="widget-header">
+                    <h5 class="widget-title">
+                        <i class="bi bi-calendar-check text-info me-2"></i>Prossime Revisioni
+                    </h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Targa</th>
+                                <th>Veicolo</th>
+                                <th>Data Revisione</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for automezzo in prossime_revisioni %}
+                            <tr>
+                                <td><strong>{{ automezzo.targa }}</strong></td>
+                                <td>{{ automezzo.marca }} {{ automezzo.modello }}</td>
+                                <td>
+                                    <span class="badge bg-info">{{ automezzo.data_revisione|date:"d/m/Y" }}</span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'automezzi:automezzo_detail' automezzo.pk %}" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Colonna destra: Sidebar -->
+        <div class="col-lg-4">
+            {% if user.is_staff %}
+            <!-- Affidamenti (solo staff) -->
+            <div class="dashboard-widget mb-4">
+                <div class="widget-header">
+                    <h5 class="widget-title">
+                        <i class="bi bi-person-badge text-secondary me-2"></i>Affidamenti
+                    </h5>
+                </div>
+                <div class="p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <span class="fs-4 fw-bold">{{ affidamenti_attivi }}</span>
+                            <span class="text-muted ms-2">attivi</span>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'automezzi:affidamento_create' %}" class="btn btn-secondary btn-sm">
+                            <i class="bi bi-plus-lg me-1"></i>Nuovo Affidamento
+                        </a>
+                        <a href="{% url 'automezzi:affidamento_list' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-list-ul me-1"></i>Elenco Affidamenti
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Il Mio Mezzo (utente con affidamento) -->
+            {% if mio_affidamento %}
+            <div class="dashboard-widget mb-4">
+                <div class="widget-header bg-danger text-white">
+                    <h5 class="widget-title text-white">
+                        <i class="bi bi-key me-2"></i>Il Mio Mezzo
+                    </h5>
+                </div>
+                <div class="p-3">
+                    <div class="mb-3">
+                        <div class="fs-5 fw-bold text-danger">{{ mio_affidamento.automezzo.targa }}</div>
+                        <div class="text-muted">{{ mio_affidamento.automezzo.marca }} {{ mio_affidamento.automezzo.modello }}</div>
+                    </div>
+                    <div class="small mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Periodo:</span>
+                            <span>{{ mio_affidamento.data_inizio|date:"d/m/Y" }} - {{ mio_affidamento.data_fine|date:"d/m/Y" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Km iniziali:</span>
+                            <span>{{ mio_affidamento.km_iniziali }}</span>
+                        </div>
+                        {% if mio_affidamento.automezzo.carta_carburante %}
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Carta carburante:</span>
+                            <span>{{ mio_affidamento.automezzo.carta_carburante }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'automezzi:mio_affidamento' %}" class="btn btn-danger w-100">
+                        <i class="bi bi-truck me-1"></i>Gestisci Mezzo
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Azioni Rapide -->
+            <div class="dashboard-widget">
+                <div class="widget-header">
+                    <h5 class="widget-title">
+                        <i class="bi bi-lightning me-2"></i>Azioni Rapide
+                    </h5>
+                </div>
+                <div class="p-3">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'automezzi:automezzo_create' %}" class="btn btn-primary">
+                            <i class="bi bi-truck me-2"></i>Nuovo Automezzo
+                        </a>
+                        <a href="{% url 'automezzi:manutenzione_create' %}" class="btn btn-success">
+                            <i class="bi bi-wrench me-2"></i>Nuova Manutenzione
+                        </a>
+                        <a href="{% url 'automezzi:rifornimento_create' %}" class="btn btn-info">
+                            <i class="bi bi-fuel-pump me-2"></i>Nuovo Rifornimento
+                        </a>
+                        <a href="{% url 'automezzi:evento_create' %}" class="btn btn-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Nuovo Evento
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
