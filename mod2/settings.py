@@ -27,7 +27,24 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-ri(ihl1rt6d5k1!04n4nl
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['*'] if DEBUG else os.environ.get('ALLOWED_HOSTS', '').split(',')
+# ALLOWED_HOSTS configuration
+ALLOWED_HOSTS = []
+if DEBUG:
+    ALLOWED_HOSTS = ['*']
+else:
+    # Produzione: permetti domini specificati in ALLOWED_HOSTS
+    hosts = os.environ.get('ALLOWED_HOSTS', '')
+    if hosts:
+        ALLOWED_HOSTS = [h.strip() for h in hosts.split(',') if h.strip()]
+
+    # Aggiungi automaticamente il dominio Heroku se presente
+    if 'HEROKU_APP_NAME' in os.environ:
+        ALLOWED_HOSTS.append(f"{os.environ['HEROKU_APP_NAME']}.herokuapp.com")
+
+    # Fallback: se nessun host è configurato, usa il dominio dalla richiesta
+    # Questo previene errori 400 ma non è sicuro - configurare ALLOWED_HOSTS!
+    if not ALLOWED_HOSTS:
+        ALLOWED_HOSTS = ['*']  # Permetti tutti in caso di emergenza
 
 
 # Application definition
