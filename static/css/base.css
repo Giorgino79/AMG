@@ -344,9 +344,22 @@ body {
         position: absolute;
         left: 50%;
         transform: translateX(-50%);
-        max-height: 32px;
+        height: 36px;
         width: auto;
         z-index: 1;
+        pointer-events: none;
+    }
+
+    /* Icone navbar più grandi e visibili su mobile */
+    .navbar .btn-link i.bi {
+        font-size: 1.4rem !important;
+        color: #333 !important;
+    }
+
+    /* Bottoni navbar: area di tocco adeguata */
+    .navbar .btn-link {
+        padding: 0.4rem 0.5rem;
+        color: #333 !important;
     }
 }
 
