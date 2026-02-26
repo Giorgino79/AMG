@@ -24,6 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-ri(ihl1rt6d5k1!04n4nl30zt)+or3)i^7+-qf#g)(gkz#as%g')
 
+# Chiave per cifratura campi sensibili (django-encrypted-model-fields)
+FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', 'cHooX43W8Wp96CkU-KSacJVCFHDneQKxblRuJJGQi6k=')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
@@ -47,6 +50,7 @@ INSTALLED_APPS = [
     'django_select2',
     'qr_code',
     'django_bootstrap5',
+    'encrypted_model_fields',
 
     'anagrafica',
     'users',
