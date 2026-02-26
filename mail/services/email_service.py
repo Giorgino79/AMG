@@ -22,10 +22,15 @@ logger = logging.getLogger(__name__)
 
 class ManagementEmailService:
     """
-    Servizio semplificato per l'invio email usando le impostazioni Django.
+    Servizio semplificato per l'invio email usando le impostazioni Django
+    con supporto SMTP personalizzato per utente.
 
     Utilizzato principalmente dalle app acquisti e trasporti per
     inviare email ai fornitori/trasportatori.
+    
+    Comportamento:
+    - Se l'utente ha EmailConfiguration configurata: invia da suo email personale
+    - Altrimenti: usa DEFAULT_FROM_EMAIL (fallback)
     """
 
     def __init__(self, user=None):
@@ -36,13 +41,34 @@ class ManagementEmailService:
             user: Utente Django che sta inviando l'email (per tracking)
         """
         self.user = user
+        self.email_config = None
         self.from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@example.com')
+        
+        # Tenta di caricare EmailConfiguration personale dell'utente
+        if user:
+            try:
+                from ..models import EmailConfiguration
+                self.email_config = EmailConfiguration.objects.get(user=user)
+                
+                # Se configurata, usa l'email personale come mittente
+                if self.email_config.is_configured:
+                    self.from_email = f"{self.email_config.display_name or ''} <{self.email_config.email_address}>".strip()
+                    logger.info(f"Email service usando account personale: {self.email_config.email_address}")
+                else:
+                    logger.warning(f"User {user.username} ha EmailConfiguration ma non completamente configurata, uso fallback")
+                    
+            except Exception as e:
+                logger.debug(f"Impossibile caricare EmailConfiguration per {user.username}: {str(e)}")
+                # Fallback a DEFAULT_FROM_EMAIL
 
     def send_email(self, to, subject, body_html=None, body_text=None,
                    attachments=None, cc=None, bcc=None, reply_to=None,
                    html_content=None, source_object=None, category=None, **kwargs):
         """
         Invia un'email con supporto HTML.
+        
+        Se l'utente ha EmailConfiguration configurata, usa SMTP personalizzato.
+        Altrimenti usa Django settings (fallback).
 
         Args:
             to: Destinatario (stringa o lista)
@@ -67,6 +93,38 @@ class ManagementEmailService:
         if not body_html:
             return {'success': False, 'error': 'Contenuto HTML mancante'}
 
+        # Se esiste EmailConfiguration configurata, tenta invio via SMTP personalizzato
+        if self.email_config and self.email_config.is_configured:
+            try:
+                return self._send_via_custom_smtp(
+                    to=to,
+                    subject=subject,
+                    body_html=body_html,
+                    body_text=body_text,
+                    attachments=attachments,
+                    cc=cc,
+                    bcc=bcc,
+                    reply_to=reply_to
+                )
+            except Exception as e:
+                # Se SMTP personalizzato fallisce, logga e ricade su Django mail
+                logger.warning(f"Fallback a Django mail dopo errore SMTP personalizzato: {str(e)}")
+        
+        # Fallback: usa Django mail con DEFAULT_FROM_EMAIL
+        return self._send_via_django_mail(
+            to=to,
+            subject=subject,
+            body_html=body_html,
+            body_text=body_text,
+            attachments=attachments,
+            cc=cc,
+            bcc=bcc,
+            reply_to=reply_to
+        )
+
+    def _send_via_django_mail(self, to, subject, body_html=None, body_text=None,
+                             attachments=None, cc=None, bcc=None, reply_to=None):
+        """Invia email usando Django mail backend (DEFAULT_FROM_EMAIL)"""
         try:
             # Normalizza destinatari
             if isinstance(to, str):
@@ -106,7 +164,7 @@ class ManagementEmailService:
             # Invia
             email.send(fail_silently=False)
 
-            logger.info(f"Email inviata con successo a {', '.join(to_list)} - Oggetto: {subject}")
+            logger.info(f"Email inviata con successo da Django mail a {', '.join(to_list)} - Oggetto: {subject}")
 
             return {'success': True}
 
@@ -114,6 +172,96 @@ class ManagementEmailService:
             error_msg = str(e)
             logger.error(f"Errore invio email a {to}: {error_msg}")
             return {'success': False, 'error': error_msg}
+
+    def _send_via_custom_smtp(self, to, subject, body_html=None, body_text=None,
+                             attachments=None, cc=None, bcc=None, reply_to=None):
+        """Invia email usando SMTP personalizzato dell'utente"""
+        try:
+            # Normalizza destinatari
+            if isinstance(to, str):
+                to_list = [to]
+            else:
+                to_list = list(to)
+            
+            cc_list = cc if isinstance(cc, list) else (([cc] if cc else []))
+            bcc_list = bcc if isinstance(bcc, list) else (([bcc] if bcc else []))
+
+            # Genera testo plain da HTML se non fornito
+            if not body_text:
+                body_text = re.sub(r'<[^>]+>', '', body_html)
+                body_text = re.sub(r'\s+', ' ', body_text).strip()
+
+            # Crea messaggio MIME
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = subject
+            msg['From'] = self.from_email
+            msg['To'] = ', '.join(to_list)
+            msg['Reply-To'] = self.email_config.email_address
+            
+            if cc_list:
+                msg['Cc'] = ', '.join(cc_list)
+
+            # Aggiungi Date e Message-ID
+            from email.utils import formatdate, make_msgid
+            msg['Date'] = formatdate(localtime=True)
+            msg['Message-ID'] = make_msgid(domain=self.email_config.email_address.split('@')[1])
+
+            # Aggiungi contenuto testo
+            part_text = MIMEText(body_text, 'plain', 'utf-8')
+            msg.attach(part_text)
+
+            # Aggiungi contenuto HTML
+            if body_html:
+                part_html = MIMEText(body_html, 'html', 'utf-8')
+                msg.attach(part_html)
+
+            # TODO: Gestire allegati
+            # if attachments:
+            #     for attachment in attachments:
+            #         # Implementare logica allegati
+            #         pass
+
+            # Prepara lista completa destinatari
+            all_recipients = to_list + cc_list + bcc_list
+
+            # Connetti e invia
+            try:
+                if self.email_config.use_ssl:
+                    server = smtplib.SMTP_SSL(
+                        self.email_config.smtp_server,
+                        self.email_config.smtp_port,
+                        timeout=30
+                    )
+                else:
+                    server = smtplib.SMTP(
+                        self.email_config.smtp_server,
+                        self.email_config.smtp_port,
+                        timeout=30
+                    )
+                    if self.email_config.use_tls:
+                        server.starttls()
+
+                # Login
+                server.login(self.email_config.smtp_username, self.email_config.smtp_password)
+
+                # Invia
+                server.send_message(msg)
+
+                # Chiudi connessione
+                server.quit()
+
+                logger.info(f"Email inviata con successo da SMTP personalizzato a {', '.join(to_list)} - Oggetto: {subject}")
+
+                return {'success': True}
+
+            except smtplib.SMTPException as e:
+                raise Exception(f"Errore SMTP: {str(e)}")
+            except Exception as e:
+                raise Exception(f"Errore invio email: {str(e)}")
+
+        except Exception as e:
+            logger.error(f"Errore invio email via SMTP personalizzato a {to}: {str(e)}")
+            raise
 
 
 class EmailService:

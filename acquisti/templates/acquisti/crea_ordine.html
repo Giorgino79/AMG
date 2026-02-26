@@ -58,21 +58,57 @@
                 </div>
             </div>
 
+            <!-- Sezione Oggetto Ordine -->
+            <div class="form-section">
+                <h6><i class="fas fa-file-alt me-2"></i>Oggetto Ordine</h6>
+                <div class="row">
+                    <div class="col-12">
+                        <label for="{{ form.oggetto_ordine.id_for_label }}" class="form-label">Oggetto Ordine *</label>
+                        {{ form.oggetto_ordine }}
+                        {% if form.oggetto_ordine.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.oggetto_ordine.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <label for="{{ form.descrizione_dettagliata.id_for_label }}" class="form-label">Descrizione Dettagliata</label>
+                        {{ form.descrizione_dettagliata }}
+                        {% if form.descrizione_dettagliata.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.descrizione_dettagliata.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
             <!-- Sezione Importo e Condizioni -->
             <div class="form-section">
                 <h6><i class="fas fa-euro-sign me-2"></i>Condizioni Commerciali</h6>
                 <div class="row">
                     <div class="col-md-4">
-                        <label for="{{ form.importo_totale.id_for_label }}" class="form-label">Importo Totale *</label>
-                        {{ form.importo_totale }}
-                        {% if form.importo_totale.errors %}
+                        <label for="{{ form.imponibile.id_for_label }}" class="form-label">Imponibile (netto) *</label>
+                        {{ form.imponibile }}
+                        {% if form.imponibile.errors %}
                         <div class="invalid-feedback d-block">
-                            {{ form.importo_totale.errors }}
+                            {{ form.imponibile.errors }}
                         </div>
                         {% endif %}
                     </div>
                     <div class="col-md-4">
-                        <label for="{{ form.termini_pagamento.id_for_label }}" class="form-label">Termini Pagamento *</label>
+                        <label for="{{ form.aliquota_iva.id_for_label }}" class="form-label">Aliquota IVA (%) *</label>
+                        {{ form.aliquota_iva }}
+                        {% if form.aliquota_iva.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.aliquota_iva.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.termini_pagamento.id_for_label }}" class="form-label">Termini Pagamento</label>
                         {{ form.termini_pagamento }}
                         {% if form.termini_pagamento.errors %}
                         <div class="invalid-feedback d-block">
@@ -80,8 +116,10 @@
                         </div>
                         {% endif %}
                     </div>
-                    <div class="col-md-4">
-                        <label for="{{ form.tempi_consegna.id_for_label }}" class="form-label">Tempi Consegna *</label>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.tempi_consegna.id_for_label }}" class="form-label">Tempi Consegna</label>
                         {{ form.tempi_consegna }}
                         {% if form.tempi_consegna.errors %}
                         <div class="invalid-feedback d-block">
@@ -106,11 +144,11 @@
                         {% endif %}
                     </div>
                     <div class="col-md-6">
-                        <label for="{{ form.riferimento_esterno.id_for_label }}" class="form-label">Riferimento Fornitore</label>
-                        {{ form.riferimento_esterno }}
-                        {% if form.riferimento_esterno.errors %}
+                        <label for="{{ form.riferimento_fornitore.id_for_label }}" class="form-label">Riferimento Fornitore</label>
+                        {{ form.riferimento_fornitore }}
+                        {% if form.riferimento_fornitore.errors %}
                         <div class="invalid-feedback d-block">
-                            {{ form.riferimento_esterno.errors }}
+                            {{ form.riferimento_fornitore.errors }}
                         </div>
                         {% endif %}
                     </div>

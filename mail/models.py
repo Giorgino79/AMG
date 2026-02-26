@@ -12,6 +12,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MinValueValidator, MaxValueValidator, EmailValidator
 from django.utils import timezone
 from django.urls import reverse
+from encrypted_model_fields.fields import EncryptedCharField
 from core.models import BaseModel, BaseModelSimple
 from core.mixins import AllegatiMixin
 import hashlib
@@ -57,10 +58,10 @@ class EmailConfiguration(BaseModel):
         validators=[MinValueValidator(1), MaxValueValidator(65535)]
     )
     smtp_username = models.CharField("Username SMTP", max_length=255)
-    smtp_password = models.CharField(
+    smtp_password = EncryptedCharField(
         "Password SMTP",
         max_length=255,
-        help_text="TODO: Criptare con django-cryptography"
+        help_text="Password criptata con django-cryptography"
     )
     use_tls = models.BooleanField("Usa TLS", default=True)
     use_ssl = models.BooleanField("Usa SSL", default=False)
@@ -78,11 +79,11 @@ class EmailConfiguration(BaseModel):
         validators=[MinValueValidator(1), MaxValueValidator(65535)]
     )
     imap_username = models.CharField("Username IMAP", max_length=255, blank=True)
-    imap_password = models.CharField(
+    imap_password = EncryptedCharField(
         "Password IMAP",
         max_length=255,
         blank=True,
-        help_text="TODO: Criptare"
+        help_text="Password criptata con django-cryptography"
     )
     imap_use_tls = models.BooleanField("IMAP usa TLS", default=False)
     imap_use_ssl = models.BooleanField("IMAP usa SSL", default=True)

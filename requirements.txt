@@ -18,6 +18,7 @@ Pillow==10.1.0
 reportlab==4.0.7
 openpyxl==3.1.2
 xhtml2pdf==0.2.13
+django-cryptography==4.0
 
 # Development & Debugging
 django-extensions==3.2.3
