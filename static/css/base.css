@@ -330,16 +330,29 @@ body {
         display: none;
     }
 
-    .search-wrapper {
-        max-width: 200px;
-    }
-
     .main-container {
         padding: 1rem;
     }
 
     /* Dropdown profilo compatto */
     .user-avatar + span {
+        display: none !important;
+    }
+
+    /* Logo mobile centrato nella navbar */
+    .navbar-logo-mobile {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        max-height: 32px;
+        width: auto;
+        z-index: 1;
+    }
+}
+
+/* Pannello ricerca mobile: non mostrare mai su desktop */
+@media (min-width: 768px) {
+    #mobileSearchPanel {
         display: none !important;
     }
 }

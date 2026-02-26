@@ -18,6 +18,7 @@
     // ========================================================================
     document.addEventListener('DOMContentLoaded', function() {
         initGlobalSearch();
+        initMobileSearch();
     });
 
     // ========================================================================
@@ -188,6 +189,131 @@
         dropdown.classList.remove('d-none');
         container.classList.remove('d-none');
         document.getElementById('searchNoResults').classList.add('d-none');
+    }
+
+    // ========================================================================
+    // RICERCA MOBILE
+    // ========================================================================
+    function initMobileSearch() {
+        const panel = document.getElementById('mobileSearchPanel');
+        const toggle = document.getElementById('mobileSearchToggle');
+        const closeBtn = document.getElementById('closeMobileSearch');
+        const searchInput = document.getElementById('globalSearchMobile');
+        const searchDropdown = document.getElementById('searchResultsDropdownMobile');
+
+        if (!toggle || !panel) return;
+
+        // Apri pannello al click sulla lente
+        toggle.addEventListener('click', function() {
+            panel.classList.toggle('d-none');
+            if (!panel.classList.contains('d-none') && searchInput) {
+                searchInput.focus();
+            }
+        });
+
+        // Chiudi pannello al click su X
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                panel.classList.add('d-none');
+                if (searchInput) searchInput.value = '';
+                hideMobileDropdown();
+            });
+        }
+
+        if (!searchInput || !searchDropdown) return;
+
+        let mobileTimeout = null;
+
+        searchInput.addEventListener('input', function(e) {
+            const query = e.target.value.trim();
+            if (mobileTimeout) clearTimeout(mobileTimeout);
+            if (query.length < MIN_QUERY_LENGTH) {
+                hideMobileDropdown();
+                return;
+            }
+            showMobileLoading();
+            mobileTimeout = setTimeout(function() {
+                performMobileSearch(query);
+            }, SEARCH_DELAY);
+        });
+
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                panel.classList.add('d-none');
+                hideMobileDropdown();
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!panel.contains(e.target) && e.target !== toggle) {
+                panel.classList.add('d-none');
+                hideMobileDropdown();
+            }
+        });
+    }
+
+    function performMobileSearch(query) {
+        fetch(`/core/search/?q=${encodeURIComponent(query)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideMobileLoading();
+            if (data.success && data.results && data.results.length > 0) {
+                renderMobileResults(data.results);
+                showMobileDropdown();
+            } else {
+                showMobileNoResults();
+            }
+        })
+        .catch(error => {
+            console.error('Errore ricerca mobile:', error);
+            hideMobileLoading();
+        });
+    }
+
+    function renderMobileResults(results) {
+        const container = document.getElementById('searchResultsContainerMobile');
+        container.innerHTML = '';
+        results.forEach(category => {
+            const header = document.createElement('div');
+            header.className = 'search-results-category';
+            header.textContent = category.category;
+            container.appendChild(header);
+            category.items.forEach(item => {
+                const link = createResultItem(item);
+                link.addEventListener('click', hideMobileDropdown);
+                container.appendChild(link);
+            });
+        });
+    }
+
+    function showMobileDropdown() {
+        document.getElementById('searchResultsDropdownMobile').classList.remove('d-none');
+        document.getElementById('searchResultsContainerMobile').classList.remove('d-none');
+        document.getElementById('searchNoResultsMobile').classList.add('d-none');
+    }
+
+    function hideMobileDropdown() {
+        const dd = document.getElementById('searchResultsDropdownMobile');
+        if (dd) dd.classList.add('d-none');
+    }
+
+    function showMobileLoading() {
+        document.getElementById('searchResultsDropdownMobile').classList.remove('d-none');
+        document.getElementById('searchLoadingMobile').classList.remove('d-none');
+        document.getElementById('searchResultsContainerMobile').classList.add('d-none');
+        document.getElementById('searchNoResultsMobile').classList.add('d-none');
+    }
+
+    function hideMobileLoading() {
+        document.getElementById('searchLoadingMobile').classList.add('d-none');
+    }
+
+    function showMobileNoResults() {
+        document.getElementById('searchResultsDropdownMobile').classList.remove('d-none');
+        document.getElementById('searchNoResultsMobile').classList.remove('d-none');
+        document.getElementById('searchResultsContainerMobile').classList.add('d-none');
     }
 
     // ========================================================================

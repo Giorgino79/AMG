@@ -108,6 +108,9 @@
                     <i class="bi bi-list fs-4"></i>
                 </button>
 
+                <!-- Logo centrato su mobile -->
+                <img src="{% static 'img/easymod26.png' %}" alt="EasyMod" class="navbar-logo-mobile d-lg-none">
+
                 <div class="navbar-brand-wrapper">
                     {% block navbar_breadcrumb %}
                     <nav aria-label="breadcrumb">
@@ -125,7 +128,12 @@
                         <span id="currentDateTime" class="small"></span>
                     </div>
 
-                    <div class="search-wrapper position-relative">
+                    <!-- Bottone lente solo mobile -->
+                    <button class="btn btn-link d-md-none text-dark p-1" id="mobileSearchToggle" type="button">
+                        <i class="bi bi-search fs-5"></i>
+                    </button>
+
+                    <div class="search-wrapper position-relative d-none d-md-block">
                         <div class="input-group">
                             <span class="input-group-text bg-white border-end-0">
                                 <i class="bi bi-search text-muted"></i>
@@ -252,6 +260,33 @@
                 </div>
             </div>
         </nav>
+
+        <!-- Pannello ricerca mobile (appare sotto la navbar al click sulla lente) -->
+        <div id="mobileSearchPanel" class="d-none bg-white border-bottom px-2 py-2" style="position:sticky;top:60px;z-index:1040;">
+            <div class="position-relative">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0 ps-0" id="globalSearchMobile" placeholder="Cerca in tutto il sistema..." autocomplete="off">
+                    <button class="btn btn-outline-secondary" type="button" id="closeMobileSearch">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="search-results-dropdown d-none" id="searchResultsDropdownMobile">
+                    <div class="search-loading text-center p-3 d-none" id="searchLoadingMobile">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Ricerca in corso...</span>
+                        </div>
+                    </div>
+                    <div class="search-results-container" id="searchResultsContainerMobile"></div>
+                    <div class="search-no-results text-center p-3 text-muted d-none" id="searchNoResultsMobile">
+                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                        Nessun risultato trovato
+                    </div>
+                </div>
+            </div>
+        </div>
 
         {% if messages %}
         <div class="container-fluid mt-3">
