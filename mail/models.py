@@ -24,6 +24,95 @@ User = get_user_model()
 # ============================================================================
 
 
+class CompanyEmailSettings(BaseModel):
+    """
+    Configurazione SMTP aziendale centralizzata.
+
+    Permette di configurare un server SMTP aziendale che tutti i dipendenti
+    possono utilizzare senza dover inserire le proprie credenziali.
+    """
+
+    name = models.CharField(
+        "Nome Configurazione",
+        max_length=100,
+        help_text="Es: 'Mail Aziendale', 'Server Primario'"
+    )
+
+    is_active = models.BooleanField(
+        "Attiva",
+        default=True,
+        help_text="Se disattivata, gli utenti non potranno usarla"
+    )
+
+    # SMTP Configuration
+    smtp_server = models.CharField("Server SMTP", max_length=255)
+    smtp_port = models.IntegerField(
+        "Porta SMTP",
+        default=587,
+        validators=[MinValueValidator(1), MaxValueValidator(65535)]
+    )
+    smtp_username = models.CharField(
+        "Username SMTP",
+        max_length=255,
+        blank=True,
+        help_text="Lascia vuoto se non richiede autenticazione"
+    )
+    smtp_password = models.CharField(
+        "Password SMTP",
+        max_length=255,
+        blank=True,
+        help_text="Password per autenticazione SMTP"
+    )
+    use_tls = models.BooleanField("Usa TLS", default=True)
+    use_ssl = models.BooleanField("Usa SSL", default=False)
+
+    # Impostazioni avanzate
+    allow_custom_from = models.BooleanField(
+        "Permetti From Personalizzato",
+        default=True,
+        help_text="Permette agli utenti di usare la propria email come mittente"
+    )
+
+    default_from_domain = models.CharField(
+        "Dominio Default",
+        max_length=255,
+        blank=True,
+        help_text="Es: @azienda.com - usato per validare email mittenti"
+    )
+
+    require_same_domain = models.BooleanField(
+        "Richiedi Stesso Dominio",
+        default=False,
+        help_text="Gli utenti possono inviare solo con email dello stesso dominio aziendale"
+    )
+
+    # Limiti
+    daily_limit_per_user = models.IntegerField(
+        "Limite Giornaliero per Utente",
+        null=True,
+        blank=True,
+        help_text="Massimo numero di email che ogni utente può inviare al giorno"
+    )
+
+    # Statistiche
+    is_verified = models.BooleanField("Verificata", default=False)
+    last_test_at = models.DateTimeField("Ultimo Test", null=True, blank=True)
+    last_error = models.TextField("Ultimo Errore", blank=True)
+
+    class Meta:
+        verbose_name = "Configurazione Email Aziendale"
+        verbose_name_plural = "Configurazioni Email Aziendali"
+        ordering = ['-is_active', 'name']
+
+    def __str__(self):
+        return f"{self.name} ({self.smtp_server})"
+
+    @property
+    def is_configured(self):
+        """Verifica se la configurazione è completa"""
+        return bool(self.smtp_server and self.smtp_port)
+
+
 class EmailConfiguration(BaseModel):
     """
     Configurazione email per utente (SMTP + IMAP).
@@ -39,6 +128,30 @@ class EmailConfiguration(BaseModel):
         verbose_name="Utente"
     )
 
+    # ===== Tipo Configurazione =====
+    CONFIG_TYPE_CHOICES = [
+        ('personal', 'Personale'),
+        ('company', 'Aziendale'),
+    ]
+
+    config_type = models.CharField(
+        "Tipo Configurazione",
+        max_length=20,
+        choices=CONFIG_TYPE_CHOICES,
+        default='personal',
+        help_text="Personale: usa le tue credenziali | Aziendale: usa server aziendale"
+    )
+
+    company_settings = models.ForeignKey(
+        CompanyEmailSettings,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user_configs',
+        verbose_name="Configurazione Aziendale",
+        help_text="Server SMTP aziendale da utilizzare (solo se tipo=aziendale)"
+    )
+
     # ===== SMTP Configuration =====
     display_name = models.CharField(
         "Nome Visualizzato",
@@ -50,17 +163,28 @@ class EmailConfiguration(BaseModel):
         validators=[EmailValidator()],
         help_text="Indirizzo email completo"
     )
-    smtp_server = models.CharField("Server SMTP", max_length=255)
+    smtp_server = models.CharField(
+        "Server SMTP",
+        max_length=255,
+        blank=True,
+        help_text="Richiesto solo per configurazione personale"
+    )
     smtp_port = models.IntegerField(
         "Porta SMTP",
         default=587,
         validators=[MinValueValidator(1), MaxValueValidator(65535)]
     )
-    smtp_username = models.CharField("Username SMTP", max_length=255)
+    smtp_username = models.CharField(
+        "Username SMTP",
+        max_length=255,
+        blank=True,
+        help_text="Richiesto solo per configurazione personale"
+    )
     smtp_password = models.CharField(
         "Password SMTP",
         max_length=255,
-        help_text="TODO: Criptare con django-cryptography"
+        blank=True,
+        help_text="Password per SMTP personale (TODO: Criptare con django-cryptography)"
     )
     use_tls = models.BooleanField("Usa TLS", default=True)
     use_ssl = models.BooleanField("Usa SSL", default=False)
@@ -131,12 +255,17 @@ class EmailConfiguration(BaseModel):
     @property
     def is_configured(self):
         """Verifica se la configurazione SMTP è completa"""
-        return all([
-            self.email_address,
-            self.smtp_server,
-            self.smtp_username,
-            self.smtp_password,
-        ])
+        if self.config_type == 'company':
+            # Per configurazione aziendale serve solo email_address e company_settings
+            return bool(self.email_address and self.company_settings and self.company_settings.is_configured)
+        else:
+            # Per configurazione personale servono tutti i campi
+            return all([
+                self.email_address,
+                self.smtp_server,
+                self.smtp_username,
+                self.smtp_password,
+            ])
 
     @property
     def is_imap_configured(self):
@@ -147,6 +276,39 @@ class EmailConfiguration(BaseModel):
             self.imap_username,
             self.imap_password,
         ])
+
+    def get_smtp_config(self):
+        """
+        Restituisce la configurazione SMTP effettiva da utilizzare.
+
+        Returns:
+            dict: Configurazione SMTP con chiavi:
+                  - server, port, username, password, use_tls, use_ssl, from_email, from_name
+        """
+        if self.config_type == 'company' and self.company_settings:
+            # Usa configurazione aziendale
+            return {
+                'server': self.company_settings.smtp_server,
+                'port': self.company_settings.smtp_port,
+                'username': self.company_settings.smtp_username,
+                'password': self.company_settings.smtp_password,
+                'use_tls': self.company_settings.use_tls,
+                'use_ssl': self.company_settings.use_ssl,
+                'from_email': self.email_address,
+                'from_name': self.display_name,
+            }
+        else:
+            # Usa configurazione personale
+            return {
+                'server': self.smtp_server,
+                'port': self.smtp_port,
+                'username': self.smtp_username,
+                'password': self.smtp_password,
+                'use_tls': self.use_tls,
+                'use_ssl': self.use_ssl,
+                'from_email': self.email_address,
+                'from_name': self.display_name,
+            }
 
 
 class EmailTemplate(BaseModel):

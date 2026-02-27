@@ -226,6 +226,8 @@ class EmailService:
         """
         Invia email tramite SMTP usando la configurazione dell'utente.
 
+        Supporta sia configurazione personale che aziendale.
+
         Args:
             to_addresses: Lista indirizzi destinatari
             subject: Oggetto email
@@ -238,14 +240,17 @@ class EmailService:
         if not self.config:
             raise ValueError("Configurazione email non disponibile")
 
+        # Ottieni configurazione SMTP effettiva (personale o aziendale)
+        smtp_config = self.config.get_smtp_config()
+
         # Crea messaggio
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
-        msg['From'] = f"{self.config.display_name} <{self.config.email_address}>"
+        msg['From'] = f"{smtp_config['from_name']} <{smtp_config['from_email']}>"
         msg['To'] = ', '.join(to_addresses) if isinstance(to_addresses, list) else to_addresses
 
         # Aggiungi header Reply-To per evitare problemi
-        msg['Reply-To'] = self.config.email_address
+        msg['Reply-To'] = smtp_config['from_email']
 
         # Aggiungi Date header
         from email.utils import formatdate
@@ -295,25 +300,26 @@ class EmailService:
 
         # Connetti e invia
         try:
-            if self.config.use_ssl:
+            if smtp_config['use_ssl']:
                 # SSL connection
                 server = smtplib.SMTP_SSL(
-                    self.config.smtp_server,
-                    self.config.smtp_port,
+                    smtp_config['server'],
+                    smtp_config['port'],
                     timeout=30
                 )
             else:
                 # Normal connection with optional TLS
                 server = smtplib.SMTP(
-                    self.config.smtp_server,
-                    self.config.smtp_port,
+                    smtp_config['server'],
+                    smtp_config['port'],
                     timeout=30
                 )
-                if self.config.use_tls:
+                if smtp_config['use_tls']:
                     server.starttls()
 
-            # Login
-            server.login(self.config.smtp_username, self.config.smtp_password)
+            # Login (solo se username e password sono forniti)
+            if smtp_config['username'] and smtp_config['password']:
+                server.login(smtp_config['username'], smtp_config['password'])
 
             # Invia
             server.send_message(msg)
@@ -352,38 +358,42 @@ class EmailService:
         """
         Testa configurazione SMTP con connessione reale.
 
+        Supporta sia configurazione personale che aziendale.
+
         Returns:
             bool: True se test riuscito, False altrimenti
         """
         if not self.config:
-            self.config.last_error = "Nessuna configurazione disponibile"
-            self.config.save()
             return False
 
         if not self.config.is_configured:
-            self.config.last_error = "Configurazione incompleta"
+            self.config.last_smtp_error = "Configurazione incompleta"
             self.config.save()
             return False
 
         try:
+            # Ottieni configurazione SMTP effettiva
+            smtp_config = self.config.get_smtp_config()
+
             # Test connessione SMTP reale
-            if self.config.use_ssl:
+            if smtp_config['use_ssl']:
                 server = smtplib.SMTP_SSL(
-                    self.config.smtp_server,
-                    self.config.smtp_port,
+                    smtp_config['server'],
+                    smtp_config['port'],
                     timeout=10
                 )
             else:
                 server = smtplib.SMTP(
-                    self.config.smtp_server,
-                    self.config.smtp_port,
+                    smtp_config['server'],
+                    smtp_config['port'],
                     timeout=10
                 )
-                if self.config.use_tls:
+                if smtp_config['use_tls']:
                     server.starttls()
 
-            # Tenta il login
-            server.login(self.config.smtp_username, self.config.smtp_password)
+            # Tenta il login (solo se credenziali fornite)
+            if smtp_config['username'] and smtp_config['password']:
+                server.login(smtp_config['username'], smtp_config['password'])
 
             # Se arriviamo qui, il test è riuscito
             server.quit()
@@ -391,7 +401,7 @@ class EmailService:
             # Aggiorna configurazione
             self.config.is_verified = True
             self.config.last_test_at = timezone.now()
-            self.config.last_error = ''
+            self.config.last_smtp_error = ''
             self.config.save()
 
             return True
@@ -399,21 +409,21 @@ class EmailService:
         except smtplib.SMTPAuthenticationError as e:
             error_msg = f"Autenticazione fallita: {str(e)}"
             self.config.is_verified = False
-            self.config.last_error = error_msg
+            self.config.last_smtp_error = error_msg
             self.config.save()
             return False
 
         except smtplib.SMTPException as e:
             error_msg = f"Errore SMTP: {str(e)}"
             self.config.is_verified = False
-            self.config.last_error = error_msg
+            self.config.last_smtp_error = error_msg
             self.config.save()
             return False
 
         except Exception as e:
             error_msg = f"Errore: {str(e)}"
             self.config.is_verified = False
-            self.config.last_error = error_msg
+            self.config.last_smtp_error = error_msg
             self.config.save()
             return False
 
