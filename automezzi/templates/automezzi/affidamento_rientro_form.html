@@ -77,6 +77,24 @@
                             <div class="form-text">Video per documentare lo stato della vettura al rientro</div>
                         </div>
 
+                        <!-- Mappa Danni alla Consegna (readonly) -->
+                        {% if object.danni_consegna %}
+                        <div class="mt-4 mb-4">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">
+                                <i class="fas fa-eye me-2"></i>Danni Registrati alla Consegna (solo visualizzazione)
+                            </h6>
+                            {% include 'automezzi/components/vehicle_damage_map.html' with field_name='danni_consegna_readonly' label='Stato alla Consegna' existing_damages=object.danni_consegna|safe readonly=True %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Mappa Danni al Rientro (editabile) -->
+                        <div class="mt-4 mb-4">
+                            <h6 class="text-primary border-bottom pb-2 mb-3">
+                                <i class="fas fa-car-crash me-2"></i>Stato Carrozzeria al Rientro
+                            </h6>
+                            {% include 'automezzi/components/vehicle_damage_map.html' with field_name='danni_rientro' label='Mappa Danni al Rientro' readonly=False %}
+                        </div>
+
                         <div class="mb-3">
                             <label for="{{ form.note_rientro.id_for_label }}" class="form-label fw-semibold">
                                 <i class="fas fa-sticky-note me-2 text-muted"></i>Note Rientro

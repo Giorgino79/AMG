@@ -294,6 +294,7 @@ class AffidamentoMezzoForm(forms.ModelForm):
             "km_iniziali",
             "scopo_viaggio",
             "carburante",
+            "danni_consegna",
             "note",
         ]
         widgets = {
@@ -304,12 +305,14 @@ class AffidamentoMezzoForm(forms.ModelForm):
             ),
             "note": forms.Textarea(attrs={"rows": 3}),
             "km_iniziali": forms.NumberInput(attrs={"min": "0"}),
+            "danni_consegna": forms.HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["video_stato_vettura"].required = False
         self.fields["note"].required = False
+        self.fields["danni_consegna"].required = False
 
 
 class AffidamentoRientroForm(forms.ModelForm):
@@ -318,6 +321,7 @@ class AffidamentoRientroForm(forms.ModelForm):
         fields = [
             "km_finali",
             "video_rientro",
+            "danni_rientro",
             "note_rientro",
         ]
         widgets = {
@@ -325,10 +329,12 @@ class AffidamentoRientroForm(forms.ModelForm):
             "note_rientro": forms.Textarea(
                 attrs={"rows": 3, "placeholder": "Note sul rientro, eventuali danni, problemi riscontrati..."}
             ),
+            "danni_rientro": forms.HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["km_finali"].required = True
         self.fields["video_rientro"].required = False
+        self.fields["danni_rientro"].required = False
         self.fields["note_rientro"].required = False

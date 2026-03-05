@@ -175,6 +175,16 @@
                             </div>
                         </div>
 
+                        <!-- Mappa Danni Consegna -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2 mb-3">
+                                    <i class="fas fa-car-crash me-2"></i>Stato Carrozzeria alla Consegna
+                                </h5>
+                                {% include 'automezzi/components/vehicle_damage_map.html' with field_name='danni_consegna' label='Mappa Danni alla Consegna' readonly=False %}
+                            </div>
+                        </div>
+
                         <div class="row mt-3">
                             <div class="col-12">
                                 <div class="mb-3">

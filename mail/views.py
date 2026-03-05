@@ -26,11 +26,13 @@ from .models import (
 )
 from .forms import (
     EmailConfigurationForm,
+    EmailSetupWizardForm,
     EmailTemplateForm,
     ComposeEmailForm,
     PromemoriaForm,
 )
 from .services.email_service import EmailService
+from .email_providers import get_all_providers, get_provider_config
 
 
 # ============================================================================
@@ -129,6 +131,66 @@ def test_config(request):
         messages.warning(request, 'Nessuna configurazione trovata. Configurala prima.')
 
     return redirect('mail:config')
+
+
+@login_required
+def email_setup_wizard(request):
+    """Wizard guidato per configurazione email con presets provider"""
+    import json
+    from .models import CompanyEmailSettings
+
+    # Get or create configuration
+    config, created = EmailConfiguration.objects.get_or_create(
+        user=request.user,
+        defaults={
+            'display_name': request.user.get_full_name() or request.user.username,
+            'email_address': request.user.email,
+        }
+    )
+
+    if request.method == 'POST':
+        form = EmailSetupWizardForm(request.POST, instance=config)
+        if form.is_valid():
+            config = form.save()
+
+            # Test automatico della configurazione
+            service = EmailService(user=request.user, config=config)
+            if service.test_configuration():
+                messages.success(request, '✅ Configurazione email completata e verificata con successo!')
+                return redirect('mail:dashboard')
+            else:
+                messages.warning(request,
+                    f'⚠️ Configurazione salvata ma test connessione fallito. '
+                    f'Verifica i parametri: {config.last_error}')
+                return redirect('mail:setup_wizard')
+        else:
+            messages.error(request, 'Errore nel form. Controlla i campi inseriti.')
+    else:
+        form = EmailSetupWizardForm(instance=config)
+
+    # Get all email providers for template
+    providers = get_all_providers()
+    providers_json = json.dumps(providers)
+
+    # Get active company settings
+    company_settings = CompanyEmailSettings.objects.filter(is_active=True)
+
+    breadcrumb = [
+        {'label': 'Home', 'url': reverse('home')},
+        {'label': 'Mail', 'url': reverse('mail:dashboard')},
+        {'label': 'Configurazione Guidata', 'url': None},
+    ]
+
+    context = {
+        'title': 'Configurazione Email Guidata',
+        'breadcrumb': breadcrumb,
+        'form': form,
+        'config': config,
+        'providers': providers_json,
+        'company_settings': company_settings,
+    }
+
+    return render(request, 'mail/setup_wizard.html', context)
 
 
 # ============================================================================

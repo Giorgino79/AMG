@@ -184,6 +184,15 @@ class EmailService:
             subject, content_html, content_text = template.render(context)
             template.increment_usage()
 
+        # Verifica limite giornaliero
+        if self.config:
+            puo_inviare, inviate, limite = self.config.check_daily_limit()
+            if not puo_inviare:
+                raise Exception(
+                    f"Limite giornaliero raggiunto: hai già inviato {inviate}/{limite} email oggi. "
+                    f"Il limite si resetta a mezzanotte."
+                )
+
         # Crea messaggio nel database
         message = EmailMessage.objects.create(
             sender_config=self.config,
@@ -367,7 +376,7 @@ class EmailService:
             return False
 
         if not self.config.is_configured:
-            self.config.last_smtp_error = "Configurazione incompleta"
+            self.config.last_error = "Configurazione incompleta"
             self.config.save()
             return False
 
@@ -401,7 +410,7 @@ class EmailService:
             # Aggiorna configurazione
             self.config.is_verified = True
             self.config.last_test_at = timezone.now()
-            self.config.last_smtp_error = ''
+            self.config.last_error = ''
             self.config.save()
 
             return True
@@ -409,21 +418,21 @@ class EmailService:
         except smtplib.SMTPAuthenticationError as e:
             error_msg = f"Autenticazione fallita: {str(e)}"
             self.config.is_verified = False
-            self.config.last_smtp_error = error_msg
+            self.config.last_error = error_msg
             self.config.save()
             return False
 
         except smtplib.SMTPException as e:
             error_msg = f"Errore SMTP: {str(e)}"
             self.config.is_verified = False
-            self.config.last_smtp_error = error_msg
+            self.config.last_error = error_msg
             self.config.save()
             return False
 
         except Exception as e:
             error_msg = f"Errore: {str(e)}"
             self.config.is_verified = False
-            self.config.last_smtp_error = error_msg
+            self.config.last_error = error_msg
             self.config.save()
             return False
 

@@ -310,6 +310,58 @@ class EmailConfiguration(BaseModel):
                 'from_name': self.display_name,
             }
 
+    def check_daily_limit(self):
+        """
+        Verifica se l'utente ha raggiunto il limite giornaliero di invio.
+
+        Returns:
+            tuple: (bool, int, int) - (può_inviare, email_inviate_oggi, limite)
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+
+        # Determina il limite giornaliero
+        if self.config_type == 'company' and self.company_settings:
+            daily_limit = self.company_settings.daily_limit_per_user or self.daily_limit
+        else:
+            daily_limit = self.daily_limit
+
+        # Se nessun limite impostato, può sempre inviare
+        if not daily_limit:
+            return (True, 0, None)
+
+        # Conta email inviate oggi
+        oggi_inizio = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        oggi_fine = oggi_inizio + timedelta(days=1)
+
+        from .models import EmailMessage
+        email_inviate_oggi = EmailMessage.objects.filter(
+            sender_config=self,
+            created_at__gte=oggi_inizio,
+            created_at__lt=oggi_fine,
+            direction='outgoing'
+        ).count()
+
+        # Verifica se ha superato il limite
+        puo_inviare = email_inviate_oggi < daily_limit
+
+        return (puo_inviare, email_inviate_oggi, daily_limit)
+
+    def get_remaining_daily_emails(self):
+        """
+        Restituisce il numero di email rimanenti che l'utente può inviare oggi.
+
+        Returns:
+            int or None: Numero email rimanenti, None se nessun limite
+        """
+        puo_inviare, inviate, limite = self.check_daily_limit()
+
+        if limite is None:
+            return None
+
+        remaining = limite - inviate
+        return max(0, remaining)
+
 
 class EmailTemplate(BaseModel):
     """

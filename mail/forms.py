@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, Submit, Div, HTML, Row, Column
 from .models import (
+    CompanyEmailSettings,
     EmailConfiguration,
     EmailTemplate,
     EmailMessage,
@@ -16,6 +17,7 @@ from .models import (
     ChatConversation,
     ChatMessage,
 )
+from .email_providers import get_all_providers
 
 User = get_user_model()
 
@@ -98,6 +100,112 @@ class EmailConfigurationForm(forms.ModelForm):
                 Column('hourly_limit', css_class='col-md-6'),
             ),
         )
+
+
+class EmailSetupWizardForm(forms.ModelForm):
+    """Form wizard per configurazione email guidata"""
+
+    # Campo extra per selezionare il provider
+    email_provider = forms.ChoiceField(
+        label="Provider Email",
+        choices=[
+            ('', '--- Seleziona un provider ---'),
+            ('company', '🏢 Usa Email Aziendale'),
+            ('gmail', '📧 Gmail'),
+            ('outlook', '📧 Outlook / Office 365'),
+            ('icloud', '📧 iCloud Mail'),
+            ('yahoo', '📧 Yahoo Mail'),
+            ('other', '⚙️ Altro Provider (Configurazione Manuale)'),
+        ],
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'form-select form-select-lg',
+            'onchange': 'handleProviderChange(this.value)',
+        }),
+        help_text='Seleziona il tuo provider email per una configurazione guidata'
+    )
+
+    class Meta:
+        model = EmailConfiguration
+        fields = [
+            'config_type',
+            'company_settings',
+            'display_name',
+            'email_address',
+            'smtp_server',
+            'smtp_port',
+            'smtp_username',
+            'smtp_password',
+            'use_tls',
+            'use_ssl',
+            'imap_server',
+            'imap_port',
+            'imap_username',
+            'imap_password',
+            'imap_use_tls',
+            'imap_use_ssl',
+            'imap_enabled',
+        ]
+        widgets = {
+            'smtp_password': forms.PasswordInput(render_value=True, attrs={'class': 'form-control'}),
+            'imap_password': forms.PasswordInput(render_value=True, attrs={'class': 'form-control'}),
+            'config_type': forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Aggiungi classi Bootstrap
+        for field_name, field in self.fields.items():
+            if field_name not in ['use_tls', 'use_ssl', 'imap_use_tls', 'imap_use_ssl', 'imap_enabled', 'config_type']:
+                field.widget.attrs['class'] = 'form-control'
+
+        # Campi checkbox
+        for field_name in ['use_tls', 'use_ssl', 'imap_use_tls', 'imap_use_ssl', 'imap_enabled']:
+            self.fields[field_name].widget.attrs['class'] = 'form-check-input'
+
+        # Popola company_settings con solo configurazioni attive
+        self.fields['company_settings'].queryset = CompanyEmailSettings.objects.filter(
+            is_active=True
+        )
+        self.fields['company_settings'].required = False
+        self.fields['company_settings'].widget.attrs.update({
+            'class': 'form-select',
+            'data-placeholder': 'Seleziona server email aziendale'
+        })
+
+        # Rendi alcuni campi opzionali inizialmente
+        optional_fields = [
+            'smtp_server', 'smtp_username', 'smtp_password',
+            'imap_server', 'imap_username', 'imap_password'
+        ]
+        for field_name in optional_fields:
+            self.fields[field_name].required = False
+
+        # Aggiungi help text
+        self.fields['display_name'].help_text = 'Nome che apparirà come mittente (es: Mario Rossi)'
+        self.fields['email_address'].help_text = 'Il tuo indirizzo email completo'
+        self.fields['smtp_username'].help_text = 'Solitamente è uguale al tuo indirizzo email'
+        self.fields['smtp_password'].help_text = 'Password per accedere alla posta (vedi guida sopra)'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        config_type = cleaned_data.get('config_type')
+
+        if config_type == 'company':
+            # Per configurazione aziendale serve company_settings
+            if not cleaned_data.get('company_settings'):
+                raise forms.ValidationError(
+                    'Devi selezionare una configurazione email aziendale.'
+                )
+        else:
+            # Per configurazione personale servono i campi SMTP
+            required_personal = ['smtp_server', 'smtp_username', 'smtp_password']
+            for field in required_personal:
+                if not cleaned_data.get(field):
+                    self.add_error(field, 'Questo campo è obbligatorio per la configurazione personale.')
+
+        return cleaned_data
 
 
 # ============================================================================

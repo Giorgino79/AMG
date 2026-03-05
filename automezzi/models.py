@@ -413,6 +413,17 @@ class AffidamentoMezzo(AllegatiMixin, models.Model):
         null=True,
         help_text="Data e ora effettiva del rientro",
     )
+    # Campi danni veicolo
+    danni_consegna = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Lista danni presenti alla consegna: [{'area': 'cofano_anteriore', 'x': 50, 'y': 30, 'tipo': 'graffio', 'note': '...'}]",
+    )
+    danni_rientro = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Lista danni presenti al rientro",
+    )
     # Meta
     data_creazione = models.DateTimeField(auto_now_add=True)
     creato_da = models.ForeignKey(

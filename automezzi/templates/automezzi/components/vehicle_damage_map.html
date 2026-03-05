@@ -1,0 +1,293 @@
+{% comment %}
+Componente mappa danni veicolo - riutilizzabile
+Parametri:
+  - field_name: nome del campo (es: 'danni_consegna' o 'danni_rientro')
+  - label: etichetta da visualizzare
+  - existing_damages: lista danni esistenti (opzionale)
+  - readonly: se true, solo visualizzazione (default: false)
+{% endcomment %}
+
+<div class="vehicle-damage-map-container mb-4">
+    <label class="form-label fw-bold">{{ label|default:"Mappa Danni Veicolo" }}</label>
+    <p class="text-muted small">Clicca sull'immagine del veicolo per segnare i danni. Puoi aggiungere note per ogni danno.</p>
+
+    <!-- Mappa SVG del veicolo -->
+    <div class="vehicle-damage-svg-wrapper border rounded p-3 bg-light" style="max-width: 600px;">
+        <svg id="vehicle-svg-{{ field_name }}" viewBox="0 0 400 600" style="width: 100%; height: auto; cursor: crosshair;">
+            <!-- Sfondo -->
+            <rect width="400" height="600" fill="#f8f9fa"/>
+
+            <!-- Vista dall'alto del veicolo -->
+            <g id="vehicle-outline">
+                <!-- Cofano anteriore -->
+                <path id="hood" d="M 120 50 Q 120 40, 130 40 L 270 40 Q 280 40, 280 50 L 280 180 L 120 180 Z"
+                      fill="#e9ecef" stroke="#495057" stroke-width="3" class="vehicle-part" data-area="cofano_anteriore"/>
+                <text x="200" y="110" text-anchor="middle" font-size="12" fill="#666">Cofano</text>
+
+                <!-- Parabrezza -->
+                <rect x="120" y="180" width="160" height="30" fill="#b8daff" stroke="#495057" stroke-width="2" class="vehicle-part" data-area="parabrezza"/>
+                <text x="200" y="200" text-anchor="middle" font-size="10" fill="#333">Parabrezza</text>
+
+                <!-- Tetto -->
+                <rect x="120" y="210" width="160" height="180" fill="#e9ecef" stroke="#495057" stroke-width="3" class="vehicle-part" data-area="tetto"/>
+                <text x="200" y="305" text-anchor="middle" font-size="12" fill="#666">Tetto</text>
+
+                <!-- Portiera Sinistra -->
+                <rect x="60" y="220" width="60" height="160" fill="#dee2e6" stroke="#495057" stroke-width="3" class="vehicle-part" data-area="portiera_sinistra"/>
+                <text x="90" y="305" text-anchor="middle" font-size="11" fill="#666" transform="rotate(-90 90 305)">Port. SX</text>
+
+                <!-- Portiera Destra -->
+                <rect x="280" y="220" width="60" height="160" fill="#dee2e6" stroke="#495057" stroke-width="3" class="vehicle-part" data-area="portiera_destra"/>
+                <text x="310" y="305" text-anchor="middle" font-size="11" fill="#666" transform="rotate(90 310 305)">Port. DX</text>
+
+                <!-- Lunotto -->
+                <rect x="120" y="390" width="160" height="30" fill="#b8daff" stroke="#495057" stroke-width="2" class="vehicle-part" data-area="lunotto"/>
+                <text x="200" y="410" text-anchor="middle" font-size="10" fill="#333">Lunotto</text>
+
+                <!-- Bagagliaio -->
+                <path id="trunk" d="M 120 420 L 120 550 Q 120 560, 130 560 L 270 560 Q 280 560, 280 550 L 280 420 Z"
+                      fill="#e9ecef" stroke="#495057" stroke-width="3" class="vehicle-part" data-area="bagagliaio"/>
+                <text x="200" y="495" text-anchor="middle" font-size="12" fill="#666">Bagagliaio</text>
+
+                <!-- Specchietti -->
+                <ellipse cx="100" cy="230" rx="15" ry="8" fill="#6c757d" stroke="#495057" stroke-width="2" class="vehicle-part" data-area="specchietto_sx"/>
+                <ellipse cx="300" cy="230" rx="15" ry="8" fill="#6c757d" stroke="#495057" stroke-width="2" class="vehicle-part" data-area="specchietto_dx"/>
+
+                <!-- Ruote -->
+                <rect x="85" y="130" width="25" height="45" rx="5" fill="#343a40" class="vehicle-part" data-area="ruota_ant_sx"/>
+                <rect x="290" y="130" width="25" height="45" rx="5" fill="#343a40" class="vehicle-part" data-area="ruota_ant_dx"/>
+                <rect x="85" y="425" width="25" height="45" rx="5" fill="#343a40" class="vehicle-part" data-area="ruota_post_sx"/>
+                <rect x="290" y="425" width="25" height="45" rx="5" fill="#343a40" class="vehicle-part" data-area="ruota_post_dx"/>
+            </g>
+
+            <!-- Layer per i marker dei danni -->
+            <g id="damage-markers-{{ field_name }}"></g>
+        </svg>
+    </div>
+
+    <!-- Lista danni -->
+    <div class="damage-list mt-3" id="damage-list-{{ field_name }}">
+        <h6>Danni Registrati (<span id="damage-count-{{ field_name }}">0</span>)</h6>
+        <div id="damages-container-{{ field_name }}" class="list-group"></div>
+    </div>
+
+    <!-- Campo hidden per salvare i danni in JSON -->
+    <input type="hidden" name="{{ field_name }}" id="input-{{ field_name }}" value="">
+</div>
+
+<style>
+.vehicle-part {
+    transition: fill 0.2s;
+}
+
+.vehicle-part:hover {
+    fill: #ffc107;
+    opacity: 0.7;
+}
+
+.damage-marker {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.damage-marker:hover {
+    transform: scale(1.2);
+}
+
+.damage-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin-bottom: 5px;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.damage-item .badge {
+    margin-right: 8px;
+}
+
+.damage-area-badge {
+    background-color: #17a2b8;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+</style>
+
+<script>
+(function() {
+    const fieldName = '{{ field_name }}';
+    const readonly = {{ readonly|default:"false"|lower }};
+    const svg = document.getElementById(`vehicle-svg-${fieldName}`);
+    const damageMarkersGroup = document.getElementById(`damage-markers-${fieldName}`);
+    const damagesContainer = document.getElementById(`damages-container-${fieldName}`);
+    const damageCountSpan = document.getElementById(`damage-count-${fieldName}`);
+    const hiddenInput = document.getElementById(`input-${fieldName}`);
+
+    let damages = [];
+    let damageIdCounter = 1;
+
+    // Carica danni esistenti se presenti
+    {% if existing_damages %}
+    damages = {{ existing_damages|safe }};
+    damages.forEach(damage => {
+        if (!damage.id) damage.id = damageIdCounter++;
+        addDamageMarker(damage);
+        addDamageToList(damage);
+    });
+    updateDamageCount();
+    {% endif %}
+
+    // Area labels in italiano
+    const areaLabels = {
+        'cofano_anteriore': 'Cofano Anteriore',
+        'parabrezza': 'Parabrezza',
+        'tetto': 'Tetto',
+        'portiera_sinistra': 'Portiera Sinistra',
+        'portiera_destra': 'Portiera Destra',
+        'lunotto': 'Lunotto',
+        'bagagliaio': 'Bagagliaio',
+        'specchietto_sx': 'Specchietto Sinistro',
+        'specchietto_dx': 'Specchietto Destro',
+        'ruota_ant_sx': 'Ruota Ant. SX',
+        'ruota_ant_dx': 'Ruota Ant. DX',
+        'ruota_post_sx': 'Ruota Post. SX',
+        'ruota_post_dx': 'Ruota Post. DX'
+    };
+
+    // Click sul veicolo per aggiungere danno
+    if (!readonly) {
+        svg.addEventListener('click', function(e) {
+            if (e.target.classList.contains('vehicle-part')) {
+                const rect = svg.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 400;
+                const y = ((e.clientY - rect.top) / rect.height) * 600;
+                const area = e.target.getAttribute('data-area');
+
+                addDamage(area, x, y);
+            }
+        });
+    }
+
+    function addDamage(area, x, y) {
+        const tipo = prompt('Tipo di danno:\n1 = Graffio\n2 = Ammaccatura\n3 = Rottura\n4 = Altro', '1');
+        if (!tipo) return;
+
+        const tipoMap = {'1': 'graffio', '2': 'ammaccatura', '3': 'rottura', '4': 'altro'};
+        const tipoLabel = tipoMap[tipo] || 'altro';
+
+        const note = prompt('Note aggiuntive (opzionale):', '');
+
+        const damage = {
+            id: damageIdCounter++,
+            area: area,
+            area_label: areaLabels[area] || area,
+            x: Math.round(x),
+            y: Math.round(y),
+            tipo: tipoLabel,
+            note: note || ''
+        };
+
+        damages.push(damage);
+        addDamageMarker(damage);
+        addDamageToList(damage);
+        updateDamageCount();
+        saveDamages();
+    }
+
+    function addDamageMarker(damage) {
+        const marker = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        marker.setAttribute('class', 'damage-marker');
+        marker.setAttribute('data-damage-id', damage.id);
+        marker.setAttribute('transform', `translate(${damage.x}, ${damage.y})`);
+
+        // X rossa per il danno
+        const cross = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        cross.textContent = '✕';
+        cross.setAttribute('x', '0');
+        cross.setAttribute('y', '0');
+        cross.setAttribute('font-size', '24');
+        cross.setAttribute('fill', '#dc3545');
+        cross.setAttribute('text-anchor', 'middle');
+        cross.setAttribute('dominant-baseline', 'middle');
+        cross.setAttribute('font-weight', 'bold');
+
+        marker.appendChild(cross);
+        damageMarkersGroup.appendChild(marker);
+
+        if (!readonly) {
+            marker.style.cursor = 'pointer';
+            marker.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (confirm(`Rimuovere questo danno da "${damage.area_label}"?`)) {
+                    removeDamage(damage.id);
+                }
+            });
+        }
+    }
+
+    function addDamageToList(damage) {
+        const item = document.createElement('div');
+        item.className = 'damage-item';
+        item.setAttribute('data-damage-id', damage.id);
+
+        const colorMap = {
+            'graffio': 'warning',
+            'ammaccatura': 'danger',
+            'rottura': 'dark',
+            'altro': 'secondary'
+        };
+
+        item.innerHTML = `
+            <div>
+                <span class="damage-area-badge">${damage.area_label}</span>
+                <span class="badge bg-${colorMap[damage.tipo] || 'secondary'}">${damage.tipo}</span>
+                ${damage.note ? `<small class="text-muted ms-2">${damage.note}</small>` : ''}
+            </div>
+            ${!readonly ? '<button type="button" class="btn btn-sm btn-outline-danger remove-damage-btn"><i class="bi bi-trash"></i></button>' : ''}
+        `;
+
+        if (!readonly) {
+            const removeBtn = item.querySelector('.remove-damage-btn');
+            removeBtn.addEventListener('click', () => removeDamage(damage.id));
+        }
+
+        damagesContainer.appendChild(item);
+    }
+
+    function removeDamage(id) {
+        damages = damages.filter(d => d.id !== id);
+
+        // Rimuovi marker SVG
+        const marker = damageMarkersGroup.querySelector(`[data-damage-id="${id}"]`);
+        if (marker) marker.remove();
+
+        // Rimuovi dalla lista
+        const listItem = damagesContainer.querySelector(`[data-damage-id="${id}"]`);
+        if (listItem) listItem.remove();
+
+        updateDamageCount();
+        saveDamages();
+    }
+
+    function updateDamageCount() {
+        damageCountSpan.textContent = damages.length;
+    }
+
+    function saveDamages() {
+        hiddenInput.value = JSON.stringify(damages);
+    }
+
+    // Salva i danni anche al submit del form
+    const form = hiddenInput.closest('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            saveDamages();
+        });
+    }
+})();
+</script>

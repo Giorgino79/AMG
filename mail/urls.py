@@ -14,6 +14,7 @@ urlpatterns = [
     # Email Configuration
     path('config/', views.email_config, name='config'),
     path('config/test/', views.test_config, name='test_config'),
+    path('setup-wizard/', views.email_setup_wizard, name='setup_wizard'),
 
     # Templates
     path('templates/', views.template_list, name='template_list'),

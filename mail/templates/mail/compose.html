@@ -7,44 +7,461 @@
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Nuova Email</h5>
-            </div>
-            <div class="card-body">
-                <form method="post" enctype="multipart/form-data" id="compose-form">
-                    {% csrf_token %}
-                    {% crispy form %}
+<style>
+.compose-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
 
-                    <div class="mt-4 d-flex gap-2">
-                        <button type="submit" name="action" value="send" class="btn btn-primary">
-                            <i class="bi bi-send"></i> Invia
-                        </button>
-                        <button type="submit" name="action" value="save" class="btn btn-outline-secondary">
-                            <i class="bi bi-save"></i> Salva Bozza
-                        </button>
-                        <a href="{% url 'mail:message_list' %}" class="btn btn-secondary">
-                            <i class="bi bi-x-circle"></i> Annulla
+.compose-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 24px;
+    border-radius: 8px 8px 0 0;
+}
+
+.compose-body {
+    background: white;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.compose-field {
+    border-bottom: 1px solid #e9ecef;
+    padding: 12px 24px;
+}
+
+.compose-field:last-of-type {
+    border-bottom: none;
+}
+
+.compose-field label {
+    margin-bottom: 0;
+    font-weight: 500;
+    width: 80px;
+    color: #6c757d;
+}
+
+.compose-field input,
+.compose-field textarea,
+.compose-field select {
+    border: none;
+    box-shadow: none;
+    padding: 4px 8px;
+}
+
+.compose-field input:focus,
+.compose-field textarea:focus,
+.compose-field select:focus {
+    outline: none;
+    background-color: #f8f9fa;
+}
+
+.compose-editor {
+    min-height: 400px;
+    padding: 24px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.compose-footer {
+    padding: 16px 24px;
+    background-color: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+    border-top: 1px solid #dee2e6;
+}
+
+.cc-bcc-toggle {
+    color: #0d6efd;
+    cursor: pointer;
+    font-size: 0.875rem;
+    text-decoration: none;
+}
+
+.cc-bcc-toggle:hover {
+    text-decoration: underline;
+}
+
+.cc-bcc-fields {
+    display: none;
+}
+
+.cc-bcc-fields.show {
+    display: block;
+}
+
+.attachment-preview {
+    display: inline-block;
+    padding: 8px 12px;
+    background-color: #e7f3ff;
+    border-radius: 4px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+}
+
+.template-preview {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 12px;
+    margin-top: 8px;
+    display: none;
+}
+
+.template-preview.show {
+    display: block;
+}
+
+.char-count {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.send-btn {
+    padding: 10px 32px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.send-btn:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #653a8a 100%);
+}
+
+.autosave-indicator {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.autosave-indicator.saving {
+    color: #0d6efd;
+}
+
+.autosave-indicator.saved {
+    color: #198754;
+}
+</style>
+
+<div class="compose-container">
+    <div class="compose-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Nuova Email</h4>
+            <a href="{% url 'mail:message_list' %}" class="text-white">
+                <i class="bi bi-x-lg"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="compose-body">
+        <form method="post" enctype="multipart/form-data" id="composeForm">
+            {% csrf_token %}
+
+            <!-- Template Selection -->
+            <div class="compose-field d-flex align-items-center">
+                <label for="id_template">Template:</label>
+                <div class="flex-grow-1">
+                    {{ form.template }}
+                    <small class="form-text text-muted ms-2">Seleziona un template predefinito (opzionale)</small>
+                </div>
+            </div>
+
+            <!-- To Field -->
+            <div class="compose-field d-flex align-items-start">
+                <label for="id_to_addresses" class="mt-2">A:</label>
+                <div class="flex-grow-1">
+                    {{ form.to_addresses }}
+                    <div class="mt-1">
+                        <a href="#" class="cc-bcc-toggle" id="showCcBcc">
+                            <i class="bi bi-plus-circle"></i> CC/BCC
                         </a>
                     </div>
-                </form>
+                    {% if form.to_addresses.errors %}
+                    <div class="text-danger small mt-1">{{ form.to_addresses.errors }}</div>
+                    {% endif %}
+                </div>
             </div>
-        </div>
 
-        <div class="card mt-3">
-            <div class="card-header">
-                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Suggerimenti</h6>
+            <!-- CC/BCC Fields (initially hidden) -->
+            <div class="cc-bcc-fields" id="ccBccFields">
+                <!-- CC Field -->
+                <div class="compose-field d-flex align-items-start">
+                    <label for="id_cc_addresses" class="mt-2">CC:</label>
+                    <div class="flex-grow-1">
+                        {{ form.cc_addresses }}
+                        {% if form.cc_addresses.errors %}
+                        <div class="text-danger small mt-1">{{ form.cc_addresses.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- BCC Field -->
+                <div class="compose-field d-flex align-items-start">
+                    <label for="id_bcc_addresses" class="mt-2">BCC:</label>
+                    <div class="flex-grow-1">
+                        {{ form.bcc_addresses }}
+                        {% if form.bcc_addresses.errors %}
+                        <div class="text-danger small mt-1">{{ form.bcc_addresses.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <ul class="mb-0">
-                    <li><small>Inserisci uno o più indirizzi email separati da virgola nei campi A, CC o BCC</small></li>
-                    <li><small>Puoi salvare la bozza e continuare a modificarla in seguito</small></li>
-                    <li><small>L'email verrà inviata in formato testo semplice</small></li>
-                </ul>
+
+            <!-- Subject Field -->
+            <div class="compose-field d-flex align-items-center">
+                <label for="id_subject">Oggetto:</label>
+                <div class="flex-grow-1">
+                    {{ form.subject }}
+                    {% if form.subject.errors %}
+                    <div class="text-danger small mt-1">{{ form.subject.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Content Editor -->
+            <div class="compose-editor">
+                {{ form.content_text }}
+                {% if form.content_text.errors %}
+                <div class="text-danger small mt-1">{{ form.content_text.errors }}</div>
+                {% endif %}
+
+                <div class="mt-2 d-flex justify-content-between align-items-center">
+                    <div class="char-count">
+                        <span id="charCount">0</span> caratteri
+                    </div>
+                    <div class="autosave-indicator" id="autosaveIndicator">
+                        <!-- Auto-save status will appear here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attachments (placeholder for future implementation) -->
+            <div class="compose-field">
+                <div id="attachmentsList"></div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="alert('Funzionalità allegati in sviluppo')">
+                    <i class="bi bi-paperclip"></i> Aggiungi Allegato
+                </button>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="compose-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="btn-group">
+                        <button type="submit" name="action" value="send" class="btn btn-primary send-btn">
+                            <i class="bi bi-send-fill me-2"></i> Invia
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="saveDraft()">
+                            <i class="bi bi-save"></i> Salva Bozza
+                        </button>
+                    </div>
+
+                    <div>
+                        <button type="button" class="btn btn-sm btn-link text-danger" onclick="discardDraft()">
+                            <i class="bi bi-trash"></i> Elimina
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Suggerimenti:</strong>
+                        Separa gli indirizzi email con una virgola. Premi Ctrl+Enter per inviare rapidamente.
+                    </small>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Quick Tips -->
+    <div class="card mt-3 border-0 shadow-sm">
+        <div class="card-body">
+            <h6 class="mb-3"><i class="bi bi-lightbulb text-warning"></i> Suggerimenti Rapidi</h6>
+            <div class="row">
+                <div class="col-md-4">
+                    <small class="text-muted">
+                        <i class="bi bi-keyboard me-1"></i>
+                        <strong>Ctrl+Enter:</strong> Invia
+                    </small>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted">
+                        <i class="bi bi-keyboard me-1"></i>
+                        <strong>Ctrl+S:</strong> Salva bozza
+                    </small>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted">
+                        <i class="bi bi-keyboard me-1"></i>
+                        <strong>Esc:</strong> Chiudi
+                    </small>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show/Hide CC/BCC Fields
+    const showCcBccLink = document.getElementById('showCcBcc');
+    const ccBccFields = document.getElementById('ccBccFields');
+
+    if (showCcBccLink) {
+        showCcBccLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            ccBccFields.classList.toggle('show');
+            if (ccBccFields.classList.contains('show')) {
+                this.innerHTML = '<i class="bi bi-dash-circle"></i> Nascondi CC/BCC';
+            } else {
+                this.innerHTML = '<i class="bi bi-plus-circle"></i> CC/BCC';
+            }
+        });
+    }
+
+    // Character Count
+    const contentTextarea = document.querySelector('textarea[name="content_text"]');
+    const charCountEl = document.getElementById('charCount');
+
+    if (contentTextarea && charCountEl) {
+        function updateCharCount() {
+            const count = contentTextarea.value.length;
+            charCountEl.textContent = count.toLocaleString();
+        }
+
+        contentTextarea.addEventListener('input', updateCharCount);
+        updateCharCount(); // Initial count
+    }
+
+    // Template Selection
+    const templateSelect = document.querySelector('select[name="template"]');
+    if (templateSelect) {
+        templateSelect.addEventListener('change', function() {
+            if (this.value) {
+                // TODO: Load template content via AJAX
+                console.log('Template selected:', this.value);
+                // For now, just show a message
+                const indicator = document.getElementById('autosaveIndicator');
+                indicator.textContent = 'Template caricato';
+                indicator.className = 'autosave-indicator saved';
+                setTimeout(() => {
+                    indicator.textContent = '';
+                }, 3000);
+            }
+        });
+    }
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+Enter to send
+        if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            const form = document.getElementById('composeForm');
+            const sendButton = form.querySelector('button[name="action"][value="send"]');
+            sendButton.click();
+        }
+
+        // Ctrl+S to save draft
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            saveDraft();
+        }
+
+        // Esc to close/go back
+        if (e.key === 'Escape') {
+            if (confirm('Vuoi chiudere senza salvare?')) {
+                window.location.href = '{% url "mail:message_list" %}';
+            }
+        }
+    });
+
+    // Auto-save functionality (every 30 seconds)
+    let autosaveTimer;
+    let hasChanges = false;
+
+    function startAutosave() {
+        const form = document.getElementById('composeForm');
+        const inputs = form.querySelectorAll('input, textarea, select');
+
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                hasChanges = true;
+            });
+        });
+
+        autosaveTimer = setInterval(function() {
+            if (hasChanges) {
+                saveDraft(true); // Auto-save mode
+            }
+        }, 30000); // Every 30 seconds
+    }
+
+    startAutosave();
+});
+
+// Save Draft Function
+function saveDraft(isAutoSave = false) {
+    const form = document.getElementById('composeForm');
+    const formData = new FormData(form);
+    formData.set('action', 'save');
+
+    const indicator = document.getElementById('autosaveIndicator');
+
+    if (isAutoSave) {
+        indicator.textContent = 'Salvataggio...';
+        indicator.className = 'autosave-indicator saving';
+    }
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            if (isAutoSave) {
+                indicator.textContent = 'Salvato automaticamente';
+                indicator.className = 'autosave-indicator saved';
+                setTimeout(() => {
+                    indicator.textContent = '';
+                }, 3000);
+            } else {
+                alert('Bozza salvata con successo!');
+                window.location.href = '{% url "mail:message_list" %}?folder=drafts';
+            }
+        } else {
+            throw new Error('Errore nel salvataggio');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        if (!isAutoSave) {
+            alert('Errore nel salvataggio della bozza');
+        }
+        indicator.textContent = 'Errore salvataggio';
+        indicator.className = 'autosave-indicator text-danger';
+    });
+}
+
+// Discard Draft Function
+function discardDraft() {
+    if (confirm('Sei sicuro di voler eliminare questa email?')) {
+        window.location.href = '{% url "mail:message_list" %}';
+    }
+}
+
+// Prevent accidental page close
+window.addEventListener('beforeunload', function(e) {
+    const form = document.getElementById('composeForm');
+    const hasContent = form.querySelector('textarea[name="content_text"]').value.trim() !== '' ||
+                      form.querySelector('input[name="subject"]').value.trim() !== '' ||
+                      form.querySelector('textarea[name="to_addresses"]').value.trim() !== '';
+
+    if (hasContent) {
+        e.preventDefault();
+        e.returnValue = 'Hai modifiche non salvate. Vuoi davvero uscire?';
+        return e.returnValue;
+    }
+});
+</script>
 {% endblock %}
