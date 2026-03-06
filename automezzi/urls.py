@@ -6,6 +6,7 @@ from .views import (
     AutomezzoCreateView,
     AutomezzoUpdateView,
     AutomezzoDeleteView,
+    AutomezzoDanniAPIView,
     ManutenzioneListView,
     ManutenzioneDetailView,
     ManutenzioneCreateView,
@@ -237,4 +238,7 @@ urlpatterns = [
     path("gruppi/affidamenti/<int:pk>/", AffidamentoGruppoDetailView.as_view(), name="affidamento_gruppo_detail"),
     path("gruppi/affidamenti/<int:pk>/modifica/", AffidamentoGruppoUpdateView.as_view(), name="affidamento_gruppo_update"),
     path("gruppi/affidamenti/<int:pk>/rientro/", AffidamentoGruppoRientroView.as_view(), name="affidamento_gruppo_rientro"),
+
+    # API ENDPOINTS
+    path("api/automezzi/<int:pk>/danni/", AutomezzoDanniAPIView.as_view(), name="automezzo_danni_api"),
 ]

@@ -175,13 +175,27 @@
                             </div>
                         </div>
 
+                        <!-- Danni Storici del Veicolo -->
+                        <div class="row mt-4" id="danni-storici-section" style="display:none;">
+                            <div class="col-12">
+                                <div class="alert alert-info border-info">
+                                    <h5 class="alert-heading">
+                                        <i class="fas fa-history me-2"></i>Danni Storici del Veicolo
+                                    </h5>
+                                    <p class="mb-0">Questa è la mappa completa dei danni registrati precedentemente per questo veicolo. Verifica lo stato attuale e aggiungi eventuali nuovi danni nella sezione successiva.</p>
+                                </div>
+                                <div id="mappa-danni-storici-container"></div>
+                            </div>
+                        </div>
+
                         <!-- Mappa Danni Consegna -->
                         <div class="row mt-4">
                             <div class="col-12">
                                 <h5 class="text-primary border-bottom pb-2 mb-3">
                                     <i class="fas fa-car-crash me-2"></i>Stato Carrozzeria alla Consegna
                                 </h5>
-                                {% include 'automezzi/components/vehicle_damage_map.html' with field_name='danni_consegna' label='Mappa Danni alla Consegna' readonly=False %}
+                                <p class="text-muted small">Registra eventuali NUOVI danni riscontrati alla consegna del veicolo. I danni già presenti sono visualizzati sopra.</p>
+                                {% include 'automezzi/components/vehicle_damage_map.html' with field_name='danni_consegna' label='Nuovi Danni alla Consegna' readonly=False %}
                             </div>
                         </div>
 
@@ -214,4 +228,145 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const automezzoSelect = document.getElementById('{{ form.automezzo.id_for_label }}');
+    const danniStoriciSection = document.getElementById('danni-storici-section');
+    const danniStoriciContainer = document.getElementById('mappa-danni-storici-container');
+
+    if (automezzoSelect) {
+        automezzoSelect.addEventListener('change', function() {
+            const automezzoId = this.value;
+
+            if (automezzoId) {
+                // Fetch dei danni storici del veicolo
+                fetch(`/api/automezzi/${automezzoId}/danni/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.mappa_danni && data.mappa_danni.length > 0) {
+                            danniStoriciSection.style.display = 'block';
+                            renderDanniStorici(data.mappa_danni);
+                        } else {
+                            danniStoriciSection.style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Errore nel caricamento danni storici:', error);
+                        danniStoriciSection.style.display = 'none';
+                    });
+            } else {
+                danniStoriciSection.style.display = 'none';
+            }
+        });
+    }
+
+    function renderDanniStorici(danni) {
+        // Crea una mappa SVG readonly con i danni storici
+        const mappaHtml = `
+            <div class="vehicle-damage-map-container mb-4">
+                <div class="vehicle-damage-svg-wrapper border rounded p-3 bg-light" style="max-width: 600px;">
+                    <svg id="vehicle-svg-storico" viewBox="0 0 400 600" style="width: 100%; height: auto;">
+                        <rect width="400" height="600" fill="#f8f9fa"/>
+                        <g id="vehicle-outline">
+                            <path id="hood" d="M 120 50 Q 120 40, 130 40 L 270 40 Q 280 40, 280 50 L 280 180 L 120 180 Z" fill="#e9ecef" stroke="#495057" stroke-width="3" class="vehicle-part"/>
+                            <text x="200" y="110" text-anchor="middle" font-size="12" fill="#666">Cofano</text>
+                            <rect x="120" y="180" width="160" height="30" fill="#b8daff" stroke="#495057" stroke-width="2" class="vehicle-part"/>
+                            <text x="200" y="200" text-anchor="middle" font-size="10" fill="#333">Parabrezza</text>
+                            <rect x="120" y="210" width="160" height="180" fill="#e9ecef" stroke="#495057" stroke-width="3" class="vehicle-part"/>
+                            <text x="200" y="305" text-anchor="middle" font-size="12" fill="#666">Tetto</text>
+                            <rect x="60" y="220" width="60" height="160" fill="#dee2e6" stroke="#495057" stroke-width="3" class="vehicle-part"/>
+                            <text x="90" y="305" text-anchor="middle" font-size="11" fill="#666" transform="rotate(-90 90 305)">Port. SX</text>
+                            <rect x="280" y="220" width="60" height="160" fill="#dee2e6" stroke="#495057" stroke-width="3" class="vehicle-part"/>
+                            <text x="310" y="305" text-anchor="middle" font-size="11" fill="#666" transform="rotate(90 310 305)">Port. DX</text>
+                            <rect x="120" y="390" width="160" height="30" fill="#b8daff" stroke="#495057" stroke-width="2" class="vehicle-part"/>
+                            <text x="200" y="410" text-anchor="middle" font-size="10" fill="#333">Lunotto</text>
+                            <path id="trunk" d="M 120 420 L 120 550 Q 120 560, 130 560 L 270 560 Q 280 560, 280 550 L 280 420 Z" fill="#e9ecef" stroke="#495057" stroke-width="3" class="vehicle-part"/>
+                            <text x="200" y="495" text-anchor="middle" font-size="12" fill="#666">Bagagliaio</text>
+                            <ellipse cx="100" cy="230" rx="15" ry="8" fill="#6c757d" stroke="#495057" stroke-width="2" class="vehicle-part"/>
+                            <ellipse cx="300" cy="230" rx="15" ry="8" fill="#6c757d" stroke="#495057" stroke-width="2" class="vehicle-part"/>
+                            <rect x="85" y="130" width="25" height="45" rx="5" fill="#343a40" class="vehicle-part"/>
+                            <rect x="290" y="130" width="25" height="45" rx="5" fill="#343a40" class="vehicle-part"/>
+                            <rect x="85" y="425" width="25" height="45" rx="5" fill="#343a40" class="vehicle-part"/>
+                            <rect x="290" y="425" width="25" height="45" rx="5" fill="#343a40" class="vehicle-part"/>
+                        </g>
+                        <g id="damage-markers-storico"></g>
+                    </svg>
+                </div>
+                <div class="damage-list mt-3">
+                    <h6>Danni Registrati (<span id="damage-count-storico">${danni.length}</span>)</h6>
+                    <div id="damages-container-storico" class="list-group"></div>
+                </div>
+            </div>
+        `;
+
+        danniStoriciContainer.innerHTML = mappaHtml;
+
+        const svg = document.getElementById('vehicle-svg-storico');
+        const markersGroup = document.getElementById('damage-markers-storico');
+        const damagesContainer = document.getElementById('damages-container-storico');
+
+        const areaLabels = {
+            'cofano_anteriore': 'Cofano Anteriore',
+            'parabrezza': 'Parabrezza',
+            'tetto': 'Tetto',
+            'portiera_sinistra': 'Portiera Sinistra',
+            'portiera_destra': 'Portiera Destra',
+            'lunotto': 'Lunotto',
+            'bagagliaio': 'Bagagliaio',
+            'specchietto_sx': 'Specchietto Sinistro',
+            'specchietto_dx': 'Specchietto Destro',
+            'ruota_ant_sx': 'Ruota Ant. SX',
+            'ruota_ant_dx': 'Ruota Ant. DX',
+            'ruota_post_sx': 'Ruota Post. SX',
+            'ruota_post_dx': 'Ruota Post. DX'
+        };
+
+        const colorMap = {
+            'graffio': 'warning',
+            'ammaccatura': 'danger',
+            'rottura': 'dark',
+            'altro': 'secondary'
+        };
+
+        // Aggiungi markers per ogni danno
+        danni.forEach(damage => {
+            // Marker SVG
+            const marker = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            marker.setAttribute('transform', `translate(${damage.x}, ${damage.y})`);
+
+            const cross = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            cross.textContent = '✕';
+            cross.setAttribute('x', '0');
+            cross.setAttribute('y', '0');
+            cross.setAttribute('font-size', '24');
+            cross.setAttribute('fill', '#dc3545');
+            cross.setAttribute('text-anchor', 'middle');
+            cross.setAttribute('dominant-baseline', 'middle');
+            cross.setAttribute('font-weight', 'bold');
+
+            marker.appendChild(cross);
+            markersGroup.appendChild(marker);
+
+            // Item nella lista
+            const item = document.createElement('div');
+            item.className = 'list-group-item';
+            item.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-info">${areaLabels[damage.area] || damage.area}</span>
+                        <span class="badge bg-${colorMap[damage.tipo] || 'secondary'}">${damage.tipo}</span>
+                        ${damage.note ? `<small class="text-muted ms-2">${damage.note}</small>` : ''}
+                    </div>
+                    ${damage.data ? `<small class="text-muted">${damage.data}</small>` : ''}
+                    ${damage.fonte ? `<small class="text-muted ms-2"><i class="fas fa-tag"></i> ${damage.fonte}</small>` : ''}
+                </div>
+            `;
+            damagesContainer.appendChild(item);
+        });
+    }
+});
+</script>
 {% endblock %}

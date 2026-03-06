@@ -275,6 +275,16 @@
                                                 <li><strong>Generale:</strong> Sempre allegare documentazione fotografica</li>
                                             </ul>
                                         </div>
+
+                                        <!-- Mappa Danni (per incidenti/guasti) -->
+                                        <div id="danni-section" style="{% if form.instance.tipo != 'incidente' and form.instance.tipo != 'guasto' %}display: none;{% endif %}">
+                                            <hr class="my-4">
+                                            <h5 class="text-danger mb-3">
+                                                <i class="fas fa-car-crash me-2"></i>Mappa Danni al Veicolo
+                                            </h5>
+                                            <p class="text-muted small">Registra i danni rilevati durante l'evento cliccando sulla mappa del veicolo.</p>
+                                            {% include 'automezzi/components/vehicle_damage_map.html' with field_name='danni' label='Danni Rilevati' existing_damages=form.instance.danni readonly=False %}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -403,13 +413,24 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     if (tipoField && descrizioneField) {
+        const danniSection = document.getElementById('danni-section');
+
         tipoField.addEventListener('change', function() {
             const suggestion = suggestionsByType[this.value];
             if (suggestion && !descrizioneField.value.trim()) {
                 descrizioneField.placeholder = suggestion;
             }
+
+            // Mostra/nascondi mappa danni per incidenti e guasti
+            if (danniSection) {
+                if (this.value === 'incidente' || this.value === 'guasto') {
+                    danniSection.style.display = 'block';
+                } else {
+                    danniSection.style.display = 'none';
+                }
+            }
         });
-        
+
         // Imposta placeholder iniziale
         if (tipoField.value) {
             const suggestion = suggestionsByType[tipoField.value];

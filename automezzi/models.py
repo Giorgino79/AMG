@@ -92,6 +92,11 @@ class Automezzo(AllegatiMixin, SearchMixin, models.Model):
         blank=True,
         help_text="PIN della carta carburante",
     )
+    mappa_danni = models.JSONField(
+        blank=True,
+        default=list,
+        help_text="Mappa completa dei danni del veicolo: [{'area': 'cofano_anteriore', 'x': 50, 'y': 30, 'tipo': 'graffio', 'note': '...', 'data': '2024-01-15', 'fonte': 'affidamento/evento'}]",
+    )
 
     def __str__(self):
         return f"{self.targa} - {self.marca} {self.modello}"
@@ -570,6 +575,11 @@ class EventoAutomezzo(AllegatiMixin, models.Model):
         help_text="Foto, verbali, documenti relativi all'evento",
     )
     risolto = models.BooleanField(default=False)
+    danni = models.JSONField(
+        blank=True,
+        default=list,
+        help_text="Mappa danni rilevati durante l'evento: [{'area': 'cofano_anteriore', 'x': 50, 'y': 30, 'tipo': 'graffio', 'note': '...'}]",
+    )
 
     def __str__(self):
         if self.automezzo:

@@ -10,6 +10,9 @@ class AutomezziConfig(AppConfig):
         """
         Registra i modelli nel SearchRegistry quando l'app è pronta.
         """
+        # Import signals
+        import automezzi.signals
+
         try:
             from core.search import SearchRegistry
             from .models import Automezzo

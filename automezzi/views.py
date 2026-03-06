@@ -1345,3 +1345,23 @@ class AffidamentoGruppoRientroView(LoginRequiredMixin, UpdateView):
         form.instance.stato = "completato"
         form.instance.data_rientro_effettivo = timezone.now().date()
         return super().form_valid(form)
+
+
+# API per ottenere i danni storici di un automezzo
+from django.http import JsonResponse
+from django.views import View
+
+class AutomezzoDanniAPIView(LoginRequiredMixin, View):
+    """API per ottenere la mappa danni storica di un automezzo"""
+
+    def get(self, request, pk):
+        try:
+            automezzo = Automezzo.objects.get(pk=pk)
+            return JsonResponse({
+                'mappa_danni': automezzo.mappa_danni or [],
+                'targa': automezzo.targa,
+                'marca': automezzo.marca,
+                'modello': automezzo.modello
+            })
+        except Automezzo.DoesNotExist:
+            return JsonResponse({'error': 'Automezzo non trovato'}, status=404)
