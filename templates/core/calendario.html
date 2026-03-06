@@ -65,7 +65,7 @@
 <div class="container-fluid py-4">
     <div class="row mb-4">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div>
                     <h2 class="mb-1">
                         <i class="bi bi-calendar-event me-2 text-primary"></i>
@@ -73,9 +73,37 @@
                     </h2>
                     <p class="text-muted mb-0">Visualizza tutti gli eventi, manutenzioni e scadenze</p>
                 </div>
+                {% if categories %}
+                <div class="btn-group" role="group" aria-label="Filtro categorie">
+                    <button type="button" class="btn btn-sm btn-outline-primary active" data-category="all">
+                        <i class="bi bi-check-all me-1"></i>Tutte
+                    </button>
+                    {% for category in categories %}
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-category="{{ category }}">
+                        {{ category }}
+                    </button>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
+
+    {% if providers_info %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-info border-info d-flex align-items-start">
+                <i class="bi bi-info-circle me-2 mt-1"></i>
+                <div>
+                    <strong>Sorgenti attive:</strong>
+                    {% for provider in providers_info %}
+                        <span class="badge bg-info text-dark ms-1">{{ provider.description|default:provider.name }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <div class="row">
         <div class="col-12">
@@ -124,6 +152,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const calendarioEl = document.getElementById('calendario');
+    let selectedCategories = [];  // Vuoto = tutte
 
     const calendar = new FullCalendar.Calendar(calendarioEl, {
         locale: 'it',
@@ -143,11 +172,31 @@ document.addEventListener('DOMContentLoaded', function() {
         navLinks: true,
         editable: false,
         dayMaxEvents: true,
-        events: {
-            url: '{% url "core:calendario_eventi_api" %}',
-            failure: function() {
-                alert('Errore nel caricamento degli eventi');
+        events: function(info, successCallback, failureCallback) {
+            // URL base
+            let url = '{% url "core:calendario_eventi_api" %}';
+
+            // Aggiungi parametri date
+            const params = new URLSearchParams({
+                start: info.startStr,
+                end: info.endStr
+            });
+
+            // Aggiungi filtro categorie se attivo
+            if (selectedCategories.length > 0) {
+                selectedCategories.forEach(cat => {
+                    params.append('categories[]', cat);
+                });
             }
+
+            // Fetch eventi
+            fetch(`${url}?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => successCallback(data))
+                .catch(error => {
+                    console.error('Errore caricamento eventi:', error);
+                    failureCallback(error);
+                });
         },
         eventClick: function(info) {
             // Se l'evento ha un URL, naviga ad esso
@@ -167,6 +216,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (props.stato) {
                 tooltipContent += '\nStato: ' + props.stato;
             }
+            if (props.responsabile) {
+                tooltipContent += '\nResponsabile: ' + props.responsabile;
+            }
 
             info.el.title = tooltipContent;
         },
@@ -181,6 +233,42 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     calendar.render();
+
+    // Gestione filtro categorie
+    document.querySelectorAll('[data-category]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+
+            if (category === 'all') {
+                // Mostra tutte
+                selectedCategories = [];
+                document.querySelectorAll('[data-category]').forEach(b => {
+                    b.classList.remove('active');
+                });
+                this.classList.add('active');
+            } else {
+                // Toggle categoria specifica
+                const index = selectedCategories.indexOf(category);
+                if (index > -1) {
+                    selectedCategories.splice(index, 1);
+                    this.classList.remove('active');
+                } else {
+                    selectedCategories.push(category);
+                    this.classList.add('active');
+                }
+
+                // Rimuovi active da "Tutte" se ci sono filtri attivi
+                if (selectedCategories.length > 0) {
+                    document.querySelector('[data-category="all"]').classList.remove('active');
+                } else {
+                    document.querySelector('[data-category="all"]').classList.add('active');
+                }
+            }
+
+            // Ricarica eventi
+            calendar.refetchEvents();
+        });
+    });
 });
 </script>
 {% endblock %}
