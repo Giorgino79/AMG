@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Manutenzione Gruppo{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2 py-md-4">
+  <h2><i class="fas fa-wrench"></i> Dettaglio Manutenzione</h2>
+  <div class="card">
+    <div class="card-body">
+      <h4>{{ manutenzione.gruppo.matricola }}</h4>
+      <p>{{ manutenzione.descrizione }}</p>
+      <p>Stato: <strong>{{ manutenzione.get_stato_display }}</strong></p>
+      <a href="{% url 'automezzi:manutenzione_gruppo_list' %}" class="btn btn-secondary">Indietro</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

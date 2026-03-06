@@ -1,0 +1,324 @@
+{% extends "commons_templates/base_detail.html" %}
+{% load static %}
+{% load humanize %}
+{% load allegati_tags %}
+
+{% block title %}Gruppo {{ gruppo.matricola }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'automezzi:dashboard' %}">Automezzi</a></li>
+<li class="breadcrumb-item"><a href="{% url 'automezzi:gruppo_list' %}">Gruppi Elettrogeni</a></li>
+<li class="breadcrumb-item active">{{ gruppo.matricola }}</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-charging-station me-2 text-primary"></i>{{ gruppo.matricola }}
+{% endblock %}
+
+{% block page_subtitle %}
+<p class="text-muted mb-0">
+    {{ gruppo.marca }} {{ gruppo.modello }} - {{ gruppo.potenza_kva }} kVA
+</p>
+{% endblock %}
+
+{% block status_badge %}
+<div class="text-end">
+    {% if gruppo.attivo %}
+    <span class="badge fs-6 bg-success mb-1">Attivo</span>
+    {% else %}
+    <span class="badge fs-6 bg-danger mb-1">Non attivo</span>
+    {% endif %}
+    <br>
+    {% if gruppo.disponibile %}
+    <span class="badge bg-info">Disponibile</span>
+    {% else %}
+    <span class="badge bg-warning text-dark">Non disponibile</span>
+    {% endif %}
+    {% if gruppo.bloccato %}
+    <br><span class="badge bg-danger mt-1"><i class="bi bi-lock-fill me-1"></i>Bloccato</span>
+    {% endif %}
+    {% if gruppo.necessita_manutenzione %}
+    <br><span class="badge bg-warning text-dark mt-1"><i class="bi bi-wrench me-1"></i>Necessita Manutenzione</span>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block detail_content %}
+<!-- Info Generali -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-info-circle me-2 text-primary"></i>Informazioni Generali
+    </h5>
+    <div class="row">
+        <div class="col-12 col-md-6 mb-3 mb-md-0">
+            <dl class="row mb-0">
+                {% if gruppo.numero_gruppo %}
+                <dt class="col-5 col-sm-5 text-muted">Numero Gruppo</dt>
+                <dd class="col-7 col-sm-7"><strong class="text-primary fs-5">#{{ gruppo.numero_gruppo }}</strong></dd>
+                {% endif %}
+                <dt class="col-5 col-sm-5 text-muted">Matricola</dt>
+                <dd class="col-7 col-sm-7"><strong>{{ gruppo.matricola }}</strong></dd>
+                <dt class="col-5 col-sm-5 text-muted">Marca</dt>
+                <dd class="col-7 col-sm-7">{{ gruppo.marca }}</dd>
+                <dt class="col-5 col-sm-5 text-muted">Modello</dt>
+                <dd class="col-7 col-sm-7">{{ gruppo.modello }}</dd>
+                <dt class="col-5 col-sm-5 text-muted">Anno Produzione</dt>
+                <dd class="col-7 col-sm-7">{{ gruppo.anno_produzione }} <small class="text-muted">({{ gruppo.eta }} anni)</small></dd>
+            </dl>
+        </div>
+        <div class="col-12 col-md-6">
+            <dl class="row mb-0">
+                <dt class="col-5 col-sm-5 text-muted">Potenza Apparente</dt>
+                <dd class="col-7 col-sm-7"><strong>{{ gruppo.potenza_kva }}</strong> kVA</dd>
+                <dt class="col-5 col-sm-5 text-muted">Potenza Attiva</dt>
+                <dd class="col-7 col-sm-7"><strong>{{ gruppo.potenza_kw }}</strong> kW</dd>
+                <dt class="col-5 col-sm-5 text-muted">Tipo Motore</dt>
+                <dd class="col-7 col-sm-7">{{ gruppo.get_tipo_motore_display }}</dd>
+                <dt class="col-5 col-sm-5 text-muted">Frequenza</dt>
+                <dd class="col-7 col-sm-7">{{ gruppo.get_frequenza_display }}</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+
+<!-- Contatori e Manutenzione -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-speedometer2 me-2 text-primary"></i>Contatori e Manutenzione
+    </h5>
+    <div class="row">
+        <div class="col-12 col-md-6 mb-3">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <h6 class="card-title text-primary"><i class="bi bi-hourglass-split me-2"></i>Ore di Lavoro</h6>
+                    <p class="display-6 mb-0"><strong>{{ gruppo.ore_lavoro_attuali }}</strong> <small class="text-muted">ore</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 mb-3">
+            <div class="card {% if gruppo.necessita_manutenzione %}border-danger{% else %}border-success{% endif %}">
+                <div class="card-body">
+                    <h6 class="card-title {% if gruppo.necessita_manutenzione %}text-danger{% else %}text-success{% endif %}">
+                        <i class="bi bi-wrench me-2"></i>Prossima Manutenzione
+                    </h6>
+                    <p class="mb-2">Ogni <strong>{{ gruppo.intervallo_manutenzione_ore }}</strong> ore</p>
+                    <p class="mb-2">Ultima: <strong>{{ gruppo.ore_ultima_manutenzione }}</strong> ore</p>
+                    <p class="mb-2">Prossima: <strong>{{ gruppo.ore_prossima_manutenzione }}</strong> ore</p>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar {% if gruppo.percentuale_manutenzione >= 90 %}bg-danger{% elif gruppo.percentuale_manutenzione >= 70 %}bg-warning{% else %}bg-success{% endif %}"
+                             role="progressbar"
+                             style="width: {{ gruppo.percentuale_manutenzione }}%;"
+                             aria-valuenow="{{ gruppo.percentuale_manutenzione }}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            {{ gruppo.percentuale_manutenzione }}%
+                        </div>
+                    </div>
+                    {% if gruppo.necessita_manutenzione %}
+                    <p class="text-danger mb-0"><strong><i class="bi bi-exclamation-triangle me-1"></i>Manutenzione Necessaria!</strong></p>
+                    {% else %}
+                    <p class="text-muted mb-0">Rimanenti: <strong>{{ gruppo.ore_alla_manutenzione }}</strong> ore</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Caratteristiche Tecniche -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-gear me-2 text-primary"></i>Caratteristiche Tecniche
+    </h5>
+    <div class="row">
+        <div class="col-12 col-md-6">
+            <dl class="row mb-0">
+                {% if gruppo.cilindrata %}
+                <dt class="col-6 text-muted">Cilindrata</dt>
+                <dd class="col-6">{{ gruppo.cilindrata }} cc</dd>
+                {% endif %}
+                {% if gruppo.numero_cilindri %}
+                <dt class="col-6 text-muted">N° Cilindri</dt>
+                <dd class="col-6">{{ gruppo.numero_cilindri }}</dd>
+                {% endif %}
+                <dt class="col-6 text-muted">Raffreddamento</dt>
+                <dd class="col-6">{{ gruppo.get_tipo_raffreddamento_display }}</dd>
+                {% if gruppo.tensione_uscita %}
+                <dt class="col-6 text-muted">Tensione Uscita</dt>
+                <dd class="col-6">{{ gruppo.tensione_uscita }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+        <div class="col-12 col-md-6">
+            <dl class="row mb-0">
+                {% if gruppo.capacita_serbatoio %}
+                <dt class="col-6 text-muted">Capacità Serbatoio</dt>
+                <dd class="col-6">{{ gruppo.capacita_serbatoio }} L</dd>
+                {% endif %}
+                {% if gruppo.consumo_orario %}
+                <dt class="col-6 text-muted">Consumo Orario</dt>
+                <dd class="col-6">{{ gruppo.consumo_orario }} L/h</dd>
+                {% endif %}
+                {% if gruppo.ubicazione %}
+                <dt class="col-6 text-muted">Ubicazione</dt>
+                <dd class="col-6"><i class="bi bi-geo-alt me-1"></i>{{ gruppo.ubicazione }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+</div>
+
+<!-- Assegnazione -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-person me-2 text-primary"></i>Assegnazione
+    </h5>
+    {% if gruppo.assegnato_a %}
+    <div class="d-flex align-items-center">
+        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+            <i class="bi bi-person-fill fs-4"></i>
+        </div>
+        <div>
+            <strong>{{ gruppo.assegnato_a.get_full_name|default:gruppo.assegnato_a.username }}</strong>
+            {% if gruppo.assegnato_a.email %}
+            <br><small class="text-muted">{{ gruppo.assegnato_a.email }}</small>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0"><i class="bi bi-dash-circle me-2"></i>Nessun assegnatario</p>
+    {% endif %}
+</div>
+
+<!-- Motivo Blocco -->
+{% if gruppo.bloccato and gruppo.motivo_blocco %}
+<div class="mb-4">
+    <div class="alert alert-danger">
+        <h6 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Gruppo Bloccato</h6>
+        <p class="mb-0">{{ gruppo.motivo_blocco }}</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Documenti -->
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-file-earmark-text me-2 text-primary"></i>Documenti del Gruppo
+    </h5>
+    <div class="row g-3">
+        <div class="col-12 col-md-4">
+            <div class="card h-100 border {% if gruppo.manuale_uso %}border-success{% else %}border-secondary{% endif %}">
+                <div class="card-body text-center">
+                    <i class="bi bi-book fs-1 {% if gruppo.manuale_uso %}text-success{% else %}text-muted{% endif %} mb-2"></i>
+                    <h6 class="card-title">Manuale d'Uso</h6>
+                    {% if gruppo.manuale_uso %}
+                    <a href="{{ gruppo.manuale_uso.url }}" target="_blank" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-eye me-1"></i>Visualizza
+                    </a>
+                    {% else %}
+                    <p class="text-muted small mb-0">Non caricato</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100 border {% if gruppo.certificato_conformita %}border-success{% else %}border-secondary{% endif %}">
+                <div class="card-body text-center">
+                    <i class="bi bi-award fs-1 {% if gruppo.certificato_conformita %}text-success{% else %}text-muted{% endif %} mb-2"></i>
+                    <h6 class="card-title">Certificato Conformità</h6>
+                    {% if gruppo.certificato_conformita %}
+                    <a href="{{ gruppo.certificato_conformita.url }}" target="_blank" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-eye me-1"></i>Visualizza
+                    </a>
+                    {% else %}
+                    <p class="text-muted small mb-0">Non caricato</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100 border {% if gruppo.scheda_tecnica %}border-success{% else %}border-secondary{% endif %}">
+                <div class="card-body text-center">
+                    <i class="bi bi-file-text fs-1 {% if gruppo.scheda_tecnica %}text-success{% else %}text-muted{% endif %} mb-2"></i>
+                    <h6 class="card-title">Scheda Tecnica</h6>
+                    {% if gruppo.scheda_tecnica %}
+                    <a href="{{ gruppo.scheda_tecnica.url }}" target="_blank" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-eye me-1"></i>Visualizza
+                    </a>
+                    {% else %}
+                    <p class="text-muted small mb-0">Non caricato</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manutenzioni Recenti -->
+{% if manutenzioni %}
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-wrench me-2 text-primary"></i>Manutenzioni Recenti
+        <a href="{% url 'automezzi:manutenzione_gruppo_create' %}" class="btn btn-sm btn-primary float-end">
+            <i class="bi bi-plus"></i> Nuova
+        </a>
+    </h5>
+    <div class="list-group">
+        {% for man in manutenzioni %}
+        <a href="{% url 'automezzi:manutenzione_gruppo_detail' man.pk %}" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between align-items-center flex-wrap">
+                <h6 class="mb-1">{{ man.descrizione }}</h6>
+                <small class="text-muted">{{ man.data_apertura|date:"d/m/Y" }}</small>
+            </div>
+            <p class="mb-1 small text-muted">{{ man.get_stato_display }} {% if man.ore_lavoro %}- {{ man.ore_lavoro }} ore{% endif %}</p>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Eventi Recenti -->
+{% if eventi %}
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-exclamation-triangle me-2 text-primary"></i>Eventi Recenti
+        <a href="{% url 'automezzi:evento_gruppo_create' %}" class="btn btn-sm btn-primary float-end">
+            <i class="bi bi-plus"></i> Nuovo
+        </a>
+    </h5>
+    <div class="list-group">
+        {% for evento in eventi %}
+        <a href="{% url 'automezzi:evento_gruppo_detail' evento.pk %}" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between align-items-center flex-wrap">
+                <h6 class="mb-1">{{ evento.get_tipo_display }}</h6>
+                <small class="text-muted">{{ evento.data_evento|date:"d/m/Y" }}</small>
+            </div>
+            {% if evento.descrizione %}
+            <p class="mb-0 small">{{ evento.descrizione|truncatewords:15 }}</p>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Note -->
+{% if gruppo.note %}
+<div class="mb-4">
+    <h5 class="border-bottom pb-2 mb-3">
+        <i class="bi bi-sticky me-2 text-primary"></i>Note
+    </h5>
+    <p>{{ gruppo.note|linebreaks }}</p>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block action_buttons %}
+<a href="{% url 'automezzi:gruppo_update' gruppo.pk %}" class="btn btn-primary">
+    <i class="bi bi-pencil me-2"></i>Modifica
+</a>
+<a href="{% url 'automezzi:gruppo_list' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Torna all'elenco
+</a>
+{% endblock %}

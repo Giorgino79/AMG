@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Elimina Manutenzione{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2 py-md-4">
+  <div class="card border-danger">
+    <div class="card-header bg-danger text-white">
+      <h4><i class="fas fa-trash"></i> Conferma Eliminazione</h4>
+    </div>
+    <div class="card-body">
+      <p>Eliminare la manutenzione <strong>{{ object.descrizione }}</strong>?</p>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Elimina</button>
+        <a href="{% url 'automezzi:manutenzione_gruppo_list' %}" class="btn btn-secondary">Annulla</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

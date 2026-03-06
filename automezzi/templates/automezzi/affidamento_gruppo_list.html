@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Affidamenti Gruppi{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2 py-md-4">
+  <div class="d-flex justify-content-between mb-4">
+    <h2><i class="fas fa-handshake"></i> Affidamenti Gruppi</h2>
+    <a href="{% url 'automezzi:affidamento_gruppo_create' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Nuovo</a>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      {% if affidamenti %}
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead><tr><th>Gruppo</th><th>Utente</th><th>Inizio</th><th>Stato</th><th>Azioni</th></tr></thead>
+            <tbody>
+              {% for aff in affidamenti %}
+              <tr>
+                <td>{{ aff.gruppo.matricola }}</td>
+                <td>{{ aff.user.get_full_name }}</td>
+                <td>{{ aff.data_inizio|date:"d/m/Y" }}</td>
+                <td><span class="badge bg-info">{{ aff.get_stato_display }}</span></td>
+                <td><a href="{% url 'automezzi:affidamento_gruppo_detail' aff.pk %}" class="btn btn-sm btn-primary"><i class="fas fa-eye"></i></a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p>Nessun affidamento.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

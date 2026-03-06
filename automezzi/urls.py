@@ -37,6 +37,27 @@ from .views import (
     MioAffidamentoView,
     AffidamentoRifornimentoCreateView,
     AffidamentoEventoCreateView,
+    # Gruppi Elettrogeni
+    GruppoListView,
+    GruppoDetailView,
+    GruppoCreateView,
+    GruppoUpdateView,
+    GruppoDeleteView,
+    ManutenzioneGruppoListView,
+    ManutenzioneGruppoDetailView,
+    ManutenzioneGruppoCreateView,
+    ManutenzioneGruppoUpdateView,
+    ManutenzioneGruppoDeleteView,
+    EventoGruppoListView,
+    EventoGruppoDetailView,
+    EventoGruppoCreateView,
+    EventoGruppoUpdateView,
+    EventoGruppoDeleteView,
+    AffidamentoGruppoListView,
+    AffidamentoGruppoDetailView,
+    AffidamentoGruppoCreateView,
+    AffidamentoGruppoUpdateView,
+    AffidamentoGruppoRientroView,
 )
 
 app_name = "automezzi"
@@ -186,4 +207,34 @@ urlpatterns = [
     path("il-mio-mezzo/", MioAffidamentoView.as_view(), name="mio_affidamento"),
     path("il-mio-mezzo/rifornimento/", AffidamentoRifornimentoCreateView.as_view(), name="affidamento_rifornimento_create"),
     path("il-mio-mezzo/evento/", AffidamentoEventoCreateView.as_view(), name="affidamento_evento_create"),
+
+    # ============================================
+    # GRUPPI ELETTROGENI
+    # ============================================
+    path("gruppi/", GruppoListView.as_view(), name="gruppo_list"),
+    path("gruppi/nuovo/", GruppoCreateView.as_view(), name="gruppo_create"),
+    path("gruppi/<int:pk>/", GruppoDetailView.as_view(), name="gruppo_detail"),
+    path("gruppi/<int:pk>/modifica/", GruppoUpdateView.as_view(), name="gruppo_update"),
+    path("gruppi/<int:pk>/elimina/", GruppoDeleteView.as_view(), name="gruppo_delete"),
+    
+    # MANUTENZIONI GRUPPI
+    path("gruppi/manutenzioni/", ManutenzioneGruppoListView.as_view(), name="manutenzione_gruppo_list"),
+    path("gruppi/manutenzioni/nuova/", ManutenzioneGruppoCreateView.as_view(), name="manutenzione_gruppo_create"),
+    path("gruppi/manutenzioni/<int:pk>/", ManutenzioneGruppoDetailView.as_view(), name="manutenzione_gruppo_detail"),
+    path("gruppi/manutenzioni/<int:pk>/modifica/", ManutenzioneGruppoUpdateView.as_view(), name="manutenzione_gruppo_update"),
+    path("gruppi/manutenzioni/<int:pk>/elimina/", ManutenzioneGruppoDeleteView.as_view(), name="manutenzione_gruppo_delete"),
+    
+    # EVENTI GRUPPI
+    path("gruppi/eventi/", EventoGruppoListView.as_view(), name="evento_gruppo_list"),
+    path("gruppi/eventi/nuovo/", EventoGruppoCreateView.as_view(), name="evento_gruppo_create"),
+    path("gruppi/eventi/<int:pk>/", EventoGruppoDetailView.as_view(), name="evento_gruppo_detail"),
+    path("gruppi/eventi/<int:pk>/modifica/", EventoGruppoUpdateView.as_view(), name="evento_gruppo_update"),
+    path("gruppi/eventi/<int:pk>/elimina/", EventoGruppoDeleteView.as_view(), name="evento_gruppo_delete"),
+    
+    # AFFIDAMENTI GRUPPI
+    path("gruppi/affidamenti/", AffidamentoGruppoListView.as_view(), name="affidamento_gruppo_list"),
+    path("gruppi/affidamenti/nuovo/", AffidamentoGruppoCreateView.as_view(), name="affidamento_gruppo_create"),
+    path("gruppi/affidamenti/<int:pk>/", AffidamentoGruppoDetailView.as_view(), name="affidamento_gruppo_detail"),
+    path("gruppi/affidamenti/<int:pk>/modifica/", AffidamentoGruppoUpdateView.as_view(), name="affidamento_gruppo_update"),
+    path("gruppi/affidamenti/<int:pk>/rientro/", AffidamentoGruppoRientroView.as_view(), name="affidamento_gruppo_rientro"),
 ]

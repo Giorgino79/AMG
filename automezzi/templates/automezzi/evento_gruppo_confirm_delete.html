@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Elimina Evento{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2 py-md-4">
+  <div class="card border-danger">
+    <div class="card-body">
+      <p>Eliminare l'evento?</p>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Elimina</button>
+        <a href="{% url 'automezzi:evento_gruppo_list' %}" class="btn btn-secondary">Annulla</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

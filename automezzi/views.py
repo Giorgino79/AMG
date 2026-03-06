@@ -17,6 +17,10 @@ from .models import (
     Rifornimento,
     EventoAutomezzo,
     AffidamentoMezzo,
+    Gruppo,
+    ManutenzioneGruppo,
+    EventoGruppo,
+    AffidamentoGruppo,
 )
 from .forms import (
     AutomezzoForm,
@@ -30,6 +34,12 @@ from .forms import (
     EventoAutomezzoForm,
     AffidamentoMezzoForm,
     AffidamentoRientroForm,
+    GruppoForm,
+    ManutenzioneGruppoCreateForm,
+    ManutenzioneGruppoUpdateForm,
+    EventoGruppoForm,
+    AffidamentoGruppoForm,
+    AffidamentoGruppoRientroForm,
 )
 from django.utils import timezone
 from core.pdf_generator import generate_pdf_from_html
@@ -1102,3 +1112,223 @@ class AffidamentoEventoCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse_lazy("automezzi:mio_affidamento")
+
+
+# ========================================
+# VIEWS PER GRUPPI ELETTROGENI
+# ========================================
+
+# GRUPPI CRUD
+class GruppoListView(LoginRequiredMixin, ListView):
+    model = Gruppo
+    template_name = "automezzi/gruppo_list.html"
+    context_object_name = "gruppi"
+    paginate_by = 20
+
+    def get_queryset(self):
+        qs = super().get_queryset().order_by("matricola")
+
+        # Filtri
+        matricola_search = self.request.GET.get("matricola", "")
+        if matricola_search:
+            qs = qs.filter(matricola__icontains=matricola_search)
+
+        marca_search = self.request.GET.get("marca", "")
+        if marca_search:
+            qs = qs.filter(marca__icontains=marca_search)
+
+        attivo_filter = self.request.GET.get("attivo", "")
+        if attivo_filter == "si":
+            qs = qs.filter(attivo=True)
+        elif attivo_filter == "no":
+            qs = qs.filter(attivo=False)
+
+        disponibile_filter = self.request.GET.get("disponibile", "")
+        if disponibile_filter == "si":
+            qs = qs.filter(disponibile=True)
+        elif disponibile_filter == "no":
+            qs = qs.filter(disponibile=False)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["matricola_search"] = self.request.GET.get("matricola", "")
+        context["marca_search"] = self.request.GET.get("marca", "")
+        context["attivo_filter"] = self.request.GET.get("attivo", "")
+        context["disponibile_filter"] = self.request.GET.get("disponibile", "")
+        return context
+
+
+class GruppoDetailView(LoginRequiredMixin, DetailView):
+    model = Gruppo
+    template_name = "automezzi/gruppo_detail.html"
+    context_object_name = "gruppo"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["manutenzioni"] = self.object.manutenzioni_gruppo.all()[:10]
+        context["eventi"] = self.object.eventi_gruppo.all()[:10]
+        context["affidamenti"] = self.object.affidamenti_gruppo.all()[:10]
+        return context
+
+
+class GruppoCreateView(LoginRequiredMixin, CreateView):
+    model = Gruppo
+    form_class = GruppoForm
+    template_name = "automezzi/gruppo_form.html"
+
+
+class GruppoUpdateView(LoginRequiredMixin, UpdateView):
+    model = Gruppo
+    form_class = GruppoForm
+    template_name = "automezzi/gruppo_form.html"
+
+
+class GruppoDeleteView(LoginRequiredMixin, DeleteView):
+    model = Gruppo
+    template_name = "automezzi/gruppo_confirm_delete.html"
+    success_url = reverse_lazy("automezzi:gruppo_list")
+
+
+# MANUTENZIONI GRUPPI
+class ManutenzioneGruppoListView(LoginRequiredMixin, ListView):
+    model = ManutenzioneGruppo
+    template_name = "automezzi/manutenzione_gruppo_list.html"
+    context_object_name = "manutenzioni"
+    paginate_by = 20
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("gruppo", "fornitore", "responsabile")
+
+        gruppo_id = self.request.GET.get("gruppo")
+        if gruppo_id:
+            qs = qs.filter(gruppo_id=gruppo_id)
+
+        stato = self.request.GET.get("stato")
+        if stato:
+            qs = qs.filter(stato=stato)
+
+        return qs.order_by("-data_apertura")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["gruppi"] = Gruppo.objects.filter(attivo=True)
+        context["gruppo_filter"] = self.request.GET.get("gruppo", "")
+        context["stato_filter"] = self.request.GET.get("stato", "")
+        return context
+
+
+class ManutenzioneGruppoDetailView(LoginRequiredMixin, DetailView):
+    model = ManutenzioneGruppo
+    template_name = "automezzi/manutenzione_gruppo_detail.html"
+    context_object_name = "manutenzione"
+
+
+class ManutenzioneGruppoCreateView(LoginRequiredMixin, CreateView):
+    model = ManutenzioneGruppo
+    form_class = ManutenzioneGruppoCreateForm
+    template_name = "automezzi/manutenzione_gruppo_form.html"
+
+    def form_valid(self, form):
+        form.instance.seguito_da = self.request.user
+        return super().form_valid(form)
+
+
+class ManutenzioneGruppoUpdateView(LoginRequiredMixin, UpdateView):
+    model = ManutenzioneGruppo
+    form_class = ManutenzioneGruppoUpdateForm
+    template_name = "automezzi/manutenzione_gruppo_form.html"
+
+
+class ManutenzioneGruppoDeleteView(LoginRequiredMixin, DeleteView):
+    model = ManutenzioneGruppo
+    template_name = "automezzi/manutenzione_gruppo_confirm_delete.html"
+    success_url = reverse_lazy("automezzi:manutenzione_gruppo_list")
+
+
+# EVENTI GRUPPI
+class EventoGruppoListView(LoginRequiredMixin, ListView):
+    model = EventoGruppo
+    template_name = "automezzi/evento_gruppo_list.html"
+    context_object_name = "eventi"
+    paginate_by = 20
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("gruppo", "dipendente_coinvolto")
+
+        gruppo_id = self.request.GET.get("gruppo")
+        if gruppo_id:
+            qs = qs.filter(gruppo_id=gruppo_id)
+
+        return qs.order_by("-data_evento")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["gruppi"] = Gruppo.objects.filter(attivo=True)
+        return context
+
+
+class EventoGruppoDetailView(LoginRequiredMixin, DetailView):
+    model = EventoGruppo
+    template_name = "automezzi/evento_gruppo_detail.html"
+    context_object_name = "evento"
+
+
+class EventoGruppoCreateView(LoginRequiredMixin, CreateView):
+    model = EventoGruppo
+    form_class = EventoGruppoForm
+    template_name = "automezzi/evento_gruppo_form.html"
+
+
+class EventoGruppoUpdateView(LoginRequiredMixin, UpdateView):
+    model = EventoGruppo
+    form_class = EventoGruppoForm
+    template_name = "automezzi/evento_gruppo_form.html"
+
+
+class EventoGruppoDeleteView(LoginRequiredMixin, DeleteView):
+    model = EventoGruppo
+    template_name = "automezzi/evento_gruppo_confirm_delete.html"
+    success_url = reverse_lazy("automezzi:evento_gruppo_list")
+
+
+# AFFIDAMENTI GRUPPI
+class AffidamentoGruppoListView(LoginRequiredMixin, ListView):
+    model = AffidamentoGruppo
+    template_name = "automezzi/affidamento_gruppo_list.html"
+    context_object_name = "affidamenti"
+    paginate_by = 20
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("gruppo", "user")
+        return qs.order_by("-data_inizio")
+
+
+class AffidamentoGruppoDetailView(LoginRequiredMixin, DetailView):
+    model = AffidamentoGruppo
+    template_name = "automezzi/affidamento_gruppo_detail.html"
+    context_object_name = "affidamento"
+
+
+class AffidamentoGruppoCreateView(LoginRequiredMixin, CreateView):
+    model = AffidamentoGruppo
+    form_class = AffidamentoGruppoForm
+    template_name = "automezzi/affidamento_gruppo_form.html"
+
+
+class AffidamentoGruppoUpdateView(LoginRequiredMixin, UpdateView):
+    model = AffidamentoGruppo
+    form_class = AffidamentoGruppoForm
+    template_name = "automezzi/affidamento_gruppo_form.html"
+
+
+class AffidamentoGruppoRientroView(LoginRequiredMixin, UpdateView):
+    model = AffidamentoGruppo
+    form_class = AffidamentoGruppoRientroForm
+    template_name = "automezzi/affidamento_gruppo_rientro_form.html"
+
+    def form_valid(self, form):
+        form.instance.stato = "completato"
+        form.instance.data_rientro_effettivo = timezone.now().date()
+        return super().form_valid(form)

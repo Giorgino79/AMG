@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Affidamento Gruppo{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2 py-md-4">
+  <h2>Dettaglio Affidamento</h2>
+  <div class="card">
+    <div class="card-body">
+      <h4>{{ affidamento.gruppo.matricola }} → {{ affidamento.user.get_full_name }}</h4>
+      <p>Scopo: {{ affidamento.scopo_utilizzo }}</p>
+      <p>Stato: {{ affidamento.get_stato_display }}</p>
+      <a href="{% url 'automezzi:affidamento_gruppo_list' %}" class="btn btn-secondary">Indietro</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

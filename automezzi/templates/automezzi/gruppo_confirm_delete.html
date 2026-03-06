@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Elimina Gruppo {{ object.matricola }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'automezzi:dashboard' %}">Automezzi</a></li>
+<li class="breadcrumb-item"><a href="{% url 'automezzi:gruppo_list' %}">Gruppi Elettrogeni</a></li>
+<li class="breadcrumb-item"><a href="{% url 'automezzi:gruppo_detail' object.pk %}">{{ object.matricola }}</a></li>
+<li class="breadcrumb-item active">Elimina</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2 py-md-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Conferma Eliminazione</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>Attenzione!</strong> Questa operazione eliminerà definitivamente il gruppo elettrogeno e tutti i dati associati.
+                    </div>
+
+                    <p class="mb-3">Sei sicuro di voler eliminare il gruppo elettrogeno:</p>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><strong>{{ object.matricola }}</strong></h5>
+                            <p class="card-text">
+                                <strong>{{ object.marca }} {{ object.modello }}</strong><br>
+                                Potenza: {{ object.potenza_kva }} kVA<br>
+                                Ore lavoro: {{ object.ore_lavoro_attuali }} h
+                            </p>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                            <a href="{% url 'automezzi:gruppo_detail' object.pk %}" class="btn btn-secondary order-2 order-md-1">
+                                <i class="fas fa-arrow-left me-2"></i>Annulla
+                            </a>
+                            <button type="submit" class="btn btn-danger order-1 order-md-2">
+                                <i class="fas fa-trash me-2"></i>Conferma Eliminazione
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

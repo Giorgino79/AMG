@@ -6,6 +6,10 @@ from .models import (
     Rifornimento,
     EventoAutomezzo,
     AffidamentoMezzo,
+    Gruppo,
+    ManutenzioneGruppo,
+    EventoGruppo,
+    AffidamentoGruppo,
 )
 
 
@@ -337,4 +341,185 @@ class AffidamentoRientroForm(forms.ModelForm):
         self.fields["km_finali"].required = True
         self.fields["video_rientro"].required = False
         self.fields["danni_rientro"].required = False
+        self.fields["note_rientro"].required = False
+
+# ==============================
+# FORMS PER GRUPPI ELETTROGENI
+# ==============================
+
+class GruppoForm(forms.ModelForm):
+    class Meta:
+        model = Gruppo
+        fields = [
+            "numero_gruppo",
+            "matricola",
+            "marca",
+            "modello",
+            "anno_produzione",
+            "potenza_kva",
+            "potenza_kw",
+            "tipo_motore",
+            "cilindrata",
+            "numero_cilindri",
+            "capacita_serbatoio",
+            "consumo_orario",
+            "tipo_raffreddamento",
+            "tensione_uscita",
+            "frequenza",
+            "ore_lavoro_attuali",
+            "intervallo_manutenzione_ore",
+            "attivo",
+            "disponibile",
+            "bloccato",
+            "motivo_blocco",
+            "ubicazione",
+            "manuale_uso",
+            "certificato_conformita",
+            "scheda_tecnica",
+            "assegnato_a",
+            "note",
+        ]
+        widgets = {
+            "motivo_blocco": forms.Textarea(attrs={"rows": 2}),
+            "note": forms.Textarea(attrs={"rows": 3}),
+            "ubicazione": forms.TextInput(attrs={"placeholder": "Es. Magazzino A, Cantiere Roma, ecc."}),
+        }
+
+
+class ManutenzioneGruppoCreateForm(forms.ModelForm):
+    """Form per creare una nuova manutenzione gruppo"""
+
+    class Meta:
+        model = ManutenzioneGruppo
+        fields = [
+            "gruppo",
+            "data_prevista",
+            "descrizione",
+            "fornitore",
+            "luogo",
+            "responsabile",
+            "ore_lavoro",
+        ]
+        widgets = {
+            "data_prevista": forms.DateInput(attrs={"type": "date"}),
+            "descrizione": forms.Textarea(
+                attrs={
+                    "rows": 3,
+                    "placeholder": "Descrivi il tipo di manutenzione da eseguire...",
+                }
+            ),
+            "luogo": forms.TextInput(attrs={"placeholder": "Es. Sede, Cantiere, ecc."}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.instance.stato = "aperta"
+        self.fields["fornitore"].required = False
+        self.fields["luogo"].required = False
+        self.fields["ore_lavoro"].required = False
+
+
+class ManutenzioneGruppoUpdateForm(forms.ModelForm):
+    """Form per aggiornare una manutenzione gruppo"""
+
+    class Meta:
+        model = ManutenzioneGruppo
+        fields = [
+            "data_prevista",
+            "descrizione",
+            "stato",
+            "fornitore",
+            "luogo",
+            "costo",
+            "ore_lavoro",
+            "responsabile",
+            "cambio_olio",
+            "cambio_filtro_aria",
+            "cambio_filtro_carburante",
+            "cambio_filtro_olio",
+            "revisione_batteria",
+            "prova_funzionamento",
+            "note_finali",
+        ]
+        widgets = {
+            "data_prevista": forms.DateInput(attrs={"type": "date"}),
+            "descrizione": forms.Textarea(attrs={"rows": 3}),
+            "note_finali": forms.Textarea(attrs={"rows": 4}),
+        }
+
+
+class EventoGruppoForm(forms.ModelForm):
+    class Meta:
+        model = EventoGruppo
+        fields = [
+            "gruppo",
+            "tipo",
+            "data_evento",
+            "ore_lavoro",
+            "descrizione",
+            "costo",
+            "dipendente_coinvolto",
+            "file_allegato",
+            "risolto",
+        ]
+        widgets = {
+            "data_evento": forms.DateInput(attrs={"type": "date"}),
+            "descrizione": forms.Textarea(attrs={"rows": 4}),
+        }
+
+
+class AffidamentoGruppoForm(forms.ModelForm):
+    class Meta:
+        model = AffidamentoGruppo
+        fields = [
+            "user",
+            "gruppo",
+            "data_inizio",
+            "data_fine",
+            "ore_iniziali",
+            "scopo_utilizzo",
+            "destinazione",
+            "carburante",
+            "video_stato_gruppo",
+            "note",
+        ]
+        widgets = {
+            "data_inizio": forms.DateInput(attrs={"type": "date"}),
+            "data_fine": forms.DateInput(attrs={"type": "date"}),
+            "scopo_utilizzo": forms.TextInput(
+                attrs={"placeholder": "Es. Cantiere Via Roma, Evento XYZ, ecc."}
+            ),
+            "destinazione": forms.TextInput(
+                attrs={"placeholder": "Es. Via Roma 10, Milano"}
+            ),
+            "note": forms.Textarea(attrs={"rows": 3}),
+        }
+
+
+class AffidamentoGruppoRientroForm(forms.ModelForm):
+    """Form per registrare il rientro di un gruppo"""
+
+    class Meta:
+        model = AffidamentoGruppo
+        fields = [
+            "ore_finali",
+            "carburante_rientro",
+            "video_stato_gruppo_rientro",
+            "note_rientro",
+            "danni_riscontrati",
+        ]
+        widgets = {
+            "note_rientro": forms.Textarea(
+                attrs={"rows": 3, "placeholder": "Note sul rientro, eventuali problemi riscontrati..."}
+            ),
+            "danni_riscontrati": forms.Textarea(
+                attrs={"rows": 3, "placeholder": "Descrivi eventuali danni riscontrati..."}
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["ore_finali"].required = True
+        self.fields["video_stato_gruppo_rientro"].required = False
+        self.fields["danni_riscontrati"].required = False
         self.fields["note_rientro"].required = False

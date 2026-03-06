@@ -24,6 +24,23 @@ def allegato_evento_path(instance, filename):
     return f"automezzi/eventi/{instance.automezzo.targa}/{filename}"
 
 
+# Upload paths per Gruppi Elettrogeni
+def manuale_gruppo_upload_path(instance, filename):
+    return f"gruppi/manuali/{instance.matricola}/{filename}"
+
+
+def certificato_gruppo_upload_path(instance, filename):
+    return f"gruppi/certificati/{instance.matricola}/{filename}"
+
+
+def allegati_manutenzione_gruppo_path(instance, filename):
+    return f"gruppi/manutenzioni/{instance.gruppo.matricola}/allegati/{filename}"
+
+
+def allegato_evento_gruppo_path(instance, filename):
+    return f"gruppi/eventi/{instance.gruppo.matricola}/{filename}"
+
+
 class Automezzo(AllegatiMixin, SearchMixin, models.Model):
     numero_mezzo = models.IntegerField(
         blank=True, null=True, help_text="Numero identificativo del mezzo"
@@ -106,6 +123,224 @@ class Automezzo(AllegatiMixin, SearchMixin, models.Model):
 
     def eventi_count(self):
         return self.eventi.count()
+
+
+class Gruppo(AllegatiMixin, SearchMixin, models.Model):
+    """Modello per gestire i gruppi elettrogeni"""
+
+    TIPO_MOTORE_CHOICES = [
+        ('diesel', 'Diesel'),
+        ('benzina', 'Benzina'),
+        ('gas', 'Gas'),
+        ('ibrido', 'Ibrido'),
+    ]
+
+    TIPO_RAFFREDDAMENTO_CHOICES = [
+        ('aria', 'Raffreddamento ad Aria'),
+        ('acqua', 'Raffreddamento ad Acqua'),
+    ]
+
+    FREQUENZA_CHOICES = [
+        ('50', '50 Hz'),
+        ('60', '60 Hz'),
+        ('50/60', '50/60 Hz'),
+    ]
+
+    # Identificazione
+    numero_gruppo = models.IntegerField(
+        blank=True, null=True, help_text="Numero identificativo del gruppo"
+    )
+    matricola = models.CharField(
+        max_length=50, unique=True, help_text="Matricola/Seriale del gruppo elettrogeno"
+    )
+    marca = models.CharField(max_length=50)
+    modello = models.CharField(max_length=50)
+    anno_produzione = models.PositiveIntegerField()
+
+    # Stato operativo
+    attivo = models.BooleanField(default=True)
+    disponibile = models.BooleanField(default=True)
+    bloccato = models.BooleanField(default=False)
+    motivo_blocco = models.TextField(blank=True, null=True)
+
+    # Caratteristiche tecniche
+    potenza_kva = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        help_text="Potenza apparente in kVA"
+    )
+    potenza_kw = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        help_text="Potenza attiva in kW"
+    )
+    tipo_motore = models.CharField(
+        max_length=10,
+        choices=TIPO_MOTORE_CHOICES,
+        default='diesel'
+    )
+    cilindrata = models.PositiveIntegerField(
+        blank=True, null=True, help_text="Cilindrata in cc"
+    )
+    numero_cilindri = models.PositiveIntegerField(
+        blank=True, null=True
+    )
+    capacita_serbatoio = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Capacità serbatoio in litri"
+    )
+    consumo_orario = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Consumo medio orario in litri/ora"
+    )
+    tipo_raffreddamento = models.CharField(
+        max_length=10,
+        choices=TIPO_RAFFREDDAMENTO_CHOICES,
+        default='aria'
+    )
+    tensione_uscita = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Tensione di uscita (es: 230/400V)"
+    )
+    frequenza = models.CharField(
+        max_length=10,
+        choices=FREQUENZA_CHOICES,
+        default='50'
+    )
+
+    # Contatori e manutenzione programmata
+    ore_lavoro_attuali = models.PositiveIntegerField(
+        default=0,
+        help_text="Ore di funzionamento totali"
+    )
+    ore_ultima_manutenzione = models.PositiveIntegerField(
+        default=0,
+        help_text="Ore al momento dell'ultima manutenzione"
+    )
+    intervallo_manutenzione_ore = models.PositiveIntegerField(
+        default=250,
+        help_text="Intervallo in ore tra le manutenzioni"
+    )
+
+    # Date manutenzioni componenti
+    data_ultimo_cambio_olio = models.DateField(
+        blank=True, null=True
+    )
+    data_ultimo_cambio_filtro_aria = models.DateField(
+        blank=True, null=True
+    )
+    data_ultimo_cambio_filtro_carburante = models.DateField(
+        blank=True, null=True
+    )
+    data_ultimo_cambio_filtro_olio = models.DateField(
+        blank=True, null=True
+    )
+    data_ultima_revisione_batteria = models.DateField(
+        blank=True, null=True
+    )
+    data_ultima_prova_funzionamento = models.DateField(
+        blank=True, null=True,
+        help_text="Data dell'ultima prova di funzionamento"
+    )
+
+    # Documenti
+    manuale_uso = models.FileField(
+        upload_to=manuale_gruppo_upload_path,
+        blank=True,
+        null=True,
+        help_text="Manuale d'uso e manutenzione"
+    )
+    certificato_conformita = models.FileField(
+        upload_to=certificato_gruppo_upload_path,
+        blank=True,
+        null=True,
+        help_text="Certificato di conformità"
+    )
+    scheda_tecnica = models.FileField(
+        upload_to=certificato_gruppo_upload_path,
+        blank=True,
+        null=True,
+        help_text="Scheda tecnica del costruttore"
+    )
+
+    # Assegnazione
+    assegnato_a = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="gruppi_assegnati",
+    )
+
+    # Note e ubicazione
+    ubicazione = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Ubicazione fisica del gruppo"
+    )
+    note = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.matricola} - {self.marca} {self.modello} ({self.potenza_kva} kVA)"
+
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse('automezzi:gruppo_detail', kwargs={'pk': self.pk})
+
+    @classmethod
+    def get_search_fields(cls):
+        """Campi ricercabili nella ricerca globale"""
+        return ['matricola', 'marca', 'modello', 'ubicazione']
+
+    def get_search_result_display(self):
+        """Testo visualizzato nei risultati di ricerca"""
+        return f"{self.matricola} - {self.marca} {self.modello} ({self.potenza_kva} kVA)"
+
+    @property
+    def eta(self):
+        from datetime import date
+        return date.today().year - self.anno_produzione
+
+    @property
+    def ore_prossima_manutenzione(self):
+        """Calcola le ore alla prossima manutenzione"""
+        return self.ore_ultima_manutenzione + self.intervallo_manutenzione_ore
+
+    @property
+    def ore_alla_manutenzione(self):
+        """Ore rimanenti alla prossima manutenzione"""
+        return self.ore_prossima_manutenzione - self.ore_lavoro_attuali
+
+    @property
+    def necessita_manutenzione(self):
+        """True se il gruppo ha superato le ore per la manutenzione"""
+        return self.ore_lavoro_attuali >= self.ore_prossima_manutenzione
+
+    @property
+    def percentuale_manutenzione(self):
+        """Percentuale di utilizzo rispetto alla prossima manutenzione"""
+        if self.intervallo_manutenzione_ore == 0:
+            return 0
+        ore_dall_ultima = self.ore_lavoro_attuali - self.ore_ultima_manutenzione
+        return min(int((ore_dall_ultima / self.intervallo_manutenzione_ore) * 100), 100)
+
+    def manutenzioni_count(self):
+        return self.manutenzioni_gruppo.count()
+
+    def eventi_count(self):
+        return self.eventi_gruppo.count()
+
+    class Meta:
+        verbose_name = "Gruppo Elettrogeno"
+        verbose_name_plural = "Gruppi Elettrogeni"
+        ordering = ['matricola']
 
 
 class Manutenzione(AllegatiMixin, models.Model):
@@ -471,6 +706,293 @@ def intervento_upload_path(instance, filename):
 
 def controllo_upload_path(instance, filename):
     return f"automezzi/controlli/{instance.automezzo.targa}/{instance.tipo_controllo}/{filename}"
+
+
+# === MODELLI PER GRUPPI ELETTROGENI ===
+
+class ManutenzioneGruppo(AllegatiMixin, models.Model):
+    """Manutenzioni per gruppi elettrogeni"""
+
+    STATO_CHOICES = [
+        ("aperta", "Manutenzione Aperta"),
+        ("in_corso", "In Corso"),
+        ("terminata", "Terminata"),
+    ]
+
+    gruppo = models.ForeignKey(
+        Gruppo, on_delete=models.CASCADE, related_name="manutenzioni_gruppo"
+    )
+    data_apertura = models.DateTimeField(
+        auto_now_add=True,
+        null=True,
+        help_text="Data e ora di apertura della manutenzione",
+    )
+    data_prevista = models.DateField(
+        null=True, help_text="Data prevista per l'intervento di manutenzione"
+    )
+    descrizione = models.CharField(max_length=255)
+
+    stato = models.CharField(
+        max_length=10,
+        choices=STATO_CHOICES,
+        default="aperta",
+        help_text="Stato della manutenzione",
+    )
+
+    fornitore = models.ForeignKey(
+        "anagrafica.Fornitore",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="Fornitore/Officina che esegue la manutenzione",
+    )
+    luogo = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Luogo dove viene eseguita la manutenzione",
+    )
+
+    costo = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Costo della manutenzione (da compilare al termine)",
+    )
+
+    # Ore lavoro al momento della manutenzione
+    ore_lavoro = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        help_text="Ore di funzionamento al momento della manutenzione"
+    )
+
+    # Campi utente
+    seguito_da = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="manutenzioni_gruppo_seguite",
+        help_text="Utente che ha aperto e segue la pratica di manutenzione",
+    )
+    responsabile = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="manutenzioni_gruppo_responsabile",
+        help_text="Responsabile dell'esecuzione della manutenzione",
+    )
+
+    data_inizio_manutenzione = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Data e ora di inizio della manutenzione",
+    )
+
+    note_responsabile = models.TextField(
+        blank=True,
+        help_text="Note del responsabile",
+    )
+
+    # Campo finale
+    data_completamento = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Data e ora di completamento della manutenzione",
+    )
+
+    note_finali = models.TextField(
+        blank=True,
+        help_text="Note finali e dettagli del lavoro svolto",
+    )
+
+    # Interventi specifici eseguiti
+    cambio_olio = models.BooleanField(default=False)
+    cambio_filtro_aria = models.BooleanField(default=False)
+    cambio_filtro_carburante = models.BooleanField(default=False)
+    cambio_filtro_olio = models.BooleanField(default=False)
+    revisione_batteria = models.BooleanField(default=False)
+    prova_funzionamento = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.gruppo.matricola} - {self.descrizione} - {self.get_stato_display()}"
+
+    class Meta:
+        verbose_name = "Manutenzione Gruppo"
+        verbose_name_plural = "Manutenzioni Gruppi"
+        ordering = ['-data_apertura']
+
+
+class EventoGruppo(AllegatiMixin, models.Model):
+    """Eventi relativi ai gruppi elettrogeni"""
+
+    TIPO_EVENTO_CHOICES = [
+        ("guasto", "Guasto/avaria"),
+        ("fermo", "Fermo tecnico"),
+        ("surriscaldamento", "Surriscaldamento"),
+        ("mancato_avvio", "Mancato avvio"),
+        ("perdita_olio", "Perdita olio"),
+        ("perdita_carburante", "Perdita carburante"),
+        ("batteria_scarica", "Batteria scarica"),
+        ("altro", "Altro"),
+    ]
+
+    gruppo = models.ForeignKey(
+        Gruppo, on_delete=models.CASCADE, related_name="eventi_gruppo"
+    )
+    tipo = models.CharField(max_length=30, choices=TIPO_EVENTO_CHOICES)
+    data_evento = models.DateField()
+    ore_lavoro = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        help_text="Ore di funzionamento al momento dell'evento"
+    )
+    descrizione = models.TextField(blank=True)
+    costo = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+    dipendente_coinvolto = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="eventi_gruppo_coinvolto",
+    )
+    file_allegato = models.FileField(
+        upload_to=allegato_evento_gruppo_path,
+        blank=True,
+        null=True,
+        help_text="Foto, verbali, documenti relativi all'evento",
+    )
+    risolto = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.gruppo.matricola} - {self.get_tipo_display()} - {self.data_evento}"
+
+    class Meta:
+        verbose_name = "Evento Gruppo"
+        verbose_name_plural = "Eventi Gruppi"
+        ordering = ['-data_evento']
+
+
+def affidamento_gruppo_video_upload_path(instance, filename):
+    return f"gruppi/affidamenti/{instance.gruppo.matricola}/consegna/{filename}"
+
+
+def affidamento_gruppo_video_rientro_upload_path(instance, filename):
+    return f"gruppi/affidamenti/{instance.gruppo.matricola}/rientro/{filename}"
+
+
+class AffidamentoGruppo(AllegatiMixin, models.Model):
+    """Affidamento di gruppi elettrogeni ai dipendenti"""
+
+    STATO_CHOICES = [
+        ("in_attesa", "In attesa di accettazione"),
+        ("accettato", "Accettato"),
+        ("in_corso", "In corso"),
+        ("completato", "Completato"),
+    ]
+
+    CARBURANTE_CHOICES = [
+        ("vuoto", "Vuoto"),
+        ("1/4", "1/4"),
+        ("1/2", "1/2"),
+        ("3/4", "3/4"),
+        ("pieno", "Pieno"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="affidamenti_gruppo",
+        help_text="Dipendente a cui viene affidato il gruppo",
+    )
+    gruppo = models.ForeignKey(
+        Gruppo,
+        on_delete=models.CASCADE,
+        related_name="affidamenti_gruppo",
+    )
+    data_inizio = models.DateField(help_text="Data inizio affidamento")
+    data_fine = models.DateField(help_text="Data fine prevista affidamento")
+    video_stato_gruppo = models.FileField(
+        upload_to=affidamento_gruppo_video_upload_path,
+        blank=True,
+        null=True,
+        help_text="Video dello stato del gruppo alla consegna",
+    )
+    ore_iniziali = models.PositiveIntegerField(help_text="Ore lavoro alla consegna")
+    ore_finali = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        help_text="Ore lavoro al rientro",
+    )
+    scopo_utilizzo = models.CharField(
+        max_length=200,
+        help_text="Scopo dell'utilizzo / cantiere",
+    )
+    destinazione = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Luogo di destinazione del gruppo",
+    )
+    carburante = models.CharField(
+        max_length=10,
+        choices=CARBURANTE_CHOICES,
+        help_text="Livello carburante alla consegna",
+    )
+    note = models.TextField(
+        blank=True,
+        help_text="Note aggiuntive sull'affidamento",
+    )
+    firma_accettazione = models.BooleanField(
+        default=False,
+        help_text="Dipendente ha accettato l'affidamento",
+    )
+    data_accettazione = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Data e ora di accettazione",
+    )
+    stato = models.CharField(
+        max_length=20,
+        choices=STATO_CHOICES,
+        default="in_attesa",
+    )
+
+    # Campi per il rientro
+    video_stato_gruppo_rientro = models.FileField(
+        upload_to=affidamento_gruppo_video_rientro_upload_path,
+        blank=True,
+        null=True,
+        help_text="Video dello stato del gruppo al rientro",
+    )
+    data_rientro_effettivo = models.DateField(
+        blank=True,
+        null=True,
+        help_text="Data effettiva di rientro",
+    )
+    carburante_rientro = models.CharField(
+        max_length=10,
+        choices=CARBURANTE_CHOICES,
+        blank=True,
+        help_text="Livello carburante al rientro",
+    )
+    note_rientro = models.TextField(
+        blank=True,
+        help_text="Note sul rientro e condizioni del gruppo",
+    )
+    danni_riscontrati = models.TextField(
+        blank=True,
+        help_text="Eventuali danni riscontrati al rientro",
+    )
+
+    class Meta:
+        verbose_name = "Affidamento Gruppo"
+        verbose_name_plural = "Affidamenti Gruppi"
+        ordering = ['-data_inizio']
+
+    def __str__(self):
+        return f"{self.gruppo.matricola} - {self.user.get_full_name()} ({self.data_inizio})"
 
 
 # === CATEGORIE E TIPOLOGIE ===
