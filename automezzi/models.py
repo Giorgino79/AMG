@@ -351,7 +351,12 @@ class Manutenzione(AllegatiMixin, models.Model):
     ]
 
     automezzo = models.ForeignKey(
-        Automezzo, on_delete=models.CASCADE, related_name="manutenzioni"
+        Automezzo, on_delete=models.CASCADE, related_name="manutenzioni",
+        blank=True, null=True
+    )
+    gruppo = models.ForeignKey(
+        'Gruppo', on_delete=models.CASCADE, related_name="manutenzioni",
+        blank=True, null=True
     )
     data_apertura = models.DateTimeField(
         auto_now_add=True,
@@ -457,7 +462,11 @@ class Manutenzione(AllegatiMixin, models.Model):
     )
 
     def __str__(self):
-        return f"{self.automezzo} - {self.data_prevista} - {self.descrizione}"
+        if self.automezzo:
+            return f"{self.automezzo} - {self.data_prevista} - {self.descrizione}"
+        elif self.gruppo:
+            return f"{self.gruppo} - {self.data_prevista} - {self.descrizione}"
+        return f"Manutenzione {self.data_prevista} - {self.descrizione}"
 
     @property
     def is_completata(self):
@@ -497,13 +506,19 @@ class AllegatoManutenzione(models.Model):
 
 class Rifornimento(AllegatiMixin, models.Model):
     automezzo = models.ForeignKey(
-        Automezzo, on_delete=models.CASCADE, related_name="rifornimenti"
+        Automezzo, on_delete=models.CASCADE, related_name="rifornimenti",
+        blank=True, null=True
+    )
+    gruppo = models.ForeignKey(
+        'Gruppo', on_delete=models.CASCADE, related_name="rifornimenti",
+        blank=True, null=True
     )
     data = models.DateField()
     litri = models.DecimalField(max_digits=6, decimal_places=2)
     costo_totale = models.DecimalField(max_digits=7, decimal_places=2)
     chilometri = models.PositiveIntegerField(
-        help_text="Chilometraggio al momento del rifornimento"
+        help_text="Chilometraggio al momento del rifornimento",
+        blank=True, null=True
     )
     scontrino = models.FileField(
         upload_to=scontrino_upload_path,
@@ -513,7 +528,11 @@ class Rifornimento(AllegatiMixin, models.Model):
     )
 
     def __str__(self):
-        return f"{self.automezzo} - {self.data} - {self.litri}L"
+        if self.automezzo:
+            return f"{self.automezzo} - {self.data} - {self.litri}L"
+        elif self.gruppo:
+            return f"{self.gruppo} - {self.data} - {self.litri}L"
+        return f"Rifornimento {self.data} - {self.litri}L"
 
 
 class EventoAutomezzo(AllegatiMixin, models.Model):
@@ -526,7 +545,12 @@ class EventoAutomezzo(AllegatiMixin, models.Model):
     ]
 
     automezzo = models.ForeignKey(
-        Automezzo, on_delete=models.CASCADE, related_name="eventi"
+        Automezzo, on_delete=models.CASCADE, related_name="eventi",
+        blank=True, null=True
+    )
+    gruppo = models.ForeignKey(
+        'Gruppo', on_delete=models.CASCADE, related_name="eventi",
+        blank=True, null=True
     )
     tipo = models.CharField(max_length=20, choices=TIPO_EVENTO_CHOICES)
     data_evento = models.DateField()
@@ -548,7 +572,11 @@ class EventoAutomezzo(AllegatiMixin, models.Model):
     risolto = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.automezzo} - {self.get_tipo_display()} - {self.data_evento}"
+        if self.automezzo:
+            return f"{self.automezzo} - {self.get_tipo_display()} - {self.data_evento}"
+        elif self.gruppo:
+            return f"{self.gruppo} - {self.get_tipo_display()} - {self.data_evento}"
+        return f"Evento {self.get_tipo_display()} - {self.data_evento}"
 
 
 def affidamento_video_upload_path(instance, filename):

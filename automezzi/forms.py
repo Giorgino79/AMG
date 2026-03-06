@@ -68,7 +68,14 @@ class ManutenzioneForm(forms.ModelForm):
 
 
 class ManutenzioneCreateForm(forms.ModelForm):
-    """Form specifico per l'apertura di una nuova manutenzione"""
+    """Form specifico per l'apertura di una nuova manutenzione (Automezzi o Gruppi)"""
+    
+    gruppo = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        label="Gruppo Elettrogeno",
+        help_text="Seleziona il gruppo elettrogeno (alternativo all'automezzo)"
+    )
 
     class Meta:
         model = Manutenzione
@@ -96,25 +103,39 @@ class ManutenzioneCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Importo qui per evitare circular imports
+        from .models import Gruppo
+        
+        # Imposta queryset per gruppi
+        self.fields['gruppo'].queryset = Gruppo.objects.filter(attivo=True)
+        
         # Per le nuove manutenzioni, il stato è sempre "aperta"
         self.instance.stato = "aperta"
 
-        # Rendi alcuni campi opzionali per la creazione
+        # Rendi campi opzionali
+        self.fields["automezzo"].required = False
         self.fields["fornitore"].required = False
         self.fields["luogo"].required = False
         self.fields["responsabile"].required = False
         self.fields["allegati"].required = False
 
-        # Aggiungi help text specifici
-        self.fields["data_prevista"].help_text = (
-            "Data prevista per l'intervento di manutenzione"
-        )
-        self.fields["fornitore"].help_text = (
-            "Seleziona l'officina o il fornitore (opzionale)"
-        )
-        self.fields["descrizione"].help_text = (
-            "Descrivi dettagliatamente il lavoro da eseguire"
-        )
+    def clean(self):
+        cleaned_data = super().clean()
+        automezzo = cleaned_data.get('automezzo')
+        gruppo = cleaned_data.get('gruppo')
+
+        # Validazione XOR: deve essere selezionato SOLO uno tra automezzo e gruppo
+        if not automezzo and not gruppo:
+            raise forms.ValidationError(
+                "Devi selezionare un Automezzo OPPURE un Gruppo Elettrogeno."
+            )
+        
+        if automezzo and gruppo:
+            raise forms.ValidationError(
+                "Puoi selezionare solo un Automezzo O un Gruppo Elettrogeno, non entrambi."
+            )
+
+        return cleaned_data
 
 
 class ManutenzioneUpdateForm(forms.ModelForm):
@@ -252,6 +273,13 @@ class AllegatoManutenzioneForm(forms.ModelForm):
 
 
 class RifornimentoForm(forms.ModelForm):
+    gruppo = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        label="Gruppo Elettrogeno",
+        help_text="Seleziona il gruppo elettrogeno (alternativo all'automezzo)"
+    )
+
     class Meta:
         model = Rifornimento
         fields = [
@@ -266,8 +294,44 @@ class RifornimentoForm(forms.ModelForm):
             "data": forms.DateInput(attrs={"type": "date"}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Importo qui per evitare circular imports
+        from .models import Gruppo
+
+        # Imposta queryset per gruppi
+        self.fields['gruppo'].queryset = Gruppo.objects.filter(attivo=True)
+
+        # Rendi automezzo opzionale
+        self.fields["automezzo"].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        automezzo = cleaned_data.get('automezzo')
+        gruppo = cleaned_data.get('gruppo')
+
+        # Validazione XOR: deve essere selezionato SOLO uno tra automezzo e gruppo
+        if not automezzo and not gruppo:
+            raise forms.ValidationError(
+                "Devi selezionare un Automezzo OPPURE un Gruppo Elettrogeno."
+            )
+
+        if automezzo and gruppo:
+            raise forms.ValidationError(
+                "Puoi selezionare solo un Automezzo O un Gruppo Elettrogeno, non entrambi."
+            )
+
+        return cleaned_data
+
 
 class EventoAutomezzoForm(forms.ModelForm):
+    gruppo = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        label="Gruppo Elettrogeno",
+        help_text="Seleziona il gruppo elettrogeno (alternativo all'automezzo)"
+    )
+
     class Meta:
         model = EventoAutomezzo
         fields = [
@@ -284,6 +348,35 @@ class EventoAutomezzoForm(forms.ModelForm):
             "data_evento": forms.DateInput(attrs={"type": "date"}),
             "descrizione": forms.Textarea(attrs={"rows": 2}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Importo qui per evitare circular imports
+        from .models import Gruppo
+
+        # Imposta queryset per gruppi
+        self.fields['gruppo'].queryset = Gruppo.objects.filter(attivo=True)
+
+        # Rendi automezzo opzionale
+        self.fields["automezzo"].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        automezzo = cleaned_data.get('automezzo')
+        gruppo = cleaned_data.get('gruppo')
+
+        # Validazione XOR: deve essere selezionato SOLO uno tra automezzo e gruppo
+        if not automezzo and not gruppo:
+            raise forms.ValidationError(
+                "Devi selezionare un Automezzo OPPURE un Gruppo Elettrogeno."
+            )
+
+        if automezzo and gruppo:
+            raise forms.ValidationError(
+                "Puoi selezionare solo un Automezzo O un Gruppo Elettrogeno, non entrambi."
+            )
+
+        return cleaned_data
 
 
 class AffidamentoMezzoForm(forms.ModelForm):
