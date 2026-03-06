@@ -554,6 +554,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = timezone.now().date()
+        
+        # Automezzi
         context["automezzi_count"] = Automezzo.objects.count()
         context["attivi_count"] = Automezzo.objects.filter(attivo=True).count()
         context["disponibili_count"] = Automezzo.objects.filter(
@@ -567,6 +569,17 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context["eventi_recenti"] = EventoAutomezzo.objects.order_by("-data_evento")[:5]
         context["rifornimenti_recenti"] = Rifornimento.objects.order_by("-data")[:5]
         context["affidamenti_attivi"] = AffidamentoMezzo.objects.exclude(stato="completato").count()
+
+        # Gruppi Elettrogeni
+        context["gruppi_count"] = Gruppo.objects.count()
+        context["gruppi_attivi_count"] = Gruppo.objects.filter(attivo=True).count()
+        context["gruppi_disponibili_count"] = Gruppo.objects.filter(
+            disponibile=True, attivo=True, bloccato=False
+        ).count()
+        context["gruppi_bloccati"] = Gruppo.objects.filter(bloccato=True)
+        context["gruppi_manutenzione_necessaria"] = [g for g in Gruppo.objects.filter(attivo=True) if g.necessita_manutenzione]
+        context["manutenzioni_gruppo_in_corso"] = ManutenzioneGruppo.objects.filter(stato__in=["aperta", "in_corso"])
+        context["eventi_gruppo_recenti"] = EventoGruppo.objects.order_by("-data_evento")[:5]
 
         # Affidamento attivo per l'utente corrente
         context["mio_affidamento"] = AffidamentoMezzo.objects.filter(
