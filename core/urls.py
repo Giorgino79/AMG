@@ -27,10 +27,17 @@ from .views_permissions import (
     permission_template_update_view,
     permission_template_delete_view,
 )
+from .views_calendario import (
+    CalendarioView,
+    CalendarioEventiAPIView,
+)
 
 app_name = "core"
 
 urlpatterns = [
+    # ========== CALENDARIO ==========
+    path("calendario/", CalendarioView.as_view(), name="calendario"),
+    path("calendario/eventi/", CalendarioEventiAPIView.as_view(), name="calendario_eventi_api"),
     # ========== API ALLEGATI (AJAX) ==========
     path("allegati/upload/", allegato_upload, name="allegato_upload"),
     path("allegati/list/", allegati_list, name="allegati_list"),

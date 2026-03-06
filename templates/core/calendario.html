@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<!-- FullCalendar CSS -->
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css' rel='stylesheet' />
+<style>
+    #calendario {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .fc-event {
+        cursor: pointer;
+    }
+
+    .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 6px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 3px;
+    }
+
+    @media (max-width: 768px) {
+        #calendario {
+            padding: 10px;
+        }
+
+        .fc-toolbar {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .fc-toolbar-chunk {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-calendar-event me-2 text-primary"></i>
+                        Calendario Aziendale
+                    </h2>
+                    <p class="text-muted mb-0">Visualizza tutti gli eventi, manutenzioni e scadenze</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div id="calendario"></div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #dc3545;"></div>
+                    <span>Incidenti</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffc107;"></div>
+                    <span>Guasti / Revisioni urgenti</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #007bff;"></div>
+                    <span>Manutenzioni in corso</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #28a745;"></div>
+                    <span>Completate</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #17a2b8;"></div>
+                    <span>Affidamenti attivi</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #6c757d;"></div>
+                    <span>Altri eventi</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- FullCalendar JS -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/it.global.min.js'></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarioEl = document.getElementById('calendario');
+
+    const calendar = new FullCalendar.Calendar(calendarioEl, {
+        locale: 'it',
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listWeek'
+        },
+        buttonText: {
+            today: 'Oggi',
+            month: 'Mese',
+            week: 'Settimana',
+            list: 'Lista'
+        },
+        height: 'auto',
+        navLinks: true,
+        editable: false,
+        dayMaxEvents: true,
+        events: {
+            url: '{% url "core:calendario_eventi_api" %}',
+            failure: function() {
+                alert('Errore nel caricamento degli eventi');
+            }
+        },
+        eventClick: function(info) {
+            // Se l'evento ha un URL, naviga ad esso
+            if (info.event.url) {
+                window.location.href = info.event.url;
+                info.jsEvent.preventDefault(); // Previeni il comportamento di default
+            }
+        },
+        eventMouseEnter: function(info) {
+            // Mostra tooltip con dettagli
+            const props = info.event.extendedProps;
+            let tooltipContent = info.event.title;
+
+            if (props.descrizione) {
+                tooltipContent += '\n' + props.descrizione;
+            }
+            if (props.stato) {
+                tooltipContent += '\nStato: ' + props.stato;
+            }
+
+            info.el.title = tooltipContent;
+        },
+        loading: function(isLoading) {
+            // Mostra/nascondi loading indicator
+            if (isLoading) {
+                document.body.style.cursor = 'wait';
+            } else {
+                document.body.style.cursor = 'default';
+            }
+        }
+    });
+
+    calendar.render();
+});
+</script>
+{% endblock %}
