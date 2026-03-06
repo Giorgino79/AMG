@@ -81,16 +81,15 @@
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label for="{{ form.automezzo.id_for_label }}" class="form-label fw-semibold">
-                                                <i class="fas fa-car me-2 text-primary"></i>Automezzo *
+                                                <i class="fas fa-car me-2 text-primary"></i>Automezzo
                                             </label>
-                                            <select name="{{ form.automezzo.name }}" 
+                                            <select name="{{ form.automezzo.name }}"
                                                     class="form-select{% if form.automezzo.errors %} is-invalid{% endif %}"
-                                                    id="{{ form.automezzo.id_for_label }}"
-                                                    required>
+                                                    id="{{ form.automezzo.id_for_label }}">
                                                 <option value="">Seleziona automezzo...</option>
                                                 {% for value, label in form.automezzo.field.choices %}
                                                     {% if value %}
-                                                        <option value="{{ value }}" 
+                                                        <option value="{{ value }}"
                                                                 {% if form.automezzo.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>
                                                             {{ label }}
                                                         </option>
@@ -100,7 +99,30 @@
                                             {% if form.automezzo.errors %}
                                                 <div class="invalid-feedback">{{ form.automezzo.errors.0 }}</div>
                                             {% endif %}
-                                            <div class="form-text">Veicolo che ha effettuato il rifornimento</div>
+                                            <div class="form-text">Alternativo al gruppo - seleziona solo uno dei due</div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="{{ form.gruppo.id_for_label }}" class="form-label fw-semibold">
+                                                <i class="fas fa-charging-station me-2 text-primary"></i>Gruppo Elettrogeno
+                                            </label>
+                                            <select name="{{ form.gruppo.name }}"
+                                                    class="form-select{% if form.gruppo.errors %} is-invalid{% endif %}"
+                                                    id="{{ form.gruppo.id_for_label }}">
+                                                <option value="">Seleziona gruppo...</option>
+                                                {% for value, label in form.gruppo.field.choices %}
+                                                    {% if value %}
+                                                        <option value="{{ value }}"
+                                                                {% if form.gruppo.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>
+                                                            {{ label }}
+                                                        </option>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </select>
+                                            {% if form.gruppo.errors %}
+                                                <div class="invalid-feedback">{{ form.gruppo.errors.0 }}</div>
+                                            {% endif %}
+                                            <div class="form-text">Alternativo all'automezzo - seleziona solo uno dei due</div>
                                         </div>
 
                                         <div class="mb-3">
