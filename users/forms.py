@@ -11,7 +11,7 @@ from django.contrib.auth.forms import (
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
-from .models import User, Timbratura, RichiestaFerie, RichiestaPermesso, LetteraRichiamo
+from .models import User, Timbratura, RichiestaFerie, RichiestaPermesso, LetteraRichiamo, EventoPersonale
 from datetime import datetime, date, time
 
 
@@ -626,3 +626,77 @@ class LetteraRichiamoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Filtra solo users attivi
         self.fields["user"].queryset = User.objects.filter(stato="attivo")
+
+
+# ============================================================================
+# FORMS CALENDARIO PERSONALE
+# ============================================================================
+
+
+class EventoPersonaleForm(forms.ModelForm):
+    """
+    Form per creare/modificare eventi personali nel calendario.
+
+    Features:
+    - Validazione date inizio/fine
+    - Selezione colore personalizzato
+    - Campo tutto il giorno
+    - Selezione priorità e tipo
+    """
+
+    # Override campi per widget personalizzati
+    data_inizio = forms.DateTimeField(
+        label='Data/Ora Inizio',
+        widget=forms.DateTimeInput(
+            attrs={
+                'class': 'form-control',
+                'type': 'datetime-local'
+            }
+        ),
+        input_formats=['%Y-%m-%dT%H:%M']
+    )
+
+    data_fine = forms.DateTimeField(
+        label='Data/Ora Fine',
+        required=False,
+        widget=forms.DateTimeInput(
+            attrs={
+                'class': 'form-control',
+                'type': 'datetime-local'
+            }
+        ),
+        input_formats=['%Y-%m-%dT%H:%M']
+    )
+
+    class Meta:
+        model = EventoPersonale
+        fields = [
+            'titolo',
+            'descrizione',
+            'tipo',
+            'priorita',
+            'data_inizio',
+            'data_fine',
+            'tutto_il_giorno',
+            'colore',
+            'notifica_email',
+        ]
+        widgets = {
+            'titolo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Es. Riunione, Compleanno, Scadenza...'}),
+            'descrizione': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Aggiungi dettagli...'}),
+            'tipo': forms.Select(attrs={'class': 'form-select'}),
+            'priorita': forms.Select(attrs={'class': 'form-select'}),
+            'tutto_il_giorno': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'colore': forms.TextInput(attrs={'class': 'form-control', 'type': 'color'}),
+            'notifica_email': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        data_inizio = cleaned_data.get('data_inizio')
+        data_fine = cleaned_data.get('data_fine')
+
+        if data_fine and data_inizio and data_fine < data_inizio:
+            raise ValidationError('La data di fine deve essere successiva alla data di inizio')
+
+        return cleaned_data

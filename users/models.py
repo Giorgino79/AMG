@@ -702,3 +702,103 @@ class LetteraRichiamo(TimestampMixin, AllegatiMixin):
 
     def __str__(self):
         return f"{self.get_tipo_display()} - {self.user.get_full_name()} - {self.data_emissione}"
+
+
+# ============================================================================
+# CALENDARIO PERSONALE
+# ============================================================================
+
+
+class EventoPersonale(TimestampMixin, SoftDeleteMixin, models.Model):
+    """
+    Eventi personali per il calendario dell'utente.
+
+    Ogni utente può creare eventi privati visibili solo a lui
+    nel suo calendario personale nella dashboard profilo.
+    """
+
+    TIPO_CHOICES = [
+        ('promemoria', 'Promemoria'),
+        ('appuntamento', 'Appuntamento'),
+        ('compleanno', 'Compleanno'),
+        ('scadenza', 'Scadenza'),
+        ('altro', 'Altro'),
+    ]
+
+    PRIORITA_CHOICES = [
+        ('bassa', 'Bassa'),
+        ('media', 'Media'),
+        ('alta', 'Alta'),
+    ]
+
+    utente = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='eventi_personali',
+        verbose_name='Utente'
+    )
+    titolo = models.CharField('Titolo', max_length=200)
+    descrizione = models.TextField('Descrizione', blank=True)
+    tipo = models.CharField(
+        'Tipo',
+        max_length=20,
+        choices=TIPO_CHOICES,
+        default='promemoria'
+    )
+    priorita = models.CharField(
+        'Priorità',
+        max_length=10,
+        choices=PRIORITA_CHOICES,
+        default='media'
+    )
+
+    # Date e orari
+    data_inizio = models.DateTimeField('Data/Ora Inizio')
+    data_fine = models.DateTimeField('Data/Ora Fine', null=True, blank=True)
+    tutto_il_giorno = models.BooleanField('Tutto il giorno', default=False)
+
+    # Ripetizione (opzionale - per futuri sviluppi)
+    ricorrente = models.BooleanField('Ricorrente', default=False)
+
+    # Notifiche (opzionale - per futuri sviluppi)
+    notifica_email = models.BooleanField('Notifica via email', default=False)
+
+    # Colore personalizzato (opzionale)
+    colore = models.CharField(
+        'Colore',
+        max_length=7,
+        default='#007bff',
+        help_text='Colore in formato esadecimale (es. #007bff)'
+    )
+
+    # Completamento
+    completato = models.BooleanField('Completato', default=False)
+    data_completamento = models.DateTimeField('Data completamento', null=True, blank=True)
+
+    class Meta:
+        db_table = 'users_evento_personale'
+        verbose_name = 'Evento Personale'
+        verbose_name_plural = 'Eventi Personali'
+        ordering = ['data_inizio']
+        indexes = [
+            models.Index(fields=['utente', 'data_inizio']),
+            models.Index(fields=['tipo']),
+            models.Index(fields=['completato']),
+        ]
+        permissions = [
+            ('view_own_eventi', 'Può visualizzare i propri eventi personali'),
+            ('manage_own_eventi', 'Può gestire i propri eventi personali'),
+        ]
+
+    def __str__(self):
+        return f"{self.titolo} - {self.data_inizio.strftime('%d/%m/%Y')}"
+
+    def clean(self):
+        """Validazione custom"""
+        super().clean()
+        if self.data_fine and self.data_fine < self.data_inizio:
+            raise ValidationError('La data di fine deve essere successiva alla data di inizio')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)

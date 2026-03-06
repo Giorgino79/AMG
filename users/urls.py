@@ -4,6 +4,13 @@ URL Configuration per l'app Users
 
 from django.urls import path
 from . import views
+from .views_calendario_personale import (
+    EventoPersonaleAPIView,
+    EventoPersonaleCreateView,
+    EventoPersonaleUpdateView,
+    EventoPersonaleDeleteView,
+    EventoPersonaleToggleCompletato,
+)
 
 app_name = "users"
 
@@ -81,6 +88,12 @@ urlpatterns = [
     # ========== PROFILO E IMPOSTAZIONI ==========
     path("profilo/", views.profilo_view, name="profilo"),
     path("impostazioni/", views.impostazioni_view, name="impostazioni"),
+    # ========== CALENDARIO PERSONALE ==========
+    path("calendario-personale/api/", EventoPersonaleAPIView.as_view(), name="calendario_personale_api"),
+    path("calendario-personale/evento/nuovo/", EventoPersonaleCreateView.as_view(), name="evento_personale_create"),
+    path("calendario-personale/evento/<int:pk>/modifica/", EventoPersonaleUpdateView.as_view(), name="evento_personale_update"),
+    path("calendario-personale/evento/<int:pk>/elimina/", EventoPersonaleDeleteView.as_view(), name="evento_personale_delete"),
+    path("calendario-personale/evento/<int:pk>/toggle-completato/", EventoPersonaleToggleCompletato.as_view(), name="evento_personale_toggle"),
     # ========== EXPORT ==========
     path(
         "giornate/export/excel/",

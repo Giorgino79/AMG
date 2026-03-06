@@ -11,6 +11,7 @@ from .models import (
     RichiestaFerie,
     RichiestaPermesso,
     LetteraRichiamo,
+    EventoPersonale,
 )
 
 
@@ -132,3 +133,20 @@ class LetteraRichiamoAdmin(admin.ModelAdmin):
     list_filter = ["tipo", "user_ha_letto", "data_emissione"]
     search_fields = ["user__username", "user__first_name", "user__last_name", "motivo"]
     date_hierarchy = "data_emissione"
+
+
+@admin.register(EventoPersonale)
+class EventoPersonaleAdmin(admin.ModelAdmin):
+    list_display = [
+        "titolo",
+        "utente",
+        "tipo",
+        "priorita",
+        "data_inizio",
+        "data_fine",
+        "completato",
+    ]
+    list_filter = ["tipo", "priorita", "completato", "tutto_il_giorno", "data_inizio"]
+    search_fields = ["titolo", "descrizione", "utente__username", "utente__first_name", "utente__last_name"]
+    date_hierarchy = "data_inizio"
+    readonly_fields = ["created_at", "updated_at"]
