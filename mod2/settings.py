@@ -202,17 +202,19 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Cloudinary Configuration for Media Files
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
-    'API_KEY': config('CLOUDINARY_API_KEY', default=''),
-    'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
-}
+# Django-cloudinary-storage legge automaticamente CLOUDINARY_URL da environment
+# Formato: cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+import cloudinary
 
-# Use Cloudinary for media files in production
-if not DEBUG:
+# Usa Cloudinary per tutti i file media se CLOUDINARY_URL è presente
+if os.environ.get('CLOUDINARY_URL'):
+    # Cloudinary è configurato - usalo per media files
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    # Cloudinary serve i file media direttamente
-    MEDIA_URL = '/media/'  # Cloudinary gestisce automaticamente
+
+    # Configurazione opzionale (cloudinary legge automaticamente da CLOUDINARY_URL)
+    cloudinary.config(
+        secure=True,  # Usa sempre HTTPS
+    )
 
 # Email Configuration - Gmail SMTP
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
